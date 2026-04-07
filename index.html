@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Peptide Pathways | MVP</title>
+    <link rel="icon" href="data:," />
+    <style>
+      :root {
+        --bg: #050507;
+        --panel: #121218;
+        --panel-soft: #191a22;
+        --border: #2a2b33;
+        --text: #f2f4f8;
+        --muted: #9aa0a6;
+        --ok: #22c55e;
+        --warn: #f59e0b;
+        --danger: #f87171;
+      }
+
+      * { box-sizing: border-box; }
+      html, body, #root { margin: 0; min-height: 100%; }
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        background: radial-gradient(circle at top, #1a1b24 0%, var(--bg) 45%);
+        color: var(--text);
+      }
+      .page {
+        min-height: 100vh;
+        padding: 24px;
+      }
+      .container {
+        width: min(1024px, 100%);
+        margin: 0 auto;
+      }
+      .card {
+        background: color-mix(in srgb, var(--panel) 85%, black 15%);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 24px;
+      }
+      h1 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.6rem); line-height: 1.1; }
+      h2 { margin: 0; font-size: clamp(1.3rem, 3vw, 1.8rem); }
+      p { color: var(--muted); }
+      .row { display: flex; flex-wrap: wrap; gap: 12px; }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+      }
+      .tag-ok { border-color: color-mix(in srgb, var(--ok) 40%, var(--border)); background: color-mix(in srgb, var(--ok) 10%, transparent); color: #bbf7d0; }
+      .tag-warn { border-color: color-mix(in srgb, var(--warn) 40%, var(--border)); background: color-mix(in srgb, var(--warn) 10%, transparent); color: #fde68a; }
+      .tag-danger { border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); background: color-mix(in srgb, var(--danger) 12%, transparent); color: #fecaca; }
+      .muted { color: var(--muted); }
+      .small { font-size: 0.92rem; }
+      .btn {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: #f7f8fb;
+        color: #101116;
+        padding: 12px 16px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      .btn:hover:enabled { transform: translateY(-1px); }
+      .btn-outline {
+        background: var(--panel);
+        color: var(--text);
+      }
+      .btn-full { width: 100%; }
+      .btn-row { display: flex; justify-content: space-between; gap: 12px; }
+      .question { margin-top: 20px; }
+      .option {
+        width: 100%;
+        border: 1px solid var(--border);
+        background: #111218;
+        color: var(--text);
+        border-radius: 14px;
+        padding: 14px;
+        text-align: left;
+        cursor: pointer;
+        transition: transform 120ms ease;
+      }
+      .option:hover:enabled { transform: translateY(-1px); }
+      .option.active { border-color: #f2f4f8; background: #ffffff; color: #0f1118; }
+      .grid { display: grid; gap: 12px; }
+      .grid.two { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+      .list {
+        list-style: none;
+        padding-left: 0;
+      }
+      .list li { margin-bottom: 6px; }
+      .progressWrap { width: 100%; height: 10px; background: #2a2b36; border-radius: 999px; overflow: hidden; }
+      .progress { height: 100%; background: #f9fafb; border-radius: 999px; transition: width 200ms; }
+      .split { display: grid; grid-template-columns: 1fr; gap: 16px; }
+      .scoreRow { margin-top: 8px; }
+      @media (min-width: 960px) { .split { grid-template-columns: 1.3fr 1fr; } }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
