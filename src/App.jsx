@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 const STORAGE_KEY = 'peptide_report_history_v2';
 const LEAD_KEY = 'peptide_leads_v1';
@@ -6,6 +6,25 @@ const ANALYTICS_KEY = 'peptide_analytics_events_v1';
 const ANALYTICS_ENDPOINT = import.meta.env.VITE_ANALYTICS_ENDPOINT || '';
 const PILOT_CHECKOUT_URL = import.meta.env.VITE_PILOT_CHECKOUT_URL || '';
 const CLINICIAN_CONTACT = 'moeylarge@gmail.com';
+
+function safeStorageGetItem(key) {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSetItem(key, value) {
+  if (typeof window === 'undefined') return false;
+  try {
+    window.localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function trackEvent(name, payload) {
   if (typeof window === 'undefined') return;
@@ -17,21 +36,42 @@ function trackEvent(name, payload) {
   };
 
   if (ANALYTICS_ENDPOINT) {
-    fetch(ANALYTICS_ENDPOINT, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(event),
-      keepalive: true,
-    }).catch(() => {
-      const raw = window.localStorage.getItem(ANALYTICS_KEY);
-      const queue = raw ? JSON.parse(raw) : [];
+    try {
+      fetch(ANALYTICS_ENDPOINT, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(event),
+        keepalive: true,
+      }).catch(() => {
+        const raw = safeStorageGetItem(ANALYTICS_KEY);
+        const parsed = raw ? (() => {
+          try {
+            return JSON.parse(raw);
+          } catch {
+            return [];
+          }
+        })() : [];
+        const queue = Array.isArray(parsed) ? parsed : [];
+        queue.push(event);
+        safeStorageSetItem(ANALYTICS_KEY, JSON.stringify(queue.slice(-200)));
+      });
+    } catch {
+      const raw = safeStorageGetItem(ANALYTICS_KEY);
+      const parsed = raw ? (() => {
+        try {
+          return JSON.parse(raw);
+        } catch {
+          return [];
+        }
+      })() : [];
+      const queue = Array.isArray(parsed) ? parsed : [];
       queue.push(event);
-      window.localStorage.setItem(ANALYTICS_KEY, JSON.stringify(queue.slice(-200)));
-    });
+      safeStorageSetItem(ANALYTICS_KEY, JSON.stringify(queue.slice(-200)));
+    }
     return;
   }
 
-  const raw = window.localStorage.getItem(ANALYTICS_KEY);
+  const raw = safeStorageGetItem(ANALYTICS_KEY);
   const queue = raw ? (() => {
     try {
       return JSON.parse(raw);
@@ -40,13 +80,13 @@ function trackEvent(name, payload) {
     }
   })() : [];
   queue.push(event);
-  window.localStorage.setItem(ANALYTICS_KEY, JSON.stringify(queue.slice(-200)));
+  safeStorageSetItem(ANALYTICS_KEY, JSON.stringify(queue.slice(-200)));
 }
 
 function getSavedLeads() {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = window.localStorage.getItem(LEAD_KEY);
+    const raw = safeStorageGetItem(LEAD_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
@@ -59,7 +99,7 @@ function saveLead(record) {
   if (typeof window === 'undefined') return [];
   const existing = getSavedLeads();
   const updated = [{ ...record, id: `lead_${Date.now()}` }, ...existing].slice(0, 50);
-  window.localStorage.setItem(LEAD_KEY, JSON.stringify(updated));
+  safeStorageSetItem(LEAD_KEY, JSON.stringify(updated));
   return updated;
 }
 
@@ -113,7 +153,7 @@ function decodeBase64Url(token) {
 function getSavedReports() {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = safeStorageGetItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
@@ -129,7 +169,7 @@ function saveReportToHistory(record) {
     { ...record, id: record.id || `r_${Date.now()}` },
     ...existing.filter((item) => item.id !== record.id),
   ].slice(0, 12);
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+  safeStorageSetItem(STORAGE_KEY, JSON.stringify(normalized));
   return normalized;
 }
 
@@ -929,7 +969,7 @@ function Results({ result, answers, copyReport, reset, copyShareLink, history, l
   );
 }
 
-export default function App() {
+function AppContent() {
   const [mode, setMode] = useState('landing');
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({ risk_flags: [] });
@@ -1063,5 +1103,52 @@ export default function App() {
     <div className="page">
       <Landing onStart={startIntake} consentGiven={consentGiven} setConsentGiven={setConsentGiven} />
     </div>
+  );
+}
+
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, message: '' };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, message: error?.message || 'Unexpected error' };
+  }
+
+  componentDidCatch(error, info) {
+    trackEvent('app_render_error', {
+      errorMessage: error?.message || '',
+      componentStack: info?.componentStack || '',
+    });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="page">
+          <section className="container">
+            <div className="card">
+              <h1>Something went wrong.</h1>
+              <p className="small">The app hit a runtime error. This is now captured and won&apos;t remain a blank screen.</p>
+              <pre className="small" style={{ whiteSpace: 'pre-wrap', marginTop: 12 }}>{this.state.message}</pre>
+              <button className="btn" type="button" onClick={() => window.location.reload()} style={{ marginTop: 12 }}>
+                Reload
+              </button>
+            </div>
+          </section>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export default function App() {
+  return (
+    <AppErrorBoundary>
+      <AppContent />
+    </AppErrorBoundary>
   );
 }

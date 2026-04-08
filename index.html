@@ -100,10 +100,34 @@
       .split { display: grid; grid-template-columns: 1fr; gap: 16px; }
       .scoreRow { margin-top: 8px; }
       @media (min-width: 960px) { .split { grid-template-columns: 1.3fr 1fr; } }
+      [data-bootstrap-fallback] {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        color: var(--muted);
+      }
+      [data-bootstrap-fallback][data-show="yes"] {
+        border: 1px solid var(--border);
+        margin: 24px;
+        border-radius: 20px;
+        padding: 24px;
+        background: color-mix(in srgb, var(--panel) 88%, transparent);
+      }
     </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main class="page" data-bootstrap-fallback>
+        Peptide Pathways is loading... if this never changes, the app mount failed.
+      </main>
+    </div>
+    <script>
+      setTimeout(() => {
+        const fallback = document.querySelector('[data-bootstrap-fallback]');
+        if (fallback) fallback.setAttribute('data-show', 'yes');
+      }, 1800);
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
