@@ -15,8 +15,22 @@ export async function createServerSupabaseClient() {
             value: cookie.value,
           }));
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach((cookie) => {
+        setAll(
+          cookiesToSet: Array<{
+            name: string;
+            value: string;
+            options?: {
+              domain?: string;
+              path?: string;
+              expires?: Date;
+              maxAge?: number;
+              httpOnly?: boolean;
+              secure?: boolean;
+              sameSite?: "lax" | "strict" | "none" | boolean;
+            };
+          }>,
+        ) {
+          cookiesToSet.forEach((cookie: { name: string; value: string; options?: Parameters<typeof cookieStore.set>[2] }) => {
             try {
               cookieStore.set(cookie.name, cookie.value, cookie.options);
             } catch {
