@@ -12,6 +12,7 @@ export function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -35,52 +36,93 @@ export function SignInForm() {
     router.refresh();
   };
 
+  const handleGoogleSignIn = async () => {
+    setIsGoogleSubmitting(true);
+    setError("");
+
+    const supabase = createBrowserSupabaseClient();
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+      },
+    });
+
+    if (oauthError) {
+      setError(oauthError.message);
+      setIsGoogleSubmitting(false);
+    }
+  };
+
   return (
-    <form className="space-y-3" onSubmit={handleSubmit}>
-      <div className="grid gap-2">
-        <label className="text-xs uppercase tracking-[0.14em] text-muted-foreground" htmlFor="email">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          className="h-10 rounded-md border border-white/20 bg-black/25 px-3 text-sm text-foreground"
-          placeholder="you@spotlight.com"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <label className="text-xs uppercase tracking-[0.14em] text-muted-foreground" htmlFor="password">
-          Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          required
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className="h-10 rounded-md border border-white/20 bg-black/25 px-3 text-sm text-foreground"
-          placeholder="Your password"
-        />
-      </div>
-
-      {error ? <p className="text-sm text-rose-300">{error}</p> : null}
-
-      <Button type="submit" size="sm" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Signing in..." : "Sign in"}
+    <div className="space-y-4">
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="w-full"
+        disabled={isGoogleSubmitting || isSubmitting}
+        onClick={handleGoogleSignIn}
+      >
+        {isGoogleSubmitting ? "Redirecting to Google..." : "Continue with Google"}
       </Button>
 
-      <p className="text-xs uppercase tracking-[0.14em] text-white/55">
-        Existing users only (Supabase auth). Add your own sign-up flow in next pass.
-      </p>
-      <p className="text-xs uppercase tracking-[0.14em] text-white/55">
-        <Link href="/" className="text-white underline-offset-4 hover:underline">
-          Back to home
-        </Link>
-      </p>
-    </form>
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-white/12" />
+        </div>
+        <div className="relative flex justify-center text-[10px] uppercase tracking-[0.16em] text-white/45">
+          <span className="bg-black px-2">Or use email</span>
+        </div>
+      </div>
+
+      <form className="space-y-3" onSubmit={handleSubmit}>
+        <div className="grid gap-2">
+          <label className="text-xs uppercase tracking-[0.14em] text-muted-foreground" htmlFor="email">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="h-10 rounded-md border border-white/20 bg-black/25 px-3 text-sm text-foreground"
+            placeholder="you@spotlight.com"
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <label className="text-xs uppercase tracking-[0.14em] text-muted-foreground" htmlFor="password">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="h-10 rounded-md border border-white/20 bg-black/25 px-3 text-sm text-foreground"
+            placeholder="Your password"
+          />
+        </div>
+
+        {error ? <p className="text-sm text-rose-300">{error}</p> : null}
+
+        <Button type="submit" size="sm" className="w-full" disabled={isSubmitting || isGoogleSubmitting}>
+          {isSubmitting ? "Signing in..." : "Sign in"}
+        </Button>
+
+        <p className="text-xs uppercase tracking-[0.14em] text-white/55">
+          Existing users only (Supabase auth). Add your own sign-up flow in next pass.
+        </p>
+        <p className="text-xs uppercase tracking-[0.14em] text-white/55">
+          <Link href="/" className="text-white underline-offset-4 hover:underline">
+            Back to home
+          </Link>
+        </p>
+      </form>
+    </div>
   );
 }
