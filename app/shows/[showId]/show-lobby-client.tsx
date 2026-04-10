@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Flame,
+  MessageSquare,
   HandMetal,
   Heart,
   MessageCircleMore,
-  Music,
-  Users,
+  SendHorizonal,
   Vote,
+  ExternalLink,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,10 @@ type Contestant = {
   name: string;
   lane: string;
   genre: string;
+  pitchTitle: string;
+  pitchSummary: string;
+  pitchUrl: string;
+  pitchAvatar: string;
   score: number;
   momentum: number;
   status: "waiting" | "live" | "ended";
@@ -51,6 +56,13 @@ type RoundResult = {
     winnerShare: number;
     margin: number;
   };
+};
+
+type CommentEntry = {
+  id: string;
+  author: string;
+  role: string;
+  message: string;
 };
 
 type AudiencePhase =
@@ -99,6 +111,10 @@ const seedContestants: Contestant[] = [
     name: "LUNA V.",
     lane: "A1",
     genre: "Performance",
+    pitchTitle: "LumaBoard — Real-time team dashboards for side-project teams",
+    pitchSummary: "A lightweight dashboard that syncs tasks, releases, and goals while teams pitch together in live sync rooms.",
+    pitchUrl: "https://example.com/lumaboard",
+    pitchAvatar: "🌀",
     score: 248,
     momentum: 19,
     status: "waiting",
@@ -108,6 +124,10 @@ const seedContestants: Contestant[] = [
     name: "Milo D.",
     lane: "B2",
     genre: "Improv",
+    pitchTitle: "LoopHouse — AI first improv rehearsal trainer",
+    pitchSummary: "A mock-stage practice app for creators to rehearse product demos and get instant crowd feedback.",
+    pitchUrl: "https://example.com/loophouse",
+    pitchAvatar: "🎤",
     score: 212,
     momentum: 12,
     status: "waiting",
@@ -117,6 +137,10 @@ const seedContestants: Contestant[] = [
     name: "Kiara M.",
     lane: "C1",
     genre: "Voice",
+    pitchTitle: "PulsePitch — Voice-first creator portfolio",
+    pitchSummary: "A portfolio system where creators upload launches and run instant investor-ready pitch previews.",
+    pitchUrl: "https://example.com/pulsepitch",
+    pitchAvatar: "🎧",
     score: 188,
     momentum: 8,
     status: "waiting",
@@ -126,11 +150,25 @@ const seedContestants: Contestant[] = [
     name: "Noah R.",
     lane: "B4",
     genre: "Comedy",
+    pitchTitle: "ClipOrbit — social proof clips with trust labels",
+    pitchSummary: "A fast clip launcher that tags performance moments and shares creator proof in one tap.",
+    pitchUrl: "https://example.com/cliporbit",
+    pitchAvatar: "🎬",
     score: 181,
     momentum: -1,
     status: "waiting",
   },
 ];
+
+const seedComments: Record<string, CommentEntry[]> = {
+  "c-01": [
+    { id: "c1", author: "Rae K", role: "builder", message: "The live sync room concept is strong." },
+    { id: "c2", author: "Jon D", role: "founder", message: "What stack are you using for realtime updates?" },
+  ],
+  "c-02": [{ id: "c3", author: "Mina V", role: "investor", message: "Could this be demoed as a mobile first flow?" }],
+  "c-03": [{ id: "c4", author: "Dev P", role: "creator", message: "I like the short form clips idea." }],
+  "c-04": [{ id: "c5", author: "Kai R", role: "audience", message: "The proof badge system feels solid." }],
+};
 
 const baseQueue: QueueEntry[] = [
   {
@@ -204,11 +242,18 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
   const [viewerReady, setViewerReady] = useState(false);
   const [resultPinned, setResultPinned] = useState(false);
   const [isHostDemoOpen, setIsHostDemoOpen] = useState(false);
+  const [commentDraft, setCommentDraft] = useState("");
+  const [commentThreads, setCommentThreads] = useState<Record<string, CommentEntry[]>>(seedComments);
+  const [commentAck, setCommentAck] = useState("");
+  const [engagementPulse, setEngagementPulse] = useState(0);
+  const [dmPulse, setDmPulse] = useState("");
   const [transitionPulse, setTransitionPulse] = useState<TransitionTone | null>(null);
   const [showResultPulse, setShowResultPulse] = useState(false);
   const [transitionCountdown, setTransitionCountdown] = useState(0);
   const transitionTimeoutRef = useRef<number | null>(null);
+  const feedbackTimeoutRef = useRef<number | null>(null);
   const resultPulseTimeoutRef = useRef<number | null>(null);
+  const commentInputRef = useRef<HTMLInputElement | null>(null);
   const roundTransitionRef = useRef({
     roundState: "waiting" as RoundState,
     viewerState: "notInQueue" as ViewerPhase,
@@ -222,6 +267,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
     [activeContestantId, contestants]
   );
   const activeBand = useMemo(() => competitionBandLabel(tierFromScore(activeContestant.score)), [activeContestant.score]);
+  const activeComments = useMemo(() => commentThreads[activeContestant.id] ?? [], [commentThreads, activeContestant.id]);
 
   const queuePosition = useMemo(
     () => queue.findIndex((entry) => entry.id === VIEWER_ID),
@@ -262,7 +308,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
     }
 
     return "joinQueue";
-  }, [isVoteArmed, roundState, result, viewerState, viewerVote]);
+  }, [isVoteArmed, roundState, viewerState, viewerVote]);
 
   const viewerReadyMode = viewerState === "invited" || viewerState === "nextUp";
 
@@ -301,6 +347,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
   );
 
   const canVote = roundState === "live" && viewerVote === null && isVoteArmed;
+  const liveReactionCount = engagementPulse + votes.keep + votes.swap;
   const canStartRound = roundState === "waiting";
   const canAdvanceContestant = queue.length > 0 && roundState !== "live";
 
@@ -330,10 +377,10 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
       : audiencePhase === "ready" && viewerReady
           ? "You're confirmed for the next call."
           : audiencePhase === "ready"
-            ? "Stand by your cue."
+            ? "Stand by for next pitch."
           : audiencePhase === "queueWait"
-              ? queuePositionCopy
-              : "Join queue to compete for spotlight.";
+              ? "You are in queue."
+              : "Join queue to get pitch access.";
 
   const roundPulseClass = isLiveRound
     ? "animate-pulse ring-1 ring-accent/40 shadow-[0_0_45px_rgba(0,214,255,0.45)]"
@@ -401,7 +448,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
         label: "Voting open",
         variant: "cta",
         disabled: true,
-        helper: "Choose your lane.",
+        helper: "Choose your call below.",
         onClick: undefined,
       };
     }
@@ -421,9 +468,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
         label: "In queue",
         variant: "outline",
         disabled: true,
-        helper: queuePositionLabel
-          ? `${queuePositionLabel} in queue`
-          : "Stay ready as your lane advances.",
+        helper: queuePositionLabel ? `Queue ${queuePositionLabel}` : "Stay ready as the arena advances.",
         onClick: undefined,
       };
     }
@@ -436,7 +481,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
         helper: viewerReady
           ? "Host call coming."
           : queuePositionLabel
-            ? `Lane ${queuePositionLabel}`
+            ? `Position ${queuePositionLabel}`
             : "Confirm once when ready.",
         onClick: viewerReady ? undefined : () => setViewerReady(true),
       };
@@ -449,7 +494,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
       helper: "Claim a lane and wait.",
       onClick: joinQueue,
     };
-  }, [audiencePhase, joinQueue, queuePosition, viewerReady]);
+  }, [audiencePhase, joinQueue, queuePositionLabel, queuePosition, viewerReady]);
 
   const triggerTransitionPulse = useCallback((next: TransitionTone, ms = 1300) => {
     if (transitionTimeoutRef.current) {
@@ -480,6 +525,63 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
     setShowResultPulse(false);
   }, []);
 
+  const broadcastComment = useCallback(() => {
+    const message = commentDraft.trim();
+    if (!message) return;
+
+    const newComment: CommentEntry = {
+      id: crypto.randomUUID(),
+      author: "You",
+      role: "viewer",
+      message,
+    };
+
+    setCommentThreads((current) => ({
+      ...current,
+      [activeContestant.id]: [...(current[activeContestant.id] ?? []), newComment],
+    }));
+    setCommentDraft("");
+    setCommentAck("Comment posted to this pitch.");
+
+    if (feedbackTimeoutRef.current) {
+      window.clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = null;
+    }
+    feedbackTimeoutRef.current = window.setTimeout(() => {
+      setCommentAck("");
+      feedbackTimeoutRef.current = null;
+    }, 2000);
+  }, [commentDraft, activeContestant.id]);
+
+  const sendReaction = useCallback(() => {
+    setEngagementPulse((current) => current + 1);
+    setCommentAck("You sent a live reaction.");
+    if (feedbackTimeoutRef.current) {
+      window.clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = null;
+    }
+    feedbackTimeoutRef.current = window.setTimeout(() => {
+      setCommentAck("");
+      feedbackTimeoutRef.current = null;
+    }, 2000);
+  }, []);
+
+  const sendDirectMessage = useCallback(() => {
+    setDmPulse(`Message sent to ${activeContestant.name} (demo message).`);
+    if (feedbackTimeoutRef.current) {
+      window.clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = null;
+    }
+    feedbackTimeoutRef.current = window.setTimeout(() => {
+      setDmPulse("");
+      feedbackTimeoutRef.current = null;
+    }, 2200);
+  }, [activeContestant.name]);
+
+  const focusCommentComposer = useCallback(() => {
+    commentInputRef.current?.focus();
+  }, []);
+
   const votePanelVisible = audiencePhase === "voteOpen" && roundState === "live" && !viewerVote;
 
   useEffect(() => {
@@ -500,6 +602,10 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
       if (resultPulseTimeoutRef.current) {
         window.clearTimeout(resultPulseTimeoutRef.current);
         resultPulseTimeoutRef.current = null;
+      }
+      if (feedbackTimeoutRef.current) {
+        window.clearTimeout(feedbackTimeoutRef.current);
+        feedbackTimeoutRef.current = null;
       }
     };
   }, []);
@@ -678,6 +784,11 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
     setViewerReady(false);
     setResultPinned(false);
     setResult(null);
+    setCommentThreads(seedComments);
+    setCommentDraft("");
+    setCommentAck("");
+    setDmPulse("");
+    setEngagementPulse(0);
   }, [clearPulseState]);
 
   const vote = useCallback(
@@ -772,6 +883,12 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
     }
   }, [roundState]);
 
+  useEffect(() => {
+    setCommentDraft("");
+    setCommentAck("");
+    setDmPulse("");
+  }, [activeContestant.id]);
+
   return (
     <section className="space-y-3">
       <div className="relative min-h-[92vh] md:min-h-[78vh] xl:min-h-[74vh] overflow-hidden">
@@ -832,16 +949,20 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
                 <div className="mt-auto grid gap-4">
                   <div className="max-w-full space-y-2 md:space-y-3">
                     <p className={`text-xs uppercase tracking-[0.16em] ${statusTextClass}`}>{stateTone}</p>
-                    <div className="flex flex-wrap items-end justify-between gap-3">
-                    <div>
-                      <p className="text-[clamp(3rem,9vw,6rem)] leading-[0.9] font-semibold uppercase tracking-[0.02em] text-white [text-shadow:_0_30px_65px_rgba(0,0,0,0.6)]">
-                        {activeContestant.name}
-                      </p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.15em] text-white/85">
-                        {activeContestant.genre} • {activeBand} • lane {activeContestant.lane} •{" "}
-                        {roundState === "live" ? "live spotlight" : "arena holding"}
-                      </p>
-                    </div>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1 flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-black/40 text-2xl">
+                          {activeContestant.pitchAvatar}
+                        </div>
+                        <div>
+                          <p className="text-[clamp(2rem,7vw,4.6rem)] leading-[0.95] font-semibold uppercase tracking-[0.02em] text-white [text-shadow:_0_30px_65px_rgba(0,0,0,0.6)]">
+                            {activeContestant.name}
+                          </p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.15em] text-white/85">
+                            {activeContestant.genre} • {activeBand} • lane {activeContestant.lane}
+                          </p>
+                        </div>
+                      </div>
                     <div className="rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-right">
                       <p className={`text-[10px] uppercase tracking-[0.16em] ${statusTextClass}`}>Round clock</p>
                       <p className={`mt-0.5 text-2xl font-black leading-none tracking-[0.04em] ${timerClass}`}>
@@ -852,6 +973,30 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
                     <p className="text-[11px] uppercase tracking-[0.14em] text-white/60">
                       {stateSubline}
                     </p>
+                    <div className="rounded-lg border border-white/15 bg-black/45 px-3 py-2.5 text-sm">
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-accent">Now pitching</p>
+                      <p className="mt-0.5 text-white/95">{activeContestant.pitchTitle}</p>
+                      <p className="mt-1 text-xs text-white/70">{activeContestant.pitchSummary}</p>
+                    </div>
+                    <a
+                      href={activeContestant.pitchUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 self-start text-xs uppercase tracking-[0.14em] text-emerald-200 transition hover:text-emerald-100"
+                    >
+                      Open product / website
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                    <div className="mt-1.5 flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={focusCommentComposer}>
+                        Comment now
+                        <MessageSquare className="ml-2 h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={sendDirectMessage}>
+                        DM creator
+                        <MessageSquare className="ml-2 h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
 
                 <div className="grid gap-2 border-t border-white/10 pt-2 text-xs uppercase tracking-[0.14em]">
@@ -981,6 +1126,42 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
                     Your vote: {viewerVote === "keep" ? "Keep" : "Swap"}
                   </p>
                 ) : null}
+                <div className="mt-2.5 space-y-2 border-t border-white/10 pt-2">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-white/50">Audience engagement</p>
+                  <div className="grid gap-2">
+                    <Button size="sm" variant="outline" onClick={sendReaction} className="justify-start">
+                      React to pitch
+                      <Heart className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-white/45">
+                    {commentAck || dmPulse || (engagementPulse ? `${engagementPulse} live reactions sent` : "No engagement sent yet")}
+                  </p>
+                  <div>
+                    <label className="text-[10px] uppercase tracking-[0.14em] text-white/55" htmlFor="commentDraft">
+                      Comment on this pitch
+                    </label>
+                    <div className="mt-1.5 flex gap-1">
+                      <input
+                        ref={commentInputRef}
+                        id="commentDraft"
+                        value={commentDraft}
+                        onChange={(event) => setCommentDraft(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            broadcastComment();
+                          }
+                        }}
+                        placeholder="What do you think?"
+                        className="h-9 flex-1 rounded-md border border-white/20 bg-black/35 px-2 text-xs text-white outline-none focus:border-accent"
+                      />
+                      <Button size="sm" variant="default" onClick={broadcastComment} disabled={!commentDraft.trim()}>
+                        <SendHorizonal className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="mt-2.5 border-t border-white/10 pt-2 text-[11px] uppercase tracking-[0.14em] text-white/50">
                   <p className="flex items-center justify-between">
@@ -1051,32 +1232,26 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
 
       <section id="vote" className="grid gap-2 xl:grid-cols-[1.1fr_0.9fr]">
         <article className="rounded-xl border border-white/12 bg-black/15 px-4 py-3 text-sm">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-accent">Room readout</p>
+          <p className="text-[11px] uppercase tracking-[0.16em] text-accent">Pitch discussion</p>
           <div className="mt-1 flex items-center justify-between gap-3">
-            <p className="text-lg font-semibold text-white">Live room energy</p>
-            <p className="text-[11px] uppercase tracking-[0.14em] text-white/55">{votes.keep + votes.swap} active signals</p>
+            <p className="text-lg font-semibold text-white">Comments on {activeContestant.name}</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-white/55">{activeComments.length} comments</p>
           </div>
-          <div className="mt-2 space-y-2 text-sm text-white/65">
-            <p className="text-sm text-white/90">
-              Crowd pressure is {keepPercent > swapPercent ? "holding" : "shifting"} on this round ({keepPercent}/{swapPercent}).
-            </p>
-            <div className="grid grid-cols-2 gap-2 pt-1 sm:grid-cols-4">
-              <p className="inline-flex items-center gap-2 rounded-sm bg-white/[0.03] px-3 py-2 text-xs uppercase tracking-[0.14em] text-white/50">
-                <Heart className="h-3.5 w-3.5" />
-                Fire
-              </p>
-              <p className="inline-flex items-center gap-2 rounded-sm bg-white/[0.03] px-3 py-2 text-xs uppercase tracking-[0.14em] text-white/50">
+          <div className="mt-2 space-y-2 text-sm text-white/80">
+              <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-white/50">
                 <MessageCircleMore className="h-3.5 w-3.5" />
-                {votes.keep + votes.swap} reactions
+                {liveReactionCount} live audience signals
               </p>
-              <p className="inline-flex items-center gap-2 rounded-sm bg-white/[0.03] px-3 py-2 text-xs uppercase tracking-[0.14em] text-white/50">
-                <Music className="h-3.5 w-3.5" />
-                Rhythm
-              </p>
-              <p className="inline-flex items-center gap-2 rounded-sm bg-white/[0.03] px-3 py-2 text-xs uppercase tracking-[0.14em] text-white/50">
-                <Users className="h-3.5 w-3.5" />
-                Crowd pulse
-              </p>
+            <div className="space-y-2">
+              {activeComments.map((comment) => (
+                <p key={comment.id} className="rounded-md border border-white/10 bg-black/25 px-2 py-1.5">
+                  <span className="text-[10px] uppercase tracking-[0.14em] text-white/55">
+                    {comment.author} · {comment.role}
+                  </span>
+                  <br />
+                  <span className="text-sm text-white/90">{comment.message}</span>
+                </p>
+              ))}
             </div>
           </div>
         </article>
