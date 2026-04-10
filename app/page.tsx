@@ -93,50 +93,49 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/30 to-black/60" />
         <div className="relative grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
           <div className="space-y-6">
-            <p className="section-title">LIVE tonight</p>
+            <p className="section-title">CREATOR SHOWCASE LIVE</p>
             <h1 className="max-w-4xl text-5xl leading-[0.94] md:text-6xl">
-              A stage opens.
+              Your best work belongs on a spotlight stage.
               <br />
-              Most wait. One person owns the room.
+              Most are seen later. You get seen here first.
             </h1>
             <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
-              This is a scheduled broadcast, not a feed. The host calls the order, judges score instantly, and
-              audience momentum decides who stays on air.
+              A single project journey with measurable proof. From first build to measurable outcome, each creator deck now earns attention through proof, not adjectives.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="w-full sm:w-auto" variant="cta">
                 <Link href="/shows">
-                  Watch live now
+                  Watch featured launches
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Link href="/shows" className="inline-flex items-center text-sm uppercase tracking-[0.16em] text-foreground/85 transition hover:text-white">
-                Enter stage queue
+                Submit your next project
               </Link>
             </div>
 
             <div className="grid gap-2 sm:grid-cols-3">
               <p className="stat-ticker">
-                <span>Show start</span>
-                <span>Tonight, 8:00 PM PT</span>
+                <span>Feature window</span>
+                <span>Updated by creator activity</span>
               </p>
               <p className="stat-ticker">
-                <span>Queue</span>
-                <span>3 live / 12 queued</span>
+                <span>Ready creators</span>
+                <span>12 builds live / 3 queued</span>
               </p>
               <p className="stat-ticker">
-                <span>Turn length</span>
-                <span>60s max</span>
+                <span>Proof window</span>
+                <span>90s review clips</span>
               </p>
             </div>
           </div>
 
           <div className="relative overflow-hidden rounded-[1.5rem] bg-black/40 p-5">
-            <p className="text-xs uppercase tracking-[0.18em] text-accent">Main Stage Feed</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-accent">Project Spotlight Deck</p>
             <div className="mt-4 grid gap-4">
               <div className="flex items-center justify-between rounded-[1.1rem] border border-primary/30 bg-gradient-to-r from-primary/20 via-primary/5 to-transparent p-4">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.15em] text-primary">On Stage</p>
+                  <p className="text-xs uppercase tracking-[0.15em] text-primary">Featured Build</p>
                   <p className="mt-1 text-3xl font-semibold text-foreground">{featuredShow.performer}</p>
                   <p className="text-sm text-muted-foreground">{featuredShow.show}</p>
                 </div>
@@ -144,11 +143,11 @@ export default function HomePage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl bg-black/30 p-3">
-                  <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Host call</p>
-                  <p className="mt-2 text-base font-semibold text-foreground">Lane {featuredShow.lane} • pressure rising</p>
+                  <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Creator context</p>
+                  <p className="mt-2 text-base font-semibold text-foreground">Lane {featuredShow.lane} • live momentum</p>
                 </div>
                 <div className="rounded-xl bg-black/30 p-3">
-                  <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Audience</p>
+                  <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Audience reaction</p>
                   <p className="mt-2 text-base font-semibold text-foreground">{featuredShow.audience} active</p>
                 </div>
               </div>
@@ -176,11 +175,11 @@ export default function HomePage() {
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="section-title">Top live now</p>
-            <h2 className="section-heading mt-1">Primary heat from the arena</h2>
+            <p className="section-title">Creator spotlight</p>
+            <h2 className="section-heading mt-1">Fresh projects gaining strongest response</h2>
           </div>
           <Link href="/shows" className="text-xs uppercase tracking-[0.16em] text-foreground/80 transition hover:text-white">
-            Open floor map
+            View full creator board
           </Link>
         </div>
 
@@ -200,15 +199,15 @@ export default function HomePage() {
             <p className="mt-6 text-sm text-muted-foreground">{featuredShow.hostCue}</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
               <div className="rounded-xl bg-black/35 p-3">
-                <p className="text-xs uppercase tracking-[0.13em] text-muted-foreground">Judges</p>
+                <p className="text-xs uppercase tracking-[0.13em] text-muted-foreground">Proof score</p>
                 <p className="mt-1 text-lg font-semibold text-foreground">{featuredShow.judges} judges</p>
               </div>
               <div className="rounded-xl bg-black/35 p-3">
-                <p className="text-xs uppercase tracking-[0.13em] text-muted-foreground">Audience</p>
+                <p className="text-xs uppercase tracking-[0.13em] text-muted-foreground">Audience reaction</p>
                 <p className="mt-1 text-lg font-semibold text-foreground">{featuredShow.audience}</p>
               </div>
               <div className="rounded-xl bg-black/35 p-3">
-                <p className="text-xs uppercase tracking-[0.13em] text-muted-foreground">Turn</p>
+                <p className="text-xs uppercase tracking-[0.13em] text-muted-foreground">Build clock</p>
                 <p className="mt-1 text-lg font-semibold text-foreground">{featuredShow.turn}</p>
               </div>
             </div>
@@ -221,7 +220,7 @@ export default function HomePage() {
                 className="grid gap-1 rounded-xl bg-black/32 px-4 py-3 transition"
               >
                 <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                  Lane {contestant.lane}
+                  Category lane {contestant.lane}
                 </p>
                 <p className="mt-1 text-xl font-semibold text-foreground">{contestant.performer}</p>
                 <p className="text-sm text-muted-foreground">{contestant.show} • {contestant.category}</p>
@@ -234,21 +233,21 @@ export default function HomePage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="section-title">Trending clips</p>
-            <h2 className="section-heading mt-1">Clips that moved the room</h2>
+            <p className="section-title">Proof highlights</p>
+            <h2 className="section-heading mt-1">Work that earned real attention</h2>
           </div>
         </div>
         <ProofClipRail clips={performanceClips} maxClips={3} />
         <div className="flex justify-end">
           <Link href="/clips" className="text-xs uppercase tracking-[0.16em] text-muted-foreground transition hover:text-white">
-            Open clip wall
+            Open proof gallery
           </Link>
         </div>
       </section>
 
       <section className="space-y-4">
-        <p className="section-title">Competition lanes</p>
-        <h2 className="section-heading mt-1">Tonight&apos;s strongest categories</h2>
+        <p className="section-title">Creator lanes</p>
+        <h2 className="section-heading mt-1">Top project disciplines</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {categories.slice(0, 4).map((category, index) => (
             <article
@@ -266,8 +265,8 @@ export default function HomePage() {
 
       <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="surface-panel-strong p-6">
-          <p className="section-title">Tonight&apos;s lineup</p>
-          <h2 className="section-heading mt-1 text-4xl md:text-5xl">What is about to hit</h2>
+          <p className="section-title">Today&apos;s showcase queue</p>
+          <h2 className="section-heading mt-1 text-4xl md:text-5xl">What you should watch next</h2>
           <div className="mt-5 space-y-2">
             {schedule.map((entry) => (
               <div
@@ -286,7 +285,7 @@ export default function HomePage() {
         </div>
 
         <div className="surface-panel border-white/18 p-6">
-          <p className="section-title">Leaderboard preview</p>
+          <p className="section-title">Creator status board</p>
           <h2 className="section-heading mt-1 text-4xl md:text-4xl">Momentum board</h2>
           <div className="mt-5 space-y-3">
             {leaderboardStandings.map((entry) => (
@@ -314,25 +313,25 @@ export default function HomePage() {
       <section className="rounded-[1.5rem] border border-white/15 bg-[linear-gradient(150deg,_hsla(14,100%,64%,0.24)_0%,_hsla(226,40%,10%,0.84)_52%,_hsla(224,22%,8%,0.92)_100%)] p-8 md:p-10">
         <div className="grid items-start gap-6 md:grid-cols-[1fr_auto]">
           <div>
-            <p className="section-title">Final call</p>
+            <p className="section-title">Open slots</p>
             <h2 className="section-heading mt-1 text-3xl md:text-5xl">
-              This is live.
+              This is your showcase moment.
               <br />
-              Seats are scarce.
+              Don&apos;t let it pass.
             </h2>
             <p className="mt-3 max-w-2xl text-sm text-muted-foreground md:text-base">
-              Watch and vote, or step into the lane. One minute to prove it.
+              Submit impact, collect votes, and secure the next spotlight slot.
             </p>
           </div>
           <div className="grid min-w-fit gap-3 sm:grid-cols-2 md:min-w-[22rem]">
             <Button asChild size="lg" variant="cta">
               <Link href="/shows">
-                Enter queue
+                Enter your creator profile
                 <Timer className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <Link href="/shows/main-event" className="inline-flex items-center justify-center rounded-lg border border-white/18 px-4 py-2 text-xs uppercase tracking-[0.16em] text-muted-foreground transition hover:border-white/35 hover:text-white">
-              Watch main feed
+              Watch main deck
             </Link>
           </div>
         </div>
