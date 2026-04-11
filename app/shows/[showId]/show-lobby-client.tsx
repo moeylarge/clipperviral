@@ -2,18 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Flame,
   MessageSquare,
   HandMetal,
-  Heart,
-  MessageCircleMore,
   SendHorizonal,
   Vote,
   ExternalLink,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { competitionBandLabel, tierFromScore } from "@/lib/competitive-intel";
 
 type Contestant = {
   id: string;
@@ -97,13 +93,6 @@ type TransitionTone = {
 const BASE_VOTES = { keep: 812, swap: 287 };
 const ROUND_SECONDS = 30;
 const VIEWER_ID = "viewer-spotlight";
-
-const seedShowHost = {
-  name: "Nova Ward",
-  stage: "Spotlight Arena",
-  runningAt: "Tonight, 8:00 PM PT",
-  audience: "10,482",
-};
 
 const seedContestants: Contestant[] = [
   {
@@ -191,25 +180,6 @@ const baseQueue: QueueEntry[] = [
   },
 ];
 
-const judges = [
-  { name: "Rory Kline", state: "ON" },
-  { name: "Mina Val", state: "READY" },
-  { name: "Kai Voss", state: "CUTTING" },
-] as const;
-
-function judgeSignalColor(state: (typeof judges)[number]["state"]) {
-  switch (state) {
-    case "ON":
-      return "text-emerald-300";
-    case "READY":
-      return "text-amber-200";
-    case "CUTTING":
-      return "text-rose-300";
-    default:
-      return "text-white/80";
-  }
-}
-
 function formatSeconds(seconds: number) {
   const display = Math.max(seconds, 0);
   const mins = Math.floor(display / 60);
@@ -219,13 +189,6 @@ function formatSeconds(seconds: number) {
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
-}
-
-function formatMomentum(value: number) {
-  if (value === 0) return "00";
-  const abs = Math.abs(value);
-  const sign = value > 0 ? "+" : "-";
-  return `${sign}${String(abs).padStart(2, "0")}`;
 }
 
 export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
@@ -240,19 +203,12 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
   const [result, setResult] = useState<RoundResult | null>(null);
   const [isVoteArmed, setIsVoteArmed] = useState(false);
   const [viewerReady, setViewerReady] = useState(false);
-  const [resultPinned, setResultPinned] = useState(false);
   const [isHostDemoOpen, setIsHostDemoOpen] = useState(false);
   const [commentDraft, setCommentDraft] = useState("");
   const [commentThreads, setCommentThreads] = useState<Record<string, CommentEntry[]>>(seedComments);
-  const [commentAck, setCommentAck] = useState("");
-  const [engagementPulse, setEngagementPulse] = useState(0);
-  const [dmPulse, setDmPulse] = useState("");
   const [transitionPulse, setTransitionPulse] = useState<TransitionTone | null>(null);
-  const [showResultPulse, setShowResultPulse] = useState(false);
   const [transitionCountdown, setTransitionCountdown] = useState(0);
   const transitionTimeoutRef = useRef<number | null>(null);
-  const feedbackTimeoutRef = useRef<number | null>(null);
-  const resultPulseTimeoutRef = useRef<number | null>(null);
   const commentInputRef = useRef<HTMLInputElement | null>(null);
   const roundTransitionRef = useRef({
     roundState: "waiting" as RoundState,
@@ -260,13 +216,11 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
     viewerVote: null as VoteChoice | null,
     hasResult: false,
   });
-  const resultCardRef = useRef<HTMLDivElement>(null);
 
   const activeContestant = useMemo(
     () => contestants.find((contestant) => contestant.id === activeContestantId) ?? contestants[0],
     [activeContestantId, contestants]
   );
-  const activeBand = useMemo(() => competitionBandLabel(tierFromScore(activeContestant.score)), [activeContestant.score]);
   const activeComments = useMemo(() => commentThreads[activeContestant.id] ?? [], [commentThreads, activeContestant.id]);
 
   const queuePosition = useMemo(
@@ -274,7 +228,6 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
     [queue]
   );
   const queuePositionLabel = queuePosition >= 0 ? `${queuePosition + 1}/${queue.length}` : null;
-  const queuePositionCopy = queuePositionLabel ? `Position ${queuePositionLabel} in queue.` : "Queue is open.";
 
   const viewerState: ViewerPhase = useMemo(() => {
     if (queuePosition === -1) {
@@ -326,28 +279,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
   const keepPercent = totalVotes ? clamp(Math.round((votes.keep / totalVotes) * 100), 0, 100) : 0;
   const swapPercent = totalVotes ? 100 - keepPercent : 0;
 
-  const laneTelemetry = useMemo(() => {
-    const livePulse = clamp(Math.round((keepPercent / 100) * 96), 45, 96);
-    return [
-      { lane: activeContestant.lane, label: "Live lead", pulse: `${livePulse}%` },
-      ...(queue.slice(0, 2).map((entry, index) => ({
-        lane: entry.lane,
-        label: index === 0 ? "Next up" : "Queued",
-        pulse: `${72 - index * 16}%`,
-      })) as { lane: string; label: string; pulse: string }[]),
-    ];
-  }, [activeContestant.lane, queue, keepPercent]);
-
-  const leaderboard = useMemo(
-    () =>
-      [...contestants]
-        .sort((a, b) => b.score - a.score)
-        .map((entry, index) => ({ ...entry, rank: index + 1 })),
-    [contestants]
-  );
-
   const canVote = roundState === "live" && viewerVote === null && isVoteArmed;
-  const liveReactionCount = engagementPulse + votes.keep + votes.swap;
   const canStartRound = roundState === "waiting";
   const canAdvanceContestant = queue.length > 0 && roundState !== "live";
 
@@ -356,31 +288,31 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
   const stateTone = isLiveRound
     ? isEndingSoon
       ? "FINAL SECONDS"
-      : "LIVE STAGE"
+      : "LIVE"
     : roundState === "ended"
       ? "RESULT"
-      : audiencePhase === "ready"
-        ? "NEXT UP"
-        : audiencePhase === "queueWait"
-          ? "WAITING IN QUEUE"
-          : "WAITING";
+      : viewerState === "notInQueue"
+        ? "JOIN"
+        : viewerState === "inQueue"
+          ? "QUEUED"
+          : "READY";
   const stateSubline = isLiveRound
     ? isVoteArmed
-      ? "Choose one vote to lock your pressure signal."
+      ? "Choose a lane."
       : viewerVote
-          ? "Vote is locked for this round."
-          : "Voting lane is live."
+        ? "Decision locked."
+        : "Watch the creator pitch."
     : roundState === "ended"
       ? result
-          ? "Result posted."
-          : "Round sealed."
-      : audiencePhase === "ready" && viewerReady
-          ? "You're confirmed for the next call."
-          : audiencePhase === "ready"
-            ? "Stand by for next pitch."
-          : audiencePhase === "queueWait"
-              ? "You are in queue."
-              : "Join queue to get pitch access.";
+        ? `Result locked · ${result.votes.margin} point spread`
+        : "Round sealed."
+      : viewerState === "invited" || viewerState === "nextUp"
+        ? "You are up next."
+        : viewerState === "inQueue"
+          ? queuePositionLabel
+            ? `Queue position ${queuePositionLabel}`
+            : "You are queued."
+          : "Join queue to get into the room.";
 
   const roundPulseClass = isLiveRound
     ? "animate-pulse ring-1 ring-accent/40 shadow-[0_0_45px_rgba(0,214,255,0.45)]"
@@ -401,34 +333,26 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
         : "text-white/60";
   const stageBandTone =
     transitionPulse?.tone === "live"
-      ? "from-accent/45 via-cyan-300/22 to-transparent"
+      ? "from-accent/30 via-cyan-300/20 to-transparent"
       : transitionPulse?.tone === "ended" || transitionPulse?.tone === "result"
-        ? "from-rose-500/35 via-amber-400/16 to-transparent"
+        ? "from-rose-400/28 via-amber-300/12 to-transparent"
         : transitionPulse?.tone === "locked"
-          ? "from-rose-500/24 via-amber-500/10 to-transparent"
+          ? "from-rose-400/20 via-amber-400/8 to-transparent"
           : isLiveRound
-            ? "from-primary/28 via-accent/20 to-transparent"
-            : "from-white/12 via-white/4 to-transparent";
+            ? "from-white/16 via-white/6 to-transparent"
+            : "from-white/8 via-white/3 to-transparent";
   const timerClass =
     isEndingSoon && isLiveRound
       ? "scale-105 text-rose-300 drop-shadow-[0_0_14px_rgba(251,113,133,0.65)]"
       : timerTone;
-  const resultRevealClass = showResultPulse
-    ? "ring-2 ring-emerald-300/65 shadow-[0_0_34px_rgba(122,255,205,0.28)] bg-black/65"
-    : "";
-
-  const resultStrip = result
-    ? `Result • ${result.winner.wasActive ? "KEPT" : "PASSED"} by ${result.votes.winnerShare}%`
-    : null;
-  const resultHeadlineClass = result?.winner.wasActive ? "text-accent" : "text-rose-300";
 
   const audienceAction = useMemo<PrimaryAudienceAction>(() => {
     if (audiencePhase === "resultView") {
       return {
-        label: "Result visible",
+        label: "See result",
         variant: "outline",
         disabled: true,
-        helper: "Result below the stage.",
+        helper: "Next round starts after you advance from demo controls.",
         onClick: undefined,
       };
     }
@@ -438,17 +362,17 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
         label: "Vote locked",
         variant: "outline",
         disabled: true,
-        helper: "Vote locked for this round.",
+        helper: "Waiting for next round.",
         onClick: undefined,
       };
     }
 
     if (audiencePhase === "voteOpen") {
       return {
-        label: "Voting open",
+        label: "Vote open",
         variant: "cta",
         disabled: true,
-        helper: "Choose your call below.",
+        helper: "Open the two options.",
         onClick: undefined,
       };
     }
@@ -458,31 +382,31 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
         label: "Vote now",
         variant: "cta",
         disabled: false,
-        helper: "Open the live vote lane.",
+        helper: "Open the decision options.",
         onClick: () => setIsVoteArmed(true),
       };
     }
 
     if (audiencePhase === "queueWait") {
       return {
-        label: "In queue",
+        label: "Queued",
         variant: "outline",
         disabled: true,
-        helper: queuePositionLabel ? `Queue ${queuePositionLabel}` : "Stay ready as the arena advances.",
+        helper: queuePositionLabel ? `Queue position ${queuePositionLabel}` : "Waiting for next live slot.",
         onClick: undefined,
       };
     }
 
     if (audiencePhase === "ready") {
       return {
-        label: viewerReady ? "Ready set" : "Get ready",
+        label: viewerReady ? "Ready" : "Get ready",
         variant: viewerReady ? "outline" : "cta",
         disabled: viewerReady,
         helper: viewerReady
-          ? "Host call coming."
+          ? "Host will open your turn."
           : queuePositionLabel
-            ? `Position ${queuePositionLabel}`
-            : "Confirm once when ready.",
+            ? `Queue position ${queuePositionLabel}`
+            : "Confirm to prep for your turn.",
         onClick: viewerReady ? undefined : () => setViewerReady(true),
       };
     }
@@ -491,10 +415,10 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
       label: "Join queue",
       variant: "cta",
       disabled: false,
-      helper: "Claim a lane and wait.",
+      helper: "Enter queue and watch the next creator.",
       onClick: joinQueue,
     };
-  }, [audiencePhase, joinQueue, queuePositionLabel, queuePosition, viewerReady]);
+  }, [audiencePhase, joinQueue, queuePositionLabel, viewerReady]);
 
   const triggerTransitionPulse = useCallback((next: TransitionTone, ms = 1300) => {
     if (transitionTimeoutRef.current) {
@@ -516,13 +440,8 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
       window.clearTimeout(transitionTimeoutRef.current);
       transitionTimeoutRef.current = null;
     }
-    if (resultPulseTimeoutRef.current) {
-      window.clearTimeout(resultPulseTimeoutRef.current);
-      resultPulseTimeoutRef.current = null;
-    }
     setTransitionPulse(null);
     setTransitionCountdown(0);
-    setShowResultPulse(false);
   }, []);
 
   const broadcastComment = useCallback(() => {
@@ -541,42 +460,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
       [activeContestant.id]: [...(current[activeContestant.id] ?? []), newComment],
     }));
     setCommentDraft("");
-    setCommentAck("Comment posted to this pitch.");
-
-    if (feedbackTimeoutRef.current) {
-      window.clearTimeout(feedbackTimeoutRef.current);
-      feedbackTimeoutRef.current = null;
-    }
-    feedbackTimeoutRef.current = window.setTimeout(() => {
-      setCommentAck("");
-      feedbackTimeoutRef.current = null;
-    }, 2000);
   }, [commentDraft, activeContestant.id]);
-
-  const sendReaction = useCallback(() => {
-    setEngagementPulse((current) => current + 1);
-    setCommentAck("You sent a live reaction.");
-    if (feedbackTimeoutRef.current) {
-      window.clearTimeout(feedbackTimeoutRef.current);
-      feedbackTimeoutRef.current = null;
-    }
-    feedbackTimeoutRef.current = window.setTimeout(() => {
-      setCommentAck("");
-      feedbackTimeoutRef.current = null;
-    }, 2000);
-  }, []);
-
-  const sendDirectMessage = useCallback(() => {
-    setDmPulse(`Message sent to ${activeContestant.name} (demo message).`);
-    if (feedbackTimeoutRef.current) {
-      window.clearTimeout(feedbackTimeoutRef.current);
-      feedbackTimeoutRef.current = null;
-    }
-    feedbackTimeoutRef.current = window.setTimeout(() => {
-      setDmPulse("");
-      feedbackTimeoutRef.current = null;
-    }, 2200);
-  }, [activeContestant.name]);
 
   const focusCommentComposer = useCallback(() => {
     commentInputRef.current?.focus();
@@ -599,21 +483,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
         window.clearTimeout(transitionTimeoutRef.current);
         transitionTimeoutRef.current = null;
       }
-      if (resultPulseTimeoutRef.current) {
-        window.clearTimeout(resultPulseTimeoutRef.current);
-        resultPulseTimeoutRef.current = null;
-      }
-      if (feedbackTimeoutRef.current) {
-        window.clearTimeout(feedbackTimeoutRef.current);
-        feedbackTimeoutRef.current = null;
-      }
     };
-  }, []);
-
-  const setContestantStatus = useCallback((id: string, status: Contestant["status"]) => {
-    setContestants((current) =>
-      current.map((contestant) => (contestant.id === id ? { ...contestant, status } : contestant))
-    );
   }, []);
 
   const resetContestantStatuses = useCallback(
@@ -695,23 +565,14 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
       setSecondsLeft(0);
       setIsVoteArmed(false);
       setViewerReady(false);
-      if (resultPulseTimeoutRef.current) {
-        window.clearTimeout(resultPulseTimeoutRef.current);
-      }
-      setResultPinned(true);
-      setShowResultPulse(true);
       triggerTransitionPulse(
         {
           label: "Result posted",
-          detail: "Scoreboard update active.",
+          detail: "Result posted.",
           tone: "result",
         },
         1200
       );
-      resultPulseTimeoutRef.current = window.setTimeout(() => {
-        setShowResultPulse(false);
-        resultPulseTimeoutRef.current = null;
-      }, 1200);
       addScore(autoWinner, moveForward ? 8 : 14);
     },
     [activeContestant.id, addScore, contestants, keepPercent, queue, roundState, swapPercent, totalVotes, triggerTransitionPulse, votes.keep, votes.swap]
@@ -722,7 +583,6 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
 
     clearPulseState();
     setResult(null);
-    setResultPinned(false);
     setViewerVote(null);
     setIsVoteArmed(false);
     setViewerReady(false);
@@ -756,7 +616,6 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
     setActiveContestantId(next.id);
     setQueue((current) => current.slice(1));
     setResult(null);
-    setResultPinned(false);
     setViewerVote(null);
     setIsVoteArmed(false);
     setViewerReady(false);
@@ -782,13 +641,9 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
     setViewerVote(null);
     setIsVoteArmed(false);
     setViewerReady(false);
-    setResultPinned(false);
     setResult(null);
     setCommentThreads(seedComments);
     setCommentDraft("");
-    setCommentAck("");
-    setDmPulse("");
-    setEngagementPulse(0);
   }, [clearPulseState]);
 
   const vote = useCallback(
@@ -799,14 +654,13 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
       setVotes((current) =>
         choice === "keep" ? { ...current, keep: current.keep + 1 } : { ...current, swap: current.swap + 1 }
       );
-      setContestantStatus(activeContestant.id, "live");
       triggerTransitionPulse({
         label: "Vote locked",
         detail: "Your pressure call is locked.",
         tone: "locked",
       });
     },
-    [canVote, activeContestant.id, setContestantStatus, triggerTransitionPulse]
+    [canVote, triggerTransitionPulse]
   );
 
   useEffect(() => {
@@ -838,7 +692,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
     if (!prev.hasResult && !!result) {
       triggerTransitionPulse({
         label: "Result posted",
-        detail: "Read the scoreboard shift.",
+        detail: "Decision is published.",
         tone: "result",
       });
     }
@@ -885,8 +739,6 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
 
   useEffect(() => {
     setCommentDraft("");
-    setCommentAck("");
-    setDmPulse("");
   }, [activeContestant.id]);
 
   return (
@@ -899,29 +751,13 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
             <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent" />
 
-            <div className="pointer-events-none absolute -left-[30%] top-16 h-[34rem] w-[60%] rotate-[20deg] rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.08),transparent_65%)] blur-3xl" />
             <div className="pointer-events-none absolute inset-x-0 top-1/2 h-1/2 bg-[repeating-linear-gradient(90deg,rgba(255,255,255,0.04)_0,rgba(255,255,255,0.04)_1px,rgba(255,255,255,0)_13px,rgba(255,255,255,0)_17px)]" />
-            <div className="pointer-events-none absolute right-[12%] top-[52%] h-40 w-40 rounded-full bg-[radial-gradient(circle_at_40%_40%,rgba(255,132,70,0.22),transparent_70%)] blur-2xl animate-ping" />
-            <div className="pointer-events-none absolute left-[8%] top-[58%] h-52 w-52 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(0,205,255,0.15),transparent_72%)] blur-3xl animate-pulse" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-24 mx-auto h-1 w-11/12 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-
             <div className={`pointer-events-none absolute inset-x-0 top-0 z-10 h-full bg-gradient-to-b ${stageBandTone} opacity-90`} />
-            <div className={`pointer-events-none absolute inset-x-4 top-24 z-10 grid gap-2 opacity-90 sm:grid-cols-3 ${isLiveRound || roundState === "ended" ? "sm:top-24" : "top-20"}`}>
-              {laneTelemetry.map((lane) => (
-                <div key={lane.lane} className="rounded-full bg-black/25 p-2.5 backdrop-blur">
-                  <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-white/80">
-                    <span>{lane.lane} • {lane.label}</span>
-                    <span className={lane.lane === activeContestant.lane ? "text-accent" : ""}>{lane.pulse}</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-white/12">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-primary/90 to-accent/90"
-                      style={{ width: lane.pulse }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            {queue[0] ? (
+              <p className="pointer-events-none absolute left-5 top-24 z-10 rounded-full border border-white/25 bg-black/35 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-white/80">
+                Next up: {queue[0]?.name}
+              </p>
+            ) : null}
 
             <div className={`pointer-events-none absolute inset-x-4 bottom-40 z-10 h-10 w-11/12 rounded-full bg-gradient-to-r from-primary/8 via-accent/14 to-primary/8 blur-3xl ${isLiveRound ? "animate-pulse" : ""}`} />
 
@@ -939,7 +775,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.16em] text-white/80">
                   <p className="inline-flex items-center gap-2 text-primary">
                     <span className="inline-flex h-2 w-2 rounded-full bg-primary" />
-                    LIVE SHOW
+                    LIVE ROOM
                   </p>
                   <p>{showName}</p>
                 </div>
@@ -959,7 +795,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
                             {activeContestant.name}
                           </p>
                           <p className="mt-1 text-xs uppercase tracking-[0.15em] text-white/85">
-                            {activeContestant.genre} • {activeBand} • lane {activeContestant.lane}
+                            {activeContestant.genre} · Lane {activeContestant.lane}
                           </p>
                         </div>
                       </div>
@@ -973,10 +809,10 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
                     <p className="text-[11px] uppercase tracking-[0.14em] text-white/60">
                       {stateSubline}
                     </p>
-                    <div className="rounded-lg border border-white/15 bg-black/45 px-3 py-2.5 text-sm">
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-accent">Now pitching</p>
-                      <p className="mt-0.5 text-white/95">{activeContestant.pitchTitle}</p>
-                      <p className="mt-1 text-xs text-white/70">{activeContestant.pitchSummary}</p>
+                    <div className="rounded-lg border border-white/15 bg-black/45 px-3 py-2.5">
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-accent">Pitch</p>
+                      <p className="mt-1 text-sm font-semibold text-white">{activeContestant.pitchTitle}</p>
+                      <p className="mt-1 text-xs text-white/75">{activeContestant.pitchSummary}</p>
                     </div>
                     <a
                       href={activeContestant.pitchUrl}
@@ -989,72 +825,22 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
                     </a>
                     <div className="mt-1.5 flex flex-wrap gap-2">
                       <Button size="sm" variant="outline" onClick={focusCommentComposer}>
-                        Comment now
-                        <MessageSquare className="ml-2 h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={sendDirectMessage}>
-                        DM creator
+                        Comment
                         <MessageSquare className="ml-2 h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
-
-                <div className="grid gap-2 border-t border-white/10 pt-2 text-xs uppercase tracking-[0.14em]">
-                  <div className="flex flex-wrap items-end justify-between gap-4">
-                    <p className="inline-flex items-center gap-2 text-white/45">
-                      <Flame className="h-3.5 w-3.5 text-primary" />
-                      Host: {seedShowHost.name}
-                    </p>
-                    <p className="inline-flex items-center gap-2 text-white/45">
-                      Stage: {seedShowHost.stage} • {seedShowHost.runningAt}
-                    </p>
-                  </div>
-
-                  <div className="w-full max-w-xl space-y-1.5">
-                    <div className="flex items-center justify-between text-white/70">
-                      <p>{activeContestant.name} score</p>
-                      <p className="text-accent">
-                        {activeContestant.score} • Momentum {formatMomentum(activeContestant.momentum)}
-                      </p>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-white/16">
-                      <div
-                        className="h-full w-[71%] rounded-full bg-gradient-to-r from-primary/95 via-accent/95 to-white/85"
-                        style={{ width: `${clamp(keepPercent, 12, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="relative rounded-xl border border-white/20 bg-black/35 px-4 py-3 text-sm">
-                  <p className="text-xs uppercase tracking-[0.16em] text-accent">Judges</p>
-                  <div className="mt-2 grid gap-1.5 text-xs uppercase tracking-[0.14em] text-white/65">
-                    {judges.map((judge) => (
-                      <p key={judge.name} className="flex items-center justify-between gap-2 border-l border-white/15 pl-2">
-                        <span>{judge.name}</span>
-                        <span className={judgeSignalColor(judge.state)}>{judge.state}</span>
-                      </p>
-                    ))}
-                  </div>
-                </div>
-
                 {result ? (
-                  <div
-                    ref={resultPinned ? resultCardRef : undefined}
-                    className={`relative overflow-hidden rounded-xl border border-white/20 bg-black/35 px-4 py-3 text-sm ${resultPinned ? "ring-1 ring-accent/45" : ""} ${resultRevealClass}`}
-                  >
-                    <div className="pointer-events-none absolute -left-10 top-1/2 h-20 w-20 -translate-y-1/2 rounded-full bg-emerald-300/10 blur-3xl" />
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">{resultStrip}</p>
-                    <p className={`mt-1 text-xs uppercase tracking-[0.16em] ${resultHeadlineClass}`}>{result.outcome}</p>
-                    <p className="mt-2 text-3xl font-black uppercase leading-tight tracking-[0.01em] text-white">
+                  <div className="relative overflow-hidden rounded-xl border border-emerald-400/35 bg-black/45 px-4 py-3 text-sm">
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-200/85">
+                      {result.outcome}
+                    </p>
+                    <p className="mt-1 text-2xl font-black uppercase leading-tight tracking-[0.01em] text-white">
                       {result.winner.name}
                     </p>
-                    <p className="mt-1 text-sm text-white/85">
-                      {result.headline} · {result.winner.lane}
-                    </p>
+                    <p className="mt-1 text-sm text-white/85">{result.headline}</p>
                     <p className="mt-2 text-xs text-white/70">
-                      {result.detail} Winner pressure {result.votes.winner} • Opponent {result.votes.loser} • Margin{" "}
-                      {result.votes.margin}
+                      {result.votes.winner} / {result.votes.loser} · {result.votes.winnerShare}% keep
                     </p>
                   </div>
                 ) : null}
@@ -1070,8 +856,8 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
                 } ${roundState === "ended" ? "from-rose-500/8 to-black/20 bg-gradient-to-b" : ""}`}
               >
                 <div className="flex items-center justify-between gap-2 text-xs uppercase tracking-[0.16em] text-white/70">
-                  <p>Audience command</p>
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/45">{roundState === "live" ? "Live" : "Standby"}</p>
+                  <p>Audience action</p>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/45">{roundState === "live" ? "Live" : "Ready"}</p>
                 </div>
                 <Button
                   size="sm"
@@ -1085,109 +871,59 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
                 <p className="mt-1.5 min-h-[1.2rem] text-[11px] uppercase tracking-[0.14em] text-white/50">{audienceAction.helper}</p>
 
                 {roundState === "live" ? (
-                  <div className="mt-3 space-y-2">
-                    <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.14em] text-white/70">
-                      <p>Crowd split</p>
-                      <p>{totalVotes} signals</p>
-                    </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-white/12">
-                      <div className="relative h-full">
-                        <div
-                          className="absolute left-0 h-full rounded-full bg-gradient-to-r from-primary/90 to-accent/90"
-                          style={{ width: `${keepPercent}%` }}
-                        />
-                        <div
-                          className="absolute right-0 h-full rounded-full bg-white/70"
-                          style={{ width: `${swapPercent}%` }}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-[10px] uppercase tracking-[0.14em] text-white/60">
-                      <p>Keep {keepPercent}%</p>
-                      <p className="text-right">Swap {swapPercent}%</p>
-                    </div>
-                  </div>
+                  <p className="mt-2 text-xs text-white/70">
+                    {totalVotes} live signals · Keep {keepPercent}% / Pass {swapPercent}%
+                  </p>
                 ) : null}
 
                 {votePanelVisible ? (
-                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  <div className="mt-3 grid gap-2">
                     <Button size="sm" variant={viewerVote === "keep" ? "cta" : "outline"} onClick={() => vote("keep")} disabled={!canVote}>
-                      Keep lane
+                      Keep it
                       <Vote className="ml-2 h-4 w-4" />
                     </Button>
                     <Button size="sm" variant={viewerVote === "swap" ? "cta" : "outline"} onClick={() => vote("swap")} disabled={!canVote}>
-                      Swap lane
+                      Pass
                       <HandMetal className="ml-2 h-4 w-4" />
                     </Button>
+                    {viewerVote ? <p className="text-xs text-white/65">Your decision: {viewerVote === "keep" ? "Keep" : "Pass"}</p> : null}
                   </div>
                 ) : null}
-                {viewerVote ? (
-                  <p className="mt-1.5 text-xs text-white/70">
-                    Your vote: {viewerVote === "keep" ? "Keep" : "Swap"}
-                  </p>
-                ) : null}
+
                 <div className="mt-2.5 space-y-2 border-t border-white/10 pt-2">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-white/50">Audience engagement</p>
-                  <div className="grid gap-2">
-                    <Button size="sm" variant="outline" onClick={sendReaction} className="justify-start">
-                      React to pitch
-                      <Heart className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-white/45">
-                    {commentAck || dmPulse || (engagementPulse ? `${engagementPulse} live reactions sent` : "No engagement sent yet")}
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-white/50">Queue now</p>
+                  <p className="text-xs text-white/75">
+                    Next: {queue[0]?.name ? `${queue[0].name}` : "none"} · You: {queuePositionLabel ?? "not in queue"}
                   </p>
-                  <div>
-                    <label className="text-[10px] uppercase tracking-[0.14em] text-white/55" htmlFor="commentDraft">
-                      Comment on this pitch
-                    </label>
-                    <div className="mt-1.5 flex gap-1">
-                      <input
-                        ref={commentInputRef}
-                        id="commentDraft"
-                        value={commentDraft}
-                        onChange={(event) => setCommentDraft(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault();
-                            broadcastComment();
-                          }
-                        }}
-                        placeholder="What do you think?"
-                        className="h-9 flex-1 rounded-md border border-white/20 bg-black/35 px-2 text-xs text-white outline-none focus:border-accent"
-                      />
-                      <Button size="sm" variant="default" onClick={broadcastComment} disabled={!commentDraft.trim()}>
-                        <SendHorizonal className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
                 </div>
 
-                <div className="mt-2.5 border-t border-white/10 pt-2 text-[11px] uppercase tracking-[0.14em] text-white/50">
-                  <p className="flex items-center justify-between">
-                    <span>Queue preview</span>
-                    <span>{queue.length} entries</span>
-                  </p>
-                  <div className="mt-1.5 space-y-1 text-white/70">
-                    {queue.length > 0 ? (
-                      queue.slice(0, 2).map((entry) => (
-                      <p key={entry.id} className="flex items-center justify-between gap-2 border-b border-white/10 pb-1 last:border-b-0 last:pb-0">
-                        <span className="inline-flex min-w-0 items-center gap-2 text-white/75">
-                          <span className="font-semibold uppercase tracking-[0.12em]">{entry.lane}</span>
-                          <span className="line-clamp-1">{entry.name}</span>
-                        </span>
-                        {entry.id === VIEWER_ID ? (
-                          <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] text-primary">you</span>
-                        ) : null}
-                      </p>
-                    ))
-                    ) : (
-                      <p className="text-white/55">Queue clear</p>
-                    )}
-                    {viewerState === "inQueue" || viewerState === "invited" || viewerState === "nextUp" ? (
-                      <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/45">{queuePositionCopy}</p>
-                    ) : null}
+                <div className="mt-2.5 border-t border-white/10 pt-2">
+                  <label className="text-[10px] uppercase tracking-[0.14em] text-white/55" htmlFor="commentDraft">
+                    Comment or DM
+                  </label>
+                  <div className="mt-1.5 flex gap-1">
+                    <input
+                      ref={commentInputRef}
+                      id="commentDraft"
+                      value={commentDraft}
+                      onChange={(event) => setCommentDraft(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          broadcastComment();
+                        }
+                      }}
+                      placeholder="Type a quick note..."
+                      className="h-9 flex-1 rounded-md border border-white/20 bg-black/35 px-2 text-xs text-white outline-none focus:border-accent"
+                    />
+                    <Button size="sm" variant="default" onClick={broadcastComment} disabled={!commentDraft.trim()}>
+                      <SendHorizonal className="h-4 w-4" />
+                    </Button>
                   </div>
+                  <Button size="sm" variant="outline" className="mt-2 w-full justify-start">
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    DM creator
+                  </Button>
                 </div>
               </section>
 
@@ -1230,54 +966,25 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
         </div>
       </div>
 
-      <section id="vote" className="grid gap-2 xl:grid-cols-[1.1fr_0.9fr]">
+      <section id="vote" className="grid gap-2">
         <article className="rounded-xl border border-white/12 bg-black/15 px-4 py-3 text-sm">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-accent">Pitch discussion</p>
+          <p className="text-[11px] uppercase tracking-[0.16em] text-accent">Pitch room chat</p>
           <div className="mt-1 flex items-center justify-between gap-3">
-            <p className="text-lg font-semibold text-white">Comments on {activeContestant.name}</p>
+            <p className="text-lg font-semibold text-white">{activeContestant.name} · Live chatter</p>
             <p className="text-[11px] uppercase tracking-[0.14em] text-white/55">{activeComments.length} comments</p>
           </div>
           <div className="mt-2 space-y-2 text-sm text-white/80">
-              <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-white/50">
-                <MessageCircleMore className="h-3.5 w-3.5" />
-                {liveReactionCount} live audience signals
-              </p>
             <div className="space-y-2">
-              {activeComments.map((comment) => (
+              {activeComments.slice(0, 4).map((comment) => (
                 <p key={comment.id} className="rounded-md border border-white/10 bg-black/25 px-2 py-1.5">
                   <span className="text-[10px] uppercase tracking-[0.14em] text-white/55">
-                    {comment.author} · {comment.role}
+                    {comment.author}
                   </span>
                   <br />
                   <span className="text-sm text-white/90">{comment.message}</span>
                 </p>
               ))}
             </div>
-          </div>
-        </article>
-
-        <article className="rounded-xl border border-white/12 bg-black/15 px-4 py-3 text-sm">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-accent">Scoreboard</p>
-          <p className="mt-1 text-lg font-semibold text-white">Live standings</p>
-                <div className="mt-2 space-y-1.5">
-            {leaderboard.map((entry) => (
-              <div
-                key={entry.id}
-                className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 border-b border-white/10 py-2 last:border-0 last:pb-0"
-              >
-                <p className="h-6 w-6 rounded-full bg-white/12 text-xs font-semibold text-white inline-flex items-center justify-center">
-                  {entry.rank}
-                </p>
-                <p className="text-sm font-semibold text-white">
-                  {entry.name}
-                  {entry.id === activeContestant.id ? " · LIVE" : null}
-                </p>
-                <p className="text-[10px] uppercase tracking-[0.16em] text-white/65">
-                  {competitionBandLabel(tierFromScore(entry.score))}
-                </p>
-                <p className="text-sm font-semibold text-accent">{entry.score}</p>
-              </div>
-            ))}
           </div>
         </article>
       </section>

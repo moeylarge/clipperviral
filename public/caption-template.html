@@ -1,0 +1,1797 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kick Clip Captions</title>
+    <style>
+      :root {
+        --bg: #070a13;
+        --panel: rgba(12, 16, 28, 0.86);
+        --line: rgba(255, 255, 255, 0.16);
+        --text: #ecf2ff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+        color: var(--text);
+        background: radial-gradient(circle at 20% 10%, rgba(83, 252, 24, 0.17), transparent 32%),
+          radial-gradient(circle at 80% 5%, rgba(3, 164, 255, 0.12), transparent 35%), var(--bg);
+        padding: 18px;
+      }
+
+      main {
+        width: min(1020px, 100%);
+        margin: 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px;
+        background: var(--panel);
+        backdrop-filter: blur(5px);
+      }
+
+      .label {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.78);
+        margin-bottom: 7px;
+        font-weight: 700;
+      }
+
+      .template-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .template-tab {
+        text-decoration: none;
+        color: #d9e6ff;
+        border: 1px solid var(--line);
+        background: rgba(3, 7, 16, 0.84);
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .template-tab:hover,
+      .template-tab.active {
+        border-color: rgba(83, 252, 24, 0.7);
+        color: #eaffc4;
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .row > * {
+        min-height: 40px;
+      }
+
+      .row input,
+      .row select,
+      .row button {
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: rgba(2, 4, 10, 0.88);
+        color: #fff;
+        padding: 9px 11px;
+      }
+
+      input[type="file"] {
+        padding: 7px 9px;
+      }
+
+      input[type="range"] {
+        min-width: 130px;
+        accent-color: #53fc18;
+      }
+
+      button {
+        cursor: pointer;
+        font-weight: 700;
+        border-color: rgba(83, 252, 24, 0.75);
+      }
+
+      button.primary {
+        background: #53fc18;
+        color: #041108;
+      }
+
+      .video-wrap {
+        margin-top: 14px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        overflow: hidden;
+        background: #000;
+        position: relative;
+      }
+
+      .video-area {
+        position: relative;
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 460px;
+        background: #020409;
+      }
+
+      video {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        object-fit: contain;
+        background: #000;
+      }
+
+      .preview-controls {
+        display: grid;
+        grid-template-columns: auto auto auto auto 1fr auto;
+        gap: 8px;
+        align-items: center;
+        margin-top: 8px;
+      }
+
+      .preview-controls button {
+        min-height: 34px;
+        padding: 6px 10px;
+      }
+
+      .preview-controls input[type="range"] {
+        width: 100%;
+        min-width: 150px;
+        accent-color: #53fc18;
+      }
+
+      .preview-time {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.85);
+        min-width: 92px;
+        text-align: right;
+      }
+
+      .caption-overlay {
+        position: absolute;
+        left: 6%;
+        right: 6%;
+        bottom: 9%;
+        --caption-entry-offset: 0px 0px;
+        --caption-entry-rotate: 0deg;
+        --caption-entry-skew: 0deg;
+        color: #fff;
+        font-family: Impact, "Arial Black", sans-serif;
+        font-size: 42px;
+        text-shadow: 0 0 7px rgba(0, 0, 0, 0.95), 0 2px 3px rgba(0, 0, 0, 0.9);
+        text-align: center;
+        font-weight: 900;
+        letter-spacing: 0.015em;
+        text-transform: uppercase;
+        -webkit-text-stroke: 0.8px rgba(0, 0, 0, 0.85);
+        pointer-events: none;
+        white-space: pre-wrap;
+        line-height: 1.02;
+        min-height: 2.2em;
+        transform: translate(var(--caption-entry-offset)) rotate(var(--caption-entry-rotate)) skew(var(--caption-entry-skew));
+        opacity: 0;
+        transition: opacity 0.22s ease, transform 0.28s ease;
+      }
+
+      .caption-overlay.show {
+        opacity: 1;
+        transform: translate(0, 0) rotate(0deg) skew(0deg);
+      }
+
+      .status {
+        margin-top: 12px;
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 13px;
+        min-height: 20px;
+      }
+
+      .status.error {
+        color: #ffb3b3;
+      }
+
+      .hint {
+        margin-top: 6px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .youtube-error {
+        margin-top: 8px;
+        border: 1px dashed rgba(255, 95, 95, 0.5);
+        border-radius: 8px;
+        background: rgba(80, 14, 20, 0.45);
+        padding: 8px;
+        font-size: 12px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        color: #ffd4d4;
+        white-space: pre-wrap;
+        word-break: break-word;
+        display: none;
+      }
+
+      .mini-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        border-radius: 999px;
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        background: rgba(4, 8, 18, 0.86);
+        font-size: 11px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .mini-pill.good {
+        border-color: rgba(83, 252, 24, 0.58);
+        color: #d7ffbf;
+      }
+
+      .mini-pill.warn {
+        border-color: rgba(255, 188, 40, 0.75);
+        color: #ffe7b6;
+      }
+
+      .mini-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #7a7a7a;
+      }
+
+      .mini-pill.good .mini-dot {
+        background: #53fc18;
+      }
+
+      .mini-pill.warn .mini-dot {
+        background: #ffbd2e;
+      }
+
+      .youtube-box {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.25);
+        padding: 10px;
+        margin-top: 10px;
+      }
+
+      .youtube-layout {
+        display: grid;
+        grid-template-columns: minmax(360px, 1.2fr) minmax(260px, 0.8fr);
+        gap: 10px;
+        margin-top: 10px;
+        align-items: start;
+      }
+
+      .youtube-list {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.24);
+        min-height: 320px;
+        max-height: 58vh;
+        overflow: auto;
+        padding: 8px;
+      }
+
+      .youtube-item {
+        padding: 8px 6px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .youtube-item:last-child {
+        border-bottom: none;
+      }
+
+      .youtube-item .actions {
+        margin-top: 6px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .list-wrap {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.24);
+        max-height: 245px;
+        overflow: auto;
+        padding: 8px;
+      }
+
+      .list-item {
+        padding: 8px 7px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .list-item:last-child {
+        border-bottom: 0;
+      }
+
+      .time-chip {
+        font-size: 11px;
+        opacity: 0.9;
+      }
+
+      .list-text {
+        margin-top: 4px;
+        line-height: 1.2;
+      }
+
+      .pill {
+        border: 1px solid var(--line);
+        background: rgba(3, 7, 16, 0.84);
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.9);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .inline-field {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .spacer {
+        flex: 1;
+      }
+
+      .small-note {
+        margin-top: 10px;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.68);
+      }
+
+      .youtube-panel-note {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.24);
+        padding: 10px;
+        min-height: 320px;
+        max-height: 58vh;
+        overflow: auto;
+      }
+
+      .youtube-note-title {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        margin-bottom: 8px;
+        color: #d2f4a8;
+      }
+
+      .youtube-note-body {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.86);
+        line-height: 1.35;
+      }
+
+      .vault-list {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.24);
+        max-height: 260px;
+        overflow: auto;
+        padding: 8px;
+        margin-top: 8px;
+      }
+
+      .vault-item {
+        padding: 8px 6px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .vault-item:last-child {
+        border-bottom: 0;
+      }
+
+      .vault-url {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.95);
+        line-height: 1.3;
+        word-break: break-all;
+      }
+
+      .vault-meta {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 4px;
+      }
+
+      .vault-actions {
+        margin-top: 6px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      @media (max-width: 900px) {
+        .caption-overlay {
+          font-size: 26px;
+        }
+
+        .preview-controls {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .preview-controls input[type="range"] {
+          grid-column: 1 / -1;
+        }
+
+        .preview-time {
+          grid-column: 1 / -1;
+          text-align: left;
+        }
+
+        .youtube-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="template-tabs">
+        <a class="template-tab active" href="/caption-template.html">Caption Template</a>
+        <a class="template-tab" href="/kick-template.html">Kick Template</a>
+        <a class="template-tab" href="/caption-template.html#youtube-auto-highlights">URL Highlights</a>
+        <a class="template-tab" href="/caption-template.html#url-vault">URL Vault (7d)</a>
+      </div>
+      <h1 style="margin: 0 0 8px 0; font-family: Impact, Arial Black, sans-serif">Clip Caption Generator</h1>
+      <p class="hint">
+        Upload a clip, auto-caption it with Whisper, preview captions styled on-screen, then download SRT or ASS subtitle files.
+        Files over 25MB are split and sent in chunks automatically.
+      </p>
+      <div id="ffmpegStatus" class="mini-pill warn">
+        <span class="mini-dot"></span>
+        <span>FFmpeg status: checking…</span>
+      </div>
+
+      <div class="youtube-box" id="youtube-auto-highlights">
+        <div class="label">0) Auto-detect best clips from YouTube or Kick</div>
+        <div class="row">
+          <input id="youtubeUrlInput" type="url" placeholder="https://www.youtube.com/... or https://kick.com/..." />
+          <input id="youtubeDurationInput" type="number" min="10" max="120" value="30" />
+          <input id="youtubeClipCountInput" type="number" min="1" max="20" value="8" />
+          <button id="analyzeYoutubeButton" type="button" class="primary">Analyze URL</button>
+          <button id="saveVaultUrlButton" type="button">Save URL (7d)</button>
+        </div>
+        <div class="row">
+          <label class="inline-field">
+            <input id="youtubeAiInput" type="checkbox" checked />
+            <span>AI clip scoring (stronger viral ranking)</span>
+          </label>
+          <span class="pill">Example: 30s clips, most likely engaging moments</span>
+        </div>
+        <div class="hint" id="youtubeHint">No job loaded yet.</div>
+        <div class="youtube-error" id="youtubeErrorBox"></div>
+        <div class="youtube-layout">
+          <div class="youtube-list" id="youtubeCandidates"></div>
+          <div class="youtube-panel-note">
+            <div class="youtube-note-title">Clip candidates area</div>
+            <div class="youtube-note-body">
+              This is where your clip candidates appear. Scroll this list and click
+              <strong>Preview</strong> to load a clip into the video player, or
+              <strong>Download mp4</strong> to export it for editing.
+            </div>
+            <div class="small-note" style="margin-top: 10px">
+              Tip: if you need more space for candidates, increase clip count or shrink your browser zoom from 110% to 90%.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="youtube-box" id="url-vault">
+        <div class="label">0.5) URL Vault (auto-expires in 7 days)</div>
+        <div class="hint" id="vaultHint">No saved URLs yet.</div>
+        <div class="vault-list" id="vaultList"></div>
+      </div>
+
+      <div class="label">1) Upload clip</div>
+      <div class="row">
+        <input id="clipInput" type="file" accept="video/*,audio/*" />
+        <select id="languageInput" aria-label="Caption language">
+          <option value="auto">Auto-detect</option>
+          <option value="en">English</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+          <option value="de">German</option>
+          <option value="pt">Portuguese</option>
+          <option value="hi">Hindi</option>
+        </select>
+        <button id="generateButton" type="button" class="primary">Generate captions</button>
+        <button id="clearButton" type="button">Clear</button>
+      </div>
+
+      <div class="label">2) Caption style</div>
+      <div class="row">
+        <select id="stylePreset">
+          <option value="kick">Kick green + black stroke</option>
+          <option value="white">White + black stroke</option>
+          <option value="yellow">Yellow + black stroke</option>
+          <option value="magenta">Magenta + black stroke</option>
+          <option value="neon">Neon mix</option>
+        </select>
+        <div class="inline-field">
+          <span class="pill">Font Size</span>
+          <input id="fontSizeInput" type="range" min="18" max="84" value="42" step="1" />
+          <span id="fontSizeValue">42</span>
+        </div>
+        <div class="inline-field">
+          <span class="pill">Max chars / line</span>
+          <input id="lineCharsInput" type="range" min="16" max="44" value="28" step="1" />
+          <span id="lineCharsValue">28</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="inline-field">
+          <span class="pill">Stroke size</span>
+          <input id="strokeInput" type="range" min="0" max="5" value="1.2" step="0.2" />
+          <span id="strokeValue">1.2</span>
+        </div>
+        <select id="positionInput">
+          <option value="bottom">Bottom</option>
+          <option value="middle">Middle</option>
+          <option value="top">Top</option>
+        </select>
+        <select id="captionMotionInput">
+          <option value="fade">Fade (current)</option>
+          <option value="sideways">Sideways</option>
+          <option value="up">From Up</option>
+          <option value="down">From Down</option>
+          <option value="slanted">Slanted</option>
+          <option value="skewed">Skewed</option>
+          <option value="rotate-side">Rotate-in (from side)</option>
+        </select>
+        <span class="pill">
+          Export as:
+          <select id="fileFormatInput">
+            <option value="srt">SRT</option>
+            <option value="ass">ASS</option>
+            <option value="vtt">VTT</option>
+            <option value="mp4">MP4 (burned-in captions)</option>
+          </select>
+        </span>
+      </div>
+
+      <div class="status" id="status"></div>
+
+      <div class="video-wrap">
+        <div class="video-area">
+          <video id="previewVideo" controls crossorigin="anonymous"></video>
+          <div id="captionOverlay" class="caption-overlay">Waiting for captions...</div>
+        </div>
+        <div class="preview-controls">
+          <button id="seekStartButton" type="button" disabled>|&lt;</button>
+          <button id="seekBackButton" type="button" disabled>-5s</button>
+          <button id="seekForwardButton" type="button" disabled>+5s</button>
+          <button id="seekEndButton" type="button" disabled>&gt;|</button>
+          <input id="previewSeekInput" type="range" min="0" max="0" step="0.01" value="0" disabled />
+          <span id="previewTimeText" class="preview-time">00:00 / 00:00</span>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 12px">
+        <button id="downloadButton" type="button" disabled>Download file</button>
+        <span class="hint" id="segmentCount" style="margin-top: 9px"></span>
+        <div class="spacer"></div>
+        <button id="copyTextButton" type="button" disabled>Copy transcript</button>
+      </div>
+
+      <div class="label">3) Caption segments</div>
+      <div class="list-wrap" id="captionsList"></div>
+
+      <p class="small-note">
+        This generates subtitle files (SRT/ASS/VTT) and supports hard-burned MP4 exports for CapCut, Premiere, Final Cut, TikTok, and clips.
+      </p>
+    </main>
+
+    <script>
+      const clipInput = document.getElementById("clipInput");
+      const languageInput = document.getElementById("languageInput");
+      const generateButton = document.getElementById("generateButton");
+      const clearButton = document.getElementById("clearButton");
+      const status = document.getElementById("status");
+      const previewVideo = document.getElementById("previewVideo");
+      const previewSeekInput = document.getElementById("previewSeekInput");
+      const seekStartButton = document.getElementById("seekStartButton");
+      const seekBackButton = document.getElementById("seekBackButton");
+      const seekForwardButton = document.getElementById("seekForwardButton");
+      const seekEndButton = document.getElementById("seekEndButton");
+      const previewTimeText = document.getElementById("previewTimeText");
+      const captionOverlay = document.getElementById("captionOverlay");
+      const captionsList = document.getElementById("captionsList");
+      const segmentCount = document.getElementById("segmentCount");
+      const downloadButton = document.getElementById("downloadButton");
+      const copyTextButton = document.getElementById("copyTextButton");
+      const stylePreset = document.getElementById("stylePreset");
+      const fontSizeInput = document.getElementById("fontSizeInput");
+      const fontSizeValue = document.getElementById("fontSizeValue");
+      const lineCharsInput = document.getElementById("lineCharsInput");
+      const lineCharsValue = document.getElementById("lineCharsValue");
+      const strokeInput = document.getElementById("strokeInput");
+      const strokeValue = document.getElementById("strokeValue");
+      const positionInput = document.getElementById("positionInput");
+      const captionMotionInput = document.getElementById("captionMotionInput");
+      const fileFormatInput = document.getElementById("fileFormatInput");
+      const ffmpegStatusEl = document.getElementById("ffmpegStatus");
+      const youtubeUrlInput = document.getElementById("youtubeUrlInput");
+      const youtubeDurationInput = document.getElementById("youtubeDurationInput");
+      const youtubeClipCountInput = document.getElementById("youtubeClipCountInput");
+      const youtubeAiInput = document.getElementById("youtubeAiInput");
+      const analyzeYoutubeButton = document.getElementById("analyzeYoutubeButton");
+      const saveVaultUrlButton = document.getElementById("saveVaultUrlButton");
+      const youtubeCandidates = document.getElementById("youtubeCandidates");
+      const youtubeHint = document.getElementById("youtubeHint");
+      const youtubeErrorBox = document.getElementById("youtubeErrorBox");
+      const vaultList = document.getElementById("vaultList");
+      const vaultHint = document.getElementById("vaultHint");
+
+      const YOUTUBE_ANALYZE_TIMEOUT_MS = 45 * 60 * 1000;
+      const YOUTUBE_ESTIMATE_TIMEOUT_MS = 45000;
+      const YOUTUBE_ANALYZE_PROGRESS_STEP_MS = 1000;
+      const URL_VAULT_KEY = "spotlight_url_vault_v1";
+      const URL_VAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+      let activeYoutubeAnalyzeController = null;
+      let youtubeAnalyzeProgressTimer = null;
+
+      let captionSegments = [];
+      let rawTranscript = "";
+      let videoUrl = null;
+      let activeSegment = -1;
+      let isExporting = false;
+      let youtubeJobId = "";
+      let youtubeClips = [];
+
+      async function refreshFfmpegStatus() {
+        if (!ffmpegStatusEl) {
+          return;
+        }
+        ffmpegStatusEl.classList.remove("good", "warn");
+        ffmpegStatusEl.classList.add("warn");
+        ffmpegStatusEl.querySelector("span:last-child").textContent = "FFmpeg status: checking…";
+        try {
+          const response = await fetch("/api/ffmpeg-status");
+          const payload = await response.json();
+          const ok = payload?.installed === true;
+          ffmpegStatusEl.classList.toggle("good", ok);
+          ffmpegStatusEl.classList.toggle("warn", !ok);
+          const command = payload?.command || "Not detected";
+          const source = payload?.source || "status endpoint";
+          ffmpegStatusEl.querySelector("span:last-child").textContent = ok
+            ? `FFmpeg status: available (${source})`
+            : `FFmpeg status: unavailable (${command})`;
+        } catch (error) {
+          ffmpegStatusEl.classList.remove("good");
+          ffmpegStatusEl.classList.add("warn");
+          ffmpegStatusEl.querySelector("span:last-child").textContent = "FFmpeg status: unavailable";
+        }
+      }
+
+      function setStatus(message, isError = false) {
+        status.textContent = message;
+        status.classList.toggle("error", isError);
+      }
+
+      function setYoutubeError(message) {
+        if (!youtubeErrorBox) return;
+        if (!message) {
+          youtubeErrorBox.style.display = "none";
+          youtubeErrorBox.textContent = "";
+          return;
+        }
+        youtubeErrorBox.style.display = "block";
+        youtubeErrorBox.textContent = message;
+      }
+
+      function toSrtTime(seconds) {
+        const totalMs = Math.max(0, Math.round(seconds * 1000));
+        const ms = totalMs % 1000;
+        const totalSec = Math.floor(totalMs / 1000);
+        const sec = totalSec % 60;
+        const totalMin = Math.floor(totalSec / 60);
+        const min = totalMin % 60;
+        const hrs = Math.floor(totalMin / 60);
+        return `${String(hrs).padStart(2, "0")}:${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")},${String(ms).padStart(3, "0")}`;
+      }
+
+      function toVttTime(seconds) {
+        const totalMs = Math.max(0, Math.round(seconds * 1000));
+        const ms = Math.floor((totalMs % 1000) / 10);
+        const totalSec = Math.floor(totalMs / 1000);
+        const sec = totalSec % 60;
+        const totalMin = Math.floor(totalSec / 60);
+        const min = totalMin % 60;
+        const hrs = Math.floor(totalMin / 60);
+        return `${String(hrs).padStart(2, "0")}:${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}.${String(ms).padStart(2, "0")}`;
+      }
+
+      function toAssTime(seconds) {
+        const totalMs = Math.max(0, Math.round(seconds * 1000));
+        const cs = Math.floor((totalMs % 1000) / 10);
+        const totalSec = Math.floor(totalMs / 1000);
+        const sec = totalSec % 60;
+        const totalMin = Math.floor(totalSec / 60);
+        const min = totalMin % 60;
+        const hrs = Math.floor(totalMin / 60);
+        return `${hrs}:${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}.${String(cs).padStart(2, "0")}`;
+      }
+
+      function toClockTime(seconds) {
+        const value = Math.max(0, Number(seconds) || 0);
+        const totalSec = Math.floor(value);
+        const sec = totalSec % 60;
+        const totalMin = Math.floor(totalSec / 60);
+        const min = totalMin % 60;
+        const hrs = Math.floor(totalMin / 60);
+        const ms = Math.floor((value - totalSec) * 1000);
+        if (hrs > 0) {
+          return `${hrs}:${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}.${String(ms).padStart(3, "0")}`;
+        }
+        return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}.${String(ms).padStart(3, "0")}`;
+      }
+
+      function formatCountdown(seconds) {
+        const safe = Math.max(0, Math.round(Number(seconds) || 0));
+        const hrs = Math.floor(safe / 3600);
+        const mins = Math.floor((safe % 3600) / 60);
+        const secs = safe % 60;
+        if (hrs > 0) {
+          return `${hrs}h ${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+        }
+        return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+      }
+
+      function formatPlayerTime(seconds) {
+        const safe = Math.max(0, Math.floor(Number(seconds) || 0));
+        const hrs = Math.floor(safe / 3600);
+        const mins = Math.floor((safe % 3600) / 60);
+        const secs = safe % 60;
+        if (hrs > 0) {
+          return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+        }
+        return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+      }
+
+      function setPreviewControlsEnabled(enabled) {
+        previewSeekInput.disabled = !enabled;
+        seekStartButton.disabled = !enabled;
+        seekBackButton.disabled = !enabled;
+        seekForwardButton.disabled = !enabled;
+        seekEndButton.disabled = !enabled;
+      }
+
+      function syncPreviewControls() {
+        const duration = Number(previewVideo.duration);
+        const current = Number(previewVideo.currentTime) || 0;
+        const hasDuration = Number.isFinite(duration) && duration > 0;
+        if (!hasDuration) {
+          previewSeekInput.max = "0";
+          previewSeekInput.value = "0";
+          previewTimeText.textContent = "00:00 / 00:00";
+          setPreviewControlsEnabled(false);
+          return;
+        }
+
+        previewSeekInput.max = String(duration);
+        previewSeekInput.value = String(Math.min(duration, Math.max(0, current)));
+        previewTimeText.textContent = `${formatPlayerTime(current)} / ${formatPlayerTime(duration)}`;
+        setPreviewControlsEnabled(true);
+      }
+
+      function seekBy(offsetSeconds) {
+        const duration = Number(previewVideo.duration);
+        if (!Number.isFinite(duration) || duration <= 0) return;
+        const next = Math.max(0, Math.min(duration, (Number(previewVideo.currentTime) || 0) + offsetSeconds));
+        previewVideo.currentTime = next;
+        syncPreviewControls();
+      }
+
+      function youtubeEstimateFallbackSeconds(clipDuration, maxClips) {
+        const safeClip = Number.isFinite(clipDuration) ? Math.min(Math.max(clipDuration, 10), 120) : 30;
+        const safeMaxClips = Number.isFinite(maxClips) ? Math.min(Math.max(Math.floor(maxClips), 1), 20) : 8;
+        return Math.max(180, Math.round(120 + safeMaxClips * 8 + safeClip * 4));
+      }
+
+      async function estimateYoutubeRuntimeSeconds(rawUrl, clipDuration, maxClips) {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => {
+          controller.abort();
+        }, YOUTUBE_ESTIMATE_TIMEOUT_MS);
+        try {
+          const response = await fetch(
+            `/api/youtube/highlights?mode=estimate&url=${encodeURIComponent(rawUrl)}&clipDuration=${encodeURIComponent(
+              String(clipDuration),
+            )}&maxClips=${encodeURIComponent(String(maxClips))}`,
+            { signal: controller.signal },
+          );
+          const payload = (await response.json()) || {};
+          if (!response.ok) return null;
+          const estimated = Number(payload?.estimatedTotalSeconds);
+          return Number.isFinite(estimated) && estimated > 0 ? Math.round(estimated) : null;
+        } catch (error) {
+          return null;
+        } finally {
+          window.clearTimeout(timeoutId);
+        }
+      }
+
+      function safeFileName(value) {
+        return `${value}`.replace(/[^a-zA-Z0-9._-]+/g, "-");
+      }
+
+      function detectUrlKind(rawUrl) {
+        const value = `${rawUrl || ""}`.toLowerCase();
+        if (value.includes("youtube.com") || value.includes("youtu.be")) return "YouTube";
+        if (value.includes("kick.com")) return "Kick";
+        return "Other";
+      }
+
+      function formatDateTime(ts) {
+        const date = new Date(ts);
+        if (!Number.isFinite(date.getTime())) return "Invalid date";
+        return date.toLocaleString();
+      }
+
+      function readVaultRaw() {
+        try {
+          const raw = localStorage.getItem(URL_VAULT_KEY);
+          if (!raw) return [];
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return [];
+          return parsed;
+        } catch {
+          return [];
+        }
+      }
+
+      function saveVaultRaw(entries) {
+        try {
+          localStorage.setItem(URL_VAULT_KEY, JSON.stringify(entries));
+        } catch {
+          // localStorage unavailable or full
+        }
+      }
+
+      function sanitizeVaultEntries(entries) {
+        const now = Date.now();
+        return entries
+          .map((item) => ({
+            id: `${item?.id || ""}`,
+            url: `${item?.url || ""}`.trim(),
+            sourceKind: `${item?.sourceKind || detectUrlKind(item?.url || "")}`,
+            addedAt: Number(item?.addedAt || 0),
+            expiresAt: Number(item?.expiresAt || 0),
+          }))
+          .filter((item) => item.url && /^https?:\/\/.+/i.test(item.url) && item.expiresAt > now);
+      }
+
+      function getVaultEntries() {
+        const cleaned = sanitizeVaultEntries(readVaultRaw())
+          .sort((a, b) => Number(b.addedAt || 0) - Number(a.addedAt || 0));
+        saveVaultRaw(cleaned);
+        return cleaned;
+      }
+
+      function setVaultEntries(entries) {
+        const cleaned = sanitizeVaultEntries(entries);
+        saveVaultRaw(cleaned);
+        return cleaned;
+      }
+
+      function renderVaultList() {
+        const entries = getVaultEntries();
+        vaultList.innerHTML = "";
+        if (!entries.length) {
+          vaultHint.textContent = "No saved URLs yet.";
+          vaultList.innerHTML = "<div class='vault-item'>Save a YouTube or Kick URL and it will stay here for 7 days.</div>";
+          return;
+        }
+
+        vaultHint.textContent = `${entries.length} saved URL(s).`;
+        entries.forEach((entry) => {
+          const item = document.createElement("div");
+          item.className = "vault-item";
+
+          const urlText = document.createElement("div");
+          urlText.className = "vault-url";
+          urlText.textContent = entry.url;
+
+          const meta = document.createElement("div");
+          meta.className = "vault-meta";
+          meta.textContent = `${entry.sourceKind} | added ${formatDateTime(entry.addedAt)} | expires ${formatDateTime(entry.expiresAt)}`;
+
+          const actions = document.createElement("div");
+          actions.className = "vault-actions";
+
+          const useButton = document.createElement("button");
+          useButton.type = "button";
+          useButton.textContent = "Use URL";
+          useButton.addEventListener("click", () => {
+            youtubeUrlInput.value = entry.url;
+            window.location.hash = "#youtube-auto-highlights";
+            setStatus("Loaded URL from vault.");
+          });
+
+          const copyButton = document.createElement("button");
+          copyButton.type = "button";
+          copyButton.textContent = "Copy";
+          copyButton.addEventListener("click", () => {
+            navigator.clipboard.writeText(entry.url).then(() => {
+              setStatus("Vault URL copied.");
+            });
+          });
+
+          const removeButton = document.createElement("button");
+          removeButton.type = "button";
+          removeButton.textContent = "Remove";
+          removeButton.addEventListener("click", () => {
+            const remaining = getVaultEntries().filter((row) => row.id !== entry.id);
+            setVaultEntries(remaining);
+            renderVaultList();
+            setStatus("Removed URL from vault.");
+          });
+
+          actions.appendChild(useButton);
+          actions.appendChild(copyButton);
+          actions.appendChild(removeButton);
+          item.appendChild(urlText);
+          item.appendChild(meta);
+          item.appendChild(actions);
+          vaultList.appendChild(item);
+        });
+      }
+
+      function saveUrlToVault(rawUrl, options = {}) {
+        const url = `${rawUrl || ""}`.trim();
+        const silent = options?.silent === true;
+        if (!url || !/^https?:\/\/.+/i.test(url)) {
+          if (!silent) setStatus("Paste a valid URL before saving.", true);
+          return false;
+        }
+
+        const sourceKind = detectUrlKind(url);
+        if (sourceKind === "Other") {
+          if (!silent) setStatus("Only YouTube and Kick URLs can be saved in this vault.", true);
+          return false;
+        }
+
+        const now = Date.now();
+        const expiresAt = now + URL_VAULT_TTL_MS;
+        const existing = getVaultEntries();
+        const next = existing.filter((row) => row.url !== url);
+        next.unshift({
+          id: crypto.randomUUID(),
+          url,
+          sourceKind,
+          addedAt: now,
+          expiresAt,
+        });
+        const trimmed = next.slice(0, 120);
+        setVaultEntries(trimmed);
+        renderVaultList();
+        if (!silent) {
+          setStatus(`Saved ${sourceKind} URL to vault (7 days).`);
+        }
+        return true;
+      }
+
+      function hexToAss(hex, alpha) {
+        const color = hex.replace("#", "").trim().toLowerCase();
+        const hasAlpha = color.length === 8;
+        const normalized = hasAlpha ? color.slice(2) : color;
+        const r = normalized.slice(0, 2);
+        const g = normalized.slice(2, 4);
+        const b = normalized.slice(4, 6);
+        const a = hasAlpha ? color.slice(0, 2) : alpha.toString(16).padStart(2, "0");
+        return `&H${a}${b}${g}${r}`.toUpperCase();
+      }
+
+      function wrapText(text, maxLen) {
+        const words = text.trim().split(/\s+/);
+        const lines = [];
+        let current = "";
+
+        for (const word of words) {
+          if (!current) {
+            current = word;
+            continue;
+          }
+          if ((current + " " + word).length <= maxLen) {
+            current = `${current} ${word}`;
+          } else {
+            lines.push(current);
+            current = word;
+          }
+        }
+
+        if (current) lines.push(current);
+        return lines.slice(0, 2);
+      }
+
+      function formatAssEscape(text) {
+        return text
+          .replace(/\\/g, "\\\\")
+          .replace(/\{/g, "\\{")
+          .replace(/\}/g, "\\}")
+          .replace(/\n/g, "\\N");
+      }
+
+      function styleConfig() {
+        const size = Number(fontSizeInput.value);
+        const strokeWidth = Number(strokeInput.value);
+        const lineLimit = Number(lineCharsInput.value);
+        const pos = positionInput.value;
+        const preset = stylePreset.value;
+        const motion = captionMotionInput.value;
+
+        let baseColor = "#53fc18";
+        let glow = "0 0 9px rgba(0,0,0,0.45)";
+        let bg = "rgba(0,0,0,0.16)";
+        let shadow = "2px 2px 3px rgba(0,0,0,.95)";
+
+        if (preset === "white") {
+          baseColor = "#ffffff";
+          shadow = "2px 2px 3px rgba(0,0,0,.95)";
+          bg = "rgba(0,0,0,0.25)";
+          glow = "0 0 8px rgba(255,255,255,0.16)";
+        } else if (preset === "yellow") {
+          baseColor = "#dbff4d";
+          glow = "0 0 8px rgba(255, 255, 255, 0.14)";
+        } else if (preset === "magenta") {
+          baseColor = "#ff4de8";
+        } else if (preset === "neon") {
+          baseColor = "#4de8ff";
+          glow = "0 0 8px rgba(0, 255, 255, 0.22)";
+          bg = "rgba(13, 29, 48, 0.18)";
+        }
+
+        let bottom = "9%";
+        if (pos === "middle") bottom = "38%";
+        if (pos === "top") bottom = "82%";
+
+        let entryOffset = "0px 0px";
+        let entryRotate = "0deg";
+        let entrySkew = "0deg";
+        if (motion === "sideways") {
+          entryOffset = "-24px 0px";
+        } else if (motion === "up") {
+          entryOffset = "0px 22px";
+        } else if (motion === "down") {
+          entryOffset = "0px -22px";
+        } else if (motion === "slanted") {
+          entryOffset = "-28px 12px";
+          entryRotate = "-7deg";
+        } else if (motion === "skewed") {
+          entryOffset = "-16px 4px";
+          entrySkew = "-10deg";
+        } else if (motion === "rotate-side") {
+          entryOffset = "-28px 0px";
+          entryRotate = "-12deg";
+        }
+
+        return {
+          color: baseColor,
+          size,
+          strokeWidth,
+          lineLimit,
+          bottom,
+          shadow,
+          glow,
+          bg,
+          preset,
+          entryOffset,
+          entryRotate,
+          entrySkew,
+          motion,
+        };
+      }
+
+      function applyStyleToOverlay() {
+        const cfg = styleConfig();
+        fontSizeValue.textContent = String(cfg.size);
+        lineCharsValue.textContent = String(cfg.lineLimit);
+        strokeValue.textContent = cfg.strokeWidth.toFixed(1);
+
+        captionOverlay.style.color = cfg.color;
+        captionOverlay.style.fontSize = `${cfg.size}px`;
+        captionOverlay.style.bottom = cfg.bottom;
+        captionOverlay.style.setProperty("-webkit-text-stroke", `${cfg.strokeWidth}px rgba(0,0,0,0.9)`);
+        captionOverlay.style.textShadow = `${cfg.shadow}, ${cfg.glow}`;
+        captionOverlay.style.setProperty("--caption-entry-offset", cfg.entryOffset);
+        captionOverlay.style.setProperty("--caption-entry-rotate", cfg.entryRotate);
+        captionOverlay.style.setProperty("--caption-entry-skew", cfg.entrySkew);
+      }
+
+      function activeCaption(time) {
+        for (let i = 0; i < captionSegments.length; i++) {
+          if (time >= captionSegments[i].start && time <= captionSegments[i].end) {
+            return i;
+          }
+        }
+        return -1;
+      }
+
+      function setOverlayText(index) {
+        if (index === -1) {
+          captionOverlay.textContent = "";
+          captionOverlay.classList.remove("show");
+          return;
+        }
+        const cfg = styleConfig();
+        const segment = captionSegments[index];
+        const lines = wrapText(segment.text, cfg.lineLimit);
+        captionOverlay.textContent = lines.join("\n");
+        captionOverlay.style.setProperty("--caption-entry-offset", cfg.entryOffset);
+        captionOverlay.style.setProperty("--caption-entry-rotate", cfg.entryRotate);
+        captionOverlay.style.setProperty("--caption-entry-skew", cfg.entrySkew);
+        captionOverlay.classList.remove("show");
+        void captionOverlay.offsetWidth;
+        captionOverlay.classList.add("show");
+      }
+
+      function renderCaptionList() {
+        captionsList.innerHTML = "";
+        captionSegments.forEach((segment, index) => {
+          const item = document.createElement("div");
+          item.className = "list-item";
+          const line = document.createElement("div");
+          line.className = "time-chip";
+          line.textContent = `${String(index + 1).padStart(3, "0")} | ${toSrtTime(segment.start)} → ${toSrtTime(segment.end)}`;
+          const text = document.createElement("div");
+          text.className = "list-text";
+          text.textContent = segment.text;
+          item.appendChild(line);
+          item.appendChild(text);
+          captionsList.appendChild(item);
+        });
+      }
+
+      function createSrt() {
+        return captionSegments
+          .map((segment, i) => {
+            const lines = wrapText(segment.text, Number(lineCharsInput.value));
+            return [
+              String(i + 1),
+              `${toSrtTime(segment.start)} --> ${toSrtTime(segment.end)}`,
+              lines.join("\n"),
+              "",
+            ].join("\n");
+          })
+          .join("\n");
+      }
+
+      function createVtt() {
+        const body = captionSegments
+          .map((segment, i) => {
+            const lines = wrapText(segment.text, Number(lineCharsInput.value));
+            return `${i + 1}\n${toVttTime(segment.start)} --> ${toVttTime(segment.end)}\n${lines.join("\n")}\n`;
+          })
+          .join("\n");
+        return "WEBVTT\n\n" + body;
+      }
+
+      function createAss() {
+        const cfg = styleConfig();
+        const fontSize = Math.max(18, cfg.size);
+        const textColor = hexToAss(cfg.color, 0);
+        const stroke = hexToAss("#000000", Math.round(0.08 * 255));
+        const shadow = hexToAss("#000000", Math.round(0.6 * 255));
+        const align =
+          cfg.bottom === "9%" ? 2 : cfg.bottom === "38%" ? 5 : 8;
+
+        const header = [
+          "[Script Info]",
+          "; Generated by spotlight-mvp caption tool",
+          "Title: Kick Caption Export",
+          "ScriptType: v4.00+",
+          "Collisions: Normal",
+          "PlayResX: 1920",
+          "PlayResY: 1080",
+          "WrapStyle: 0",
+          "",
+          "[V4+ Styles]",
+          "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
+          `Style: ClipCaps,Impact,${fontSize},${textColor},${textColor},${stroke},${shadow},-1,0,0,0,100,100,0,0,1,${Math.max(1, Math.round(cfg.strokeWidth * 3))},${Math.max(1, Math.round(cfg.strokeWidth))},${align},20,20,${cfg.bottom === "9%" ? 30 : 100},1`,
+          "",
+          "[Events]",
+          "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
+        ];
+
+        const lines = captionSegments.flatMap((segment, i) => {
+          const wrapped = wrapText(segment.text, Number(lineCharsInput.value));
+          const assText = formatAssEscape(wrapped.join("\\N"));
+          const start = toAssTime(segment.start);
+          const end = toAssTime(segment.end);
+          return `${i + 1},${start},${end},ClipCaps,,0,0,0,,${assText}`;
+        });
+
+        return `${header.join("\n")}\nDialogue: ${lines.join("\nDialogue: ")}`;
+      }
+
+      function renderYoutubeCandidates(clips) {
+        youtubeCandidates.innerHTML = "";
+        if (!clips.length) {
+          youtubeCandidates.innerHTML = "<div class='youtube-item'>No clip candidates found.</div>";
+          return;
+        }
+
+        clips.forEach((clip, index) => {
+          const item = document.createElement("div");
+          item.className = "youtube-item";
+
+          const title = document.createElement("div");
+          title.className = "time-chip";
+          const scoreText = Number.isFinite(Number(clip.score)) ? `${Math.round(Number(clip.score))} / 100` : "N/A";
+          title.textContent = `${index + 1}. ${toClockTime(clip.start)} → ${toClockTime(clip.end)} | Score: ${scoreText}`;
+
+          const reason = document.createElement("div");
+          reason.className = "list-text";
+          reason.textContent = clip.reason || "Auto-ranked.";
+
+          const text = document.createElement("div");
+          text.className = "list-text";
+          text.style.opacity = "0.86";
+          text.textContent = clip.text || "No speech detected in this window.";
+
+          const actions = document.createElement("div");
+          actions.className = "actions";
+
+          const previewButton = document.createElement("button");
+          previewButton.type = "button";
+          previewButton.textContent = "Preview";
+          previewButton.addEventListener("click", async () => {
+            await previewYoutubeClip(index, previewButton);
+          });
+
+          const downloadButton = document.createElement("button");
+          downloadButton.type = "button";
+          downloadButton.className = "primary";
+          downloadButton.textContent = "Download mp4";
+          downloadButton.addEventListener("click", async () => {
+            await downloadYoutubeClip(index, downloadButton);
+          });
+
+          actions.appendChild(previewButton);
+          actions.appendChild(downloadButton);
+
+          item.appendChild(title);
+          item.appendChild(reason);
+          item.appendChild(text);
+          item.appendChild(actions);
+          youtubeCandidates.appendChild(item);
+        });
+      }
+
+      async function readResponseError(response) {
+        const text = await response.text();
+        if (!text) return `${response.status} ${response.statusText}`.trim();
+        try {
+          const payload = JSON.parse(text);
+          return [payload?.error, payload?.details].filter(Boolean).join(" | ") || text;
+        } catch {
+          return text;
+        }
+      }
+
+      async function fetchYoutubeClipBlob(index) {
+        const response = await fetch(`/api/youtube/clip?jobId=${encodeURIComponent(youtubeJobId)}&index=${index}`, {
+          method: "GET",
+        });
+        if (!response.ok) {
+          throw new Error(await readResponseError(response));
+        }
+        const blob = await response.blob();
+        if (!blob.size) {
+          throw new Error("Rendered clip is empty.");
+        }
+        return blob;
+      }
+
+      async function previewYoutubeClip(index, button) {
+        if (!youtubeJobId) {
+          setStatus("No active clip job. Analyze a URL first.", true);
+          return;
+        }
+        setStatus(`Preparing preview for clip ${index + 1}...`);
+        setYoutubeError("");
+        youtubeHint.textContent = `Rendering preview for clip ${index + 1}...`;
+        const originalText = button ? button.textContent : "";
+        if (button) {
+          button.disabled = true;
+          button.textContent = "Rendering...";
+        }
+        try {
+          const clip = youtubeClips[index];
+          if (!clip) {
+            setStatus("Clip not found.", true);
+            return;
+          }
+          const blob = await fetchYoutubeClipBlob(index);
+          if (videoUrl) URL.revokeObjectURL(videoUrl);
+          videoUrl = URL.createObjectURL(blob);
+          previewVideo.src = videoUrl;
+          previewVideo.load();
+          previewVideo.play().catch(() => {});
+          setStatus(`Preview loaded: ${toClockTime(clip.start)}-${toClockTime(clip.end)} ${clip.score ? `(Score ${Math.round(Number(clip.score))})` : ""}`);
+          youtubeHint.textContent = `Preview loaded for clip ${index + 1}.`;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Could not preview clip.";
+          setStatus(`Preview failed: ${message}`, true);
+          youtubeHint.textContent = "Preview failed.";
+          setYoutubeError(message);
+        } finally {
+          if (button) {
+            button.disabled = false;
+            button.textContent = originalText || "Preview";
+          }
+        }
+      }
+
+      async function downloadYoutubeClip(index, button) {
+        if (!youtubeJobId) {
+          setStatus("No active clip job. Analyze a URL first.", true);
+          return;
+        }
+        setStatus(`Rendering MP4 for clip ${index + 1}...`);
+        setYoutubeError("");
+        youtubeHint.textContent = `Rendering MP4 for clip ${index + 1}...`;
+        const originalText = button ? button.textContent : "";
+        if (button) {
+          button.disabled = true;
+          button.textContent = "Rendering...";
+        }
+        try {
+          const blob = await fetchYoutubeClipBlob(index);
+          const clip = youtubeClips[index];
+          const filename = clip
+            ? `${safeFileName(youtubeUrlInput.value || "stream")}-clip-${String(clip.start).replace(".", "-")}-${String(clip.end).replace(".", "-")}.mp4`
+            : `youtube-clip-${index + 1}.mp4`;
+          downloadBlob(blob, filename);
+          setStatus(`Downloaded clip ${index + 1}.`);
+          youtubeHint.textContent = `Downloaded clip ${index + 1}.`;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Could not download clip.";
+          setStatus(`Download failed: ${message}`, true);
+          youtubeHint.textContent = "Download failed.";
+          setYoutubeError(message);
+        } finally {
+          if (button) {
+            button.disabled = false;
+            button.textContent = originalText || "Download mp4";
+          }
+        }
+      }
+
+      async function analyzeYoutube() {
+        const rawUrl = `${youtubeUrlInput.value || ""}`.trim();
+        const clipDuration = Number(youtubeDurationInput.value || 30);
+        const maxClips = Number(youtubeClipCountInput.value || 8);
+
+        if (!rawUrl) {
+          setStatus("Paste a valid YouTube or Kick URL first.", true);
+          return;
+        }
+        saveUrlToVault(rawUrl, { silent: true });
+
+        setStatus("Preparing analysis estimate...");
+        youtubeHint.textContent = "Estimating completion time...";
+        analyzeYoutubeButton.disabled = true;
+        youtubeCandidates.innerHTML = "";
+        youtubeClips = [];
+        youtubeJobId = "";
+        setYoutubeError("");
+
+        const estimateFallback = youtubeEstimateFallbackSeconds(clipDuration, maxClips);
+        let estimatedTotalSeconds = await estimateYoutubeRuntimeSeconds(rawUrl, clipDuration, maxClips);
+        if (!Number.isFinite(estimatedTotalSeconds) || !estimatedTotalSeconds || estimatedTotalSeconds <= 0) {
+          estimatedTotalSeconds = estimateFallback;
+        }
+        const baseEstimateText = formatCountdown(estimatedTotalSeconds);
+
+        youtubeHint.textContent = `Analyzing from URL... est. total ${baseEstimateText}`;
+        setStatus(`Analyzing URL... (est ${baseEstimateText})`);
+        if (activeYoutubeAnalyzeController) {
+          activeYoutubeAnalyzeController.abort();
+        }
+        activeYoutubeAnalyzeController = new AbortController();
+        const startTime = Date.now();
+        let dynamicEstimate = estimatedTotalSeconds;
+        const timeoutId = window.setTimeout(() => {
+          if (activeYoutubeAnalyzeController) {
+            activeYoutubeAnalyzeController.abort();
+          }
+        }, YOUTUBE_ANALYZE_TIMEOUT_MS);
+        youtubeAnalyzeProgressTimer = window.setInterval(() => {
+          const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+          if (elapsedSeconds > dynamicEstimate) {
+            dynamicEstimate = Math.max(Math.round(elapsedSeconds * 1.15), dynamicEstimate + 30);
+          }
+          const remainingSeconds = Math.max(0, dynamicEstimate - elapsedSeconds);
+          youtubeHint.textContent = `Analyzing from URL... ${formatCountdown(elapsedSeconds)} elapsed · ${formatCountdown(remainingSeconds)} remaining`;
+        }, YOUTUBE_ANALYZE_PROGRESS_STEP_MS);
+
+        try {
+          const response = await fetch("/api/youtube/highlights", {
+            method: "POST",
+            signal: activeYoutubeAnalyzeController.signal,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              url: rawUrl,
+              clipDuration: Number.isFinite(clipDuration) ? clipDuration : 30,
+              maxClips: Number.isFinite(maxClips) ? maxClips : 8,
+              useAiScoring: !!youtubeAiInput.checked,
+            }),
+          });
+
+          const isJson = (response.headers.get("content-type") || "").includes("application/json");
+          const payload = isJson ? await response.json() : { error: await response.text() };
+          if (!response.ok) {
+            const message =
+              [payload?.error, payload?.details].filter(Boolean).join(" | ") || "Could not analyze this URL.";
+            setStatus(`URL analyze failed: ${message}`, true);
+            youtubeHint.textContent = "Analysis failed.";
+            setYoutubeError(message);
+            return;
+          }
+
+          const clips = payload.clips || [];
+          youtubeJobId = payload.jobId || "";
+          youtubeClips = clips;
+          renderYoutubeCandidates(clips);
+          const totalElapsed = Math.floor((Date.now() - startTime) / 1000);
+          if (!clips.length) {
+            youtubeHint.textContent = `No clip candidates passed after ${formatCountdown(totalElapsed)}.`;
+            setStatus("No clip candidates found.");
+            return;
+          }
+          youtubeHint.textContent = `Found ${clips.length} candidate clip(s) in ${formatCountdown(totalElapsed)}.`;
+          setStatus(`URL analyze complete: ${clips.length} candidate(s).`);
+        } catch (error) {
+          if (error instanceof Error && error.name === "AbortError") {
+            const totalElapsed = formatCountdown(Math.floor((Date.now() - startTime) / 1000));
+            setStatus(`URL analysis timed out after ${totalElapsed} elapsed.`, true);
+            youtubeHint.textContent = "Analysis timed out.";
+            setYoutubeError(
+              `Request timed out after ${Math.round(YOUTUBE_ANALYZE_TIMEOUT_MS / 1000 / 60)} minutes. ` +
+                "The server job may still be running.",
+            );
+            return;
+          }
+          const message = error instanceof Error ? error.message : "Could not run URL analysis.";
+          setStatus(`URL analyze failed: ${message}`, true);
+          youtubeHint.textContent = "Analysis failed.";
+          setYoutubeError(message);
+        } finally {
+          window.clearTimeout(timeoutId);
+          if (youtubeAnalyzeProgressTimer) {
+            window.clearInterval(youtubeAnalyzeProgressTimer);
+            youtubeAnalyzeProgressTimer = null;
+          }
+          if (activeYoutubeAnalyzeController) {
+            activeYoutubeAnalyzeController = null;
+          }
+          analyzeYoutubeButton.disabled = false;
+        }
+      }
+
+      function downloadBlob(blob, filename) {
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          URL.revokeObjectURL(a.href);
+          a.remove();
+        }, 10000);
+      }
+
+      async function downloadExportAsMp4() {
+        const clipFile = clipInput.files && clipInput.files[0];
+        if (!clipFile) {
+          setStatus("Load the clip again first to export MP4.", true);
+          return;
+        }
+
+        if (!captionSegments.length) {
+          setStatus("No captions available to burn into MP4.", true);
+          return;
+        }
+
+        if (isExporting) {
+          return;
+        }
+
+        isExporting = true;
+        const oldLabel = downloadButton.textContent;
+        downloadButton.textContent = "Rendering MP4...";
+        downloadButton.disabled = true;
+        setStatus("Burning captions into MP4...");
+
+        try {
+          const form = new FormData();
+          form.append("clip", clipFile);
+          form.append("subtitles", createAss());
+          form.append("format", "ass");
+          const response = await fetch("/api/captions/burn", {
+            method: "POST",
+            body: form,
+          });
+          if (!response.ok) {
+            const responseType = response.headers.get("content-type") || "";
+            let details = "Could not render.";
+            if (responseType.includes("application/json")) {
+              const payload = await response.json();
+              details =
+                [payload?.error, payload?.details].filter(Boolean).join(" ") ||
+                payload?.message ||
+                payload?.detail ||
+                details;
+            } else {
+              const responseText = await response.text();
+              if (responseText) details = responseText;
+            }
+            setStatus(`MP4 render failed: ${details}`, true);
+            return;
+          }
+
+          const blob = await response.blob();
+          if (!blob || blob.size === 0) {
+            setStatus("Empty MP4 returned from server.", true);
+            return;
+          }
+
+          const filename = (clipFile.name || "clip").replace(/\.[^.]+$/, "");
+          downloadBlob(blob, `${filename}-with-captions.mp4`);
+          setStatus("Downloaded burned-in MP4.");
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Could not render MP4.";
+          setStatus(`MP4 render failed: ${message}`, true);
+        } finally {
+          isExporting = false;
+          downloadButton.textContent = oldLabel;
+          if (captionSegments.length) downloadButton.disabled = false;
+        }
+      }
+
+      function downloadString(content, filename, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      async function generateCaptions() {
+        const file = clipInput.files && clipInput.files[0];
+        if (!file) {
+          setStatus("Select a video or audio file first.", true);
+          return;
+        }
+
+        if (videoUrl) {
+          URL.revokeObjectURL(videoUrl);
+          videoUrl = null;
+        }
+
+        videoUrl = URL.createObjectURL(file);
+        previewVideo.src = videoUrl;
+        previewVideo.load();
+
+        setStatus("Sending clip to transcriber...");
+        generateButton.disabled = true;
+        downloadButton.disabled = true;
+        copyTextButton.disabled = true;
+
+        try {
+          const form = new FormData();
+          form.append("clip", file);
+          form.append("language", languageInput.value);
+          const response = await fetch("/api/captions", {
+            method: "POST",
+            body: form,
+          });
+
+          const isJson = (response.headers.get("content-type") || "").includes("application/json");
+          const payload = isJson ? await response.json() : { error: await response.text() };
+          if (!response.ok) {
+            const msg =
+              [payload?.error, payload?.details]
+                .filter(Boolean)
+                .join(" | ") || "Could not transcribe this clip.";
+            setStatus(`Transcription failed: ${msg}`, true);
+            generateButton.disabled = false;
+            return;
+          }
+
+          captionSegments = (payload.segments || []).map((segment) => ({
+            start: Number(segment.start),
+            end: Number(segment.end),
+            text: `${segment.text}`.trim(),
+          })).filter((segment) => segment.text.length > 0);
+          rawTranscript = `${payload.text || ""}`.trim();
+
+          if (!captionSegments.length) {
+            setStatus("No readable speech found in this file. Try a shorter clip or clearer audio.", true);
+            generateButton.disabled = false;
+            return;
+          }
+
+          setStatus(`Captured ${captionSegments.length} caption segments`);
+          segmentCount.textContent = `Segments: ${captionSegments.length}`;
+          renderCaptionList();
+          downloadButton.disabled = false;
+          copyTextButton.disabled = false;
+          generateButton.disabled = false;
+          previewVideo.play().catch(() => {});
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : "Unknown error.";
+          setStatus(`Error: ${msg}`, true);
+          generateButton.disabled = false;
+        }
+      }
+
+      function handleDownload() {
+        if (!captionSegments.length) {
+          setStatus("No captions to download.", true);
+          return;
+        }
+
+        if (isExporting && fileFormatInput.value === "mp4") {
+          return;
+        }
+
+        const filename = (clipInput.files?.[0]?.name || "clip").replace(/\.[^.]+$/, "");
+        const format = fileFormatInput.value;
+        if (format === "mp4") {
+          downloadExportAsMp4();
+          return;
+        }
+        const extension = format === "ass" ? "ass" : format === "vtt" ? "vtt" : "srt";
+        if (format === "ass") {
+          downloadString(createAss(), `${filename}-captions.${extension}`, "text/plain;charset=utf-8");
+        } else if (format === "vtt") {
+          downloadString(createVtt(), `${filename}-captions.${extension}`, "text/vtt;charset=utf-8");
+        } else {
+          downloadString(createSrt(), `${filename}-captions.${extension}`, "text/plain;charset=utf-8");
+        }
+        setStatus(`Downloaded ${extension.toUpperCase()} file.`);
+      }
+
+      function handleCopyTranscript() {
+        if (!rawTranscript) return;
+        navigator.clipboard.writeText(rawTranscript).then(() => {
+          setStatus("Transcript copied to clipboard.");
+        });
+      }
+
+      function clearAll() {
+        captionSegments = [];
+        rawTranscript = "";
+        captionsList.innerHTML = "";
+        segmentCount.textContent = "";
+        downloadButton.disabled = true;
+        copyTextButton.disabled = true;
+        setStatus("Cleared.");
+        captionOverlay.textContent = "";
+        captionOverlay.classList.remove("show");
+        if (videoUrl) {
+          URL.revokeObjectURL(videoUrl);
+          videoUrl = null;
+        }
+        previewVideo.removeAttribute("src");
+        syncPreviewControls();
+      }
+
+      previewSeekInput.addEventListener("input", () => {
+        const next = Number(previewSeekInput.value || 0);
+        if (!Number.isFinite(next)) return;
+        previewVideo.currentTime = next;
+        syncPreviewControls();
+      });
+
+      seekStartButton.addEventListener("click", () => {
+        previewVideo.currentTime = 0;
+        syncPreviewControls();
+      });
+
+      seekEndButton.addEventListener("click", () => {
+        const duration = Number(previewVideo.duration);
+        if (!Number.isFinite(duration) || duration <= 0) return;
+        previewVideo.currentTime = Math.max(0, duration - 0.05);
+        syncPreviewControls();
+      });
+
+      seekBackButton.addEventListener("click", () => {
+        seekBy(-5);
+      });
+
+      seekForwardButton.addEventListener("click", () => {
+        seekBy(5);
+      });
+
+      previewVideo.addEventListener("loadedmetadata", syncPreviewControls);
+      previewVideo.addEventListener("durationchange", syncPreviewControls);
+      previewVideo.addEventListener("seeked", syncPreviewControls);
+
+      previewVideo.addEventListener("timeupdate", () => {
+        syncPreviewControls();
+        if (!captionSegments.length) {
+          setOverlayText(-1);
+          return;
+        }
+        const idx = activeCaption(previewVideo.currentTime);
+        if (idx !== activeSegment) {
+          activeSegment = idx;
+          setOverlayText(idx);
+        }
+      });
+
+      previewVideo.addEventListener("ended", () => {
+        setOverlayText(-1);
+      });
+
+      clipInput.addEventListener("change", () => {
+        const file = clipInput.files && clipInput.files[0];
+        if (!file) {
+          return;
+        }
+        if (videoUrl) {
+          URL.revokeObjectURL(videoUrl);
+          videoUrl = null;
+        }
+        videoUrl = URL.createObjectURL(file);
+        previewVideo.src = videoUrl;
+        previewVideo.load();
+        setStatus(`Loaded ${file.name}`);
+      });
+
+      saveVaultUrlButton.addEventListener("click", () => {
+        saveUrlToVault(youtubeUrlInput.value, { silent: false });
+      });
+      analyzeYoutubeButton.addEventListener("click", analyzeYoutube);
+      generateButton.addEventListener("click", generateCaptions);
+      downloadButton.addEventListener("click", handleDownload);
+      copyTextButton.addEventListener("click", handleCopyTranscript);
+      clearButton.addEventListener("click", clearAll);
+      fontSizeInput.addEventListener("input", applyStyleToOverlay);
+      lineCharsInput.addEventListener("input", applyStyleToOverlay);
+      strokeInput.addEventListener("input", applyStyleToOverlay);
+      stylePreset.addEventListener("change", applyStyleToOverlay);
+      positionInput.addEventListener("change", applyStyleToOverlay);
+      captionMotionInput.addEventListener("change", applyStyleToOverlay);
+      fileFormatInput.addEventListener("change", () => {
+        setStatus(`Export format set to ${fileFormatInput.value.toUpperCase()}`);
+      });
+
+      applyStyleToOverlay();
+      setStatus("Ready. Load a clip and click Generate captions.");
+      refreshFfmpegStatus();
+      syncPreviewControls();
+      renderVaultList();
+    </script>
+  </body>
+</html>

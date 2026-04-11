@@ -20,7 +20,15 @@ function unwrap<T>(value: T | null | undefined): T | null {
   return value ?? null;
 }
 
+function hasSupabaseConfig() {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+}
+
 export async function getCurrentSessionIdentity(): Promise<{ user: DbUser | null; profile: Profile | null }> {
+  if (!hasSupabaseConfig()) {
+    return { user: null, profile: null };
+  }
+
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },

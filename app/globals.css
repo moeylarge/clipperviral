@@ -73,6 +73,30 @@ body {
     @apply space-y-10;
   }
 
+  .kick-banner {
+    @apply flex items-end gap-3 rounded-lg border bg-black/45 px-4 py-3 text-foreground shadow-[0_16px_55px_-34px_rgba(0,0,0,0.9)] backdrop-blur;
+    border-color: rgba(255, 255, 255, 0.12);
+    border-width: 1px;
+  }
+
+  .kick-banner a,
+  .kick-banner p {
+    @apply m-0 text-3xl font-semibold leading-none md:text-[40px];
+    letter-spacing: 0;
+    color: hsl(var(--foreground));
+    text-decoration: none;
+  }
+
+  .kick-logo {
+    @apply flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-md bg-[#53fc18] text-black;
+  }
+
+  .kick-logo svg {
+    width: 32px;
+    height: 32px;
+    fill: currentColor;
+  }
+
   .surface-panel {
     @apply rounded-2xl border border-white/[0.18] bg-surface-2/85 backdrop-blur-[12px];
   }
