@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button";
 
 export function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
+  const oauthCallbackError = searchParams.get("error") === "oauth_callback_failed";
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -67,6 +69,12 @@ export function SignInForm() {
       >
         {isGoogleSubmitting ? "Redirecting to Google..." : "Continue with Google"}
       </Button>
+
+      {oauthCallbackError ? (
+        <p className="text-sm text-rose-600">
+          Google OAuth callback failed. Check Supabase Google provider redirect settings and try again.
+        </p>
+      ) : null}
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
