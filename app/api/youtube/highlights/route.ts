@@ -78,6 +78,38 @@ function getYtDlpFfmpegLocation() {
 const YTDLP_COOKIES_TMP_PATH = path.join(os.tmpdir(), "clipperviral-ytdlp-cookies.txt");
 let ytdlpCookiesPromise: Promise<string | null> | null = null;
 
+function looksLikeNetscapeCookieText(text: string) {
+  const normalized = text.replace(/\r\n/g, "\n").trim();
+  if (!normalized.length) return false;
+  if (normalized.includes("# Netscape HTTP Cookie File")) return true;
+  const dataLines = normalized
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length && !line.startsWith("#"));
+  return dataLines.some((line) => line.split("\t").length >= 7);
+}
+
+function normalizeCookiePayload(value: string | undefined) {
+  const raw = value?.trim();
+  if (!raw) return null;
+
+  if (looksLikeNetscapeCookieText(raw)) {
+    const normalized = raw.replace(/\r\n/g, "\n").trim();
+    return `${normalized}\n`;
+  }
+
+  try {
+    const decoded = Buffer.from(raw, "base64").toString("utf8").trim();
+    if (decoded.length && looksLikeNetscapeCookieText(decoded)) {
+      return `${decoded.replace(/\r\n/g, "\n").trim()}\n`;
+    }
+  } catch {
+    // ignore decode failures
+  }
+
+  return null;
+}
+
 async function resolveYtDlpCookieFile() {
   if (ytdlpCookiesPromise) {
     return ytdlpCookiesPromise;
@@ -94,19 +126,20 @@ async function resolveYtDlpCookieFile() {
       }
     }
 
-    const cookieText = process.env.YTDLP_COOKIES?.trim();
+    const cookieText = normalizeCookiePayload(process.env.YTDLP_COOKIES);
     if (cookieText) {
       await fs.writeFile(YTDLP_COOKIES_TMP_PATH, cookieText, "utf8");
       return YTDLP_COOKIES_TMP_PATH;
     }
 
-    const cookieB64 = process.env.YTDLP_COOKIES_B64?.trim();
+    const cookieB64 = normalizeCookiePayload(process.env.YTDLP_COOKIES_B64);
     if (cookieB64) {
-      const decoded = Buffer.from(cookieB64, "base64").toString("utf8");
-      if (decoded.trim().length) {
-        await fs.writeFile(YTDLP_COOKIES_TMP_PATH, decoded, "utf8");
-        return YTDLP_COOKIES_TMP_PATH;
-      }
+      await fs.writeFile(YTDLP_COOKIES_TMP_PATH, cookieB64, "utf8");
+      return YTDLP_COOKIES_TMP_PATH;
+    }
+
+    if (process.env.YTDLP_COOKIES || process.env.YTDLP_COOKIES_B64) {
+      console.warn("YTDLP cookies were provided but not recognized as Netscape cookie format.");
     }
 
     return null;
