@@ -2,7 +2,7 @@
 
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
-import { createReadStream } from "node:fs";
+import { createReadStream, existsSync } from "node:fs";
 import { mkdir, readdir, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -12,11 +12,29 @@ const PORT = Number(process.env.PORT || 8787);
 const HOST = process.env.HOST || "0.0.0.0";
 const TOKEN = (process.env.YTDLP_PROXY_TOKEN || "").trim();
 const YTDLP_BIN = (process.env.YTDLP_BIN || "yt-dlp").trim();
-const FFMPEG_PATH = (process.env.FFMPEG_PATH || "").trim();
 const USER_AGENT =
   (process.env.YTDLP_USER_AGENT || "").trim() ||
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36";
 const COOKIE_FILE = (process.env.YTDLP_COOKIE_FILE || "").trim();
+
+function resolveBundledFfmpegPath() {
+  const explicit = (process.env.FFMPEG_PATH || "").trim();
+  const candidates = [
+    explicit,
+    path.join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg"),
+    path.join(process.cwd(), "node_modules", "@ffmpeg-installer", `${process.platform}-${process.arch}`, "ffmpeg"),
+    path.join(process.cwd(), "node_modules", "@ffmpeg-installer", "darwin-arm64", "ffmpeg"),
+    path.join(process.cwd(), "node_modules", "@ffmpeg-installer", "linux-x64", "ffmpeg"),
+    "ffmpeg",
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (candidate === "ffmpeg" || existsSync(candidate)) return candidate;
+  }
+  return "";
+}
+
+const FFMPEG_PATH = resolveBundledFfmpegPath();
 
 function sendJson(res, status, payload) {
   res.statusCode = status;
@@ -297,6 +315,10 @@ function buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, aud
     args.push("--extractor-args", "youtube:player_client=android");
   } else {
     args.push("-f", audioOnly ? "worstaudio/worst" : formatPref || "bestvideo+bestaudio/best");
+  }
+
+  if (audioOnly && FFMPEG_PATH) {
+    args.push("--extract-audio", "--audio-format", "m4a", "--postprocessor-args", "ffmpeg:-ar 16000 -ac 1 -b:a 24k");
   }
 
   args.push(sourceUrl);
