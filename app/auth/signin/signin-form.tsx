@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -16,6 +16,48 @@ export function SignInForm() {
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
   const oauthCallbackError = searchParams.get("error") === "oauth_callback_failed";
+
+  useEffect(() => {
+    const hash = window.location.hash.replace(/^#/, "");
+    if (!hash) return;
+
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+
+    if (!accessToken || !refreshToken) return;
+
+    const finalizeHashSession = async () => {
+      setIsGoogleSubmitting(true);
+      setError("");
+      try {
+        const supabase = createBrowserSupabaseClient();
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (sessionError) {
+          setError(sessionError.message);
+          return;
+        }
+
+        window.history.replaceState(null, "", window.location.pathname);
+        router.replace("/");
+        router.refresh();
+      } catch (sessionUnexpectedError) {
+        setError(
+          sessionUnexpectedError instanceof Error
+            ? sessionUnexpectedError.message
+            : "Failed to finalize Google session."
+        );
+      } finally {
+        setIsGoogleSubmitting(false);
+      }
+    };
+
+    void finalizeHashSession();
+  }, [router]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
