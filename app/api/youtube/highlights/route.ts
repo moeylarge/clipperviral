@@ -75,6 +75,50 @@ function getYtDlpFfmpegLocation() {
   return absolute || null;
 }
 
+function getYtDlpReleaseUrls() {
+  const configured = process.env.YTDLP_BINARY_URL?.trim();
+  if (configured) return [configured];
+
+  const urls: string[] = [];
+  if (process.platform === "linux") {
+    if (process.arch === "x64") {
+      urls.push("https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux");
+    }
+    if (process.arch === "arm64") {
+      urls.push("https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux_aarch64");
+    }
+  } else if (process.platform === "darwin") {
+    if (process.arch === "arm64") {
+      urls.push("https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos");
+    } else {
+      urls.push("https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos_legacy");
+    }
+  }
+
+  // Generic fallback from upstream in case platform-specific asset mapping changes.
+  urls.push("https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp");
+  return [...new Set(urls)];
+}
+
+async function tryDownloadYtDlpBinary(targetPath: string) {
+  const urls = getYtDlpReleaseUrls();
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, { redirect: "follow" });
+      if (!response.ok) continue;
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      if (!bytes.length) continue;
+      await fs.writeFile(targetPath, bytes);
+      await fs.chmod(targetPath, 0o755);
+      await fs.access(targetPath, fsConstants.X_OK);
+      return true;
+    } catch {
+      // try next url
+    }
+  }
+  return false;
+}
+
 async function ensureYtDlpRuntimeBinary() {
   if (ytdlpBootstrapPromise) {
     return ytdlpBootstrapPromise;
@@ -88,6 +132,14 @@ async function ensureYtDlpRuntimeBinary() {
       // continue to download
     }
 
+    try {
+      const downloaded = await tryDownloadYtDlpBinary(YTDLP_RUNTIME_BINARY_PATH);
+      if (downloaded) return YTDLP_RUNTIME_BINARY_PATH;
+    } catch {
+      // fall through
+    }
+
+    // Legacy fallback if direct release download fails.
     try {
       const loaded = require("yt-dlp-wrap");
       const YtDlpWrap = loaded?.default || loaded;
