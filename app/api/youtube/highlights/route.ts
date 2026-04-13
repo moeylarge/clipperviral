@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { promises as fs } from "node:fs";
+import { promises as fs, constants as fsConstants } from "node:fs";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import os from "node:os";
@@ -16,6 +16,8 @@ const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
 const DEFAULT_COMMAND_TIMEOUT_MS = 45 * 60 * 1000;
 const YTDLP_DOWNLOAD_TIMEOUT_MS = 45 * 60 * 1000;
+const YTDLP_RUNTIME_BINARY_PATH = path.join(os.tmpdir(), "clipperviral-yt-dlp");
+let ytdlpBootstrapPromise: Promise<string | null> | null = null;
 
 const requireFfmpegPath = () => {
   try {
@@ -73,18 +75,54 @@ function getYtDlpFfmpegLocation() {
   return absolute || null;
 }
 
-function getYtDlpCandidates(): CommandCandidate[] {
-  const configured = process.env.YTDLP_PATH?.trim();
-  if (configured) {
-    const tokens = configured.split(/\s+/).filter(Boolean);
-    if (tokens.length > 1) {
-      const [command, ...args] = tokens;
-      return [{ command, args }];
-    }
-    return [{ command: configured }];
+async function ensureYtDlpRuntimeBinary() {
+  if (ytdlpBootstrapPromise) {
+    return ytdlpBootstrapPromise;
   }
 
-  return [
+  ytdlpBootstrapPromise = (async () => {
+    try {
+      await fs.access(YTDLP_RUNTIME_BINARY_PATH, fsConstants.X_OK);
+      return YTDLP_RUNTIME_BINARY_PATH;
+    } catch {
+      // continue to download
+    }
+
+    try {
+      const loaded = require("yt-dlp-wrap");
+      const YtDlpWrap = loaded?.default || loaded;
+      if (YtDlpWrap && typeof YtDlpWrap.downloadFromGithub === "function") {
+        await YtDlpWrap.downloadFromGithub(YTDLP_RUNTIME_BINARY_PATH);
+        await fs.chmod(YTDLP_RUNTIME_BINARY_PATH, 0o755);
+        return YTDLP_RUNTIME_BINARY_PATH;
+      }
+    } catch {
+      // fall back to system-level candidates
+    }
+
+    return null;
+  })();
+
+  return ytdlpBootstrapPromise;
+}
+
+function parseConfiguredYtDlpCommand(value: string | undefined): CommandCandidate[] {
+  const configured = value?.trim();
+  if (!configured) return [];
+  const tokens = configured.split(/\s+/).filter(Boolean);
+  if (tokens.length > 1) {
+    const [command, ...args] = tokens;
+    return [{ command, args }];
+  }
+  return [{ command: configured }];
+}
+
+async function getYtDlpCandidates(): Promise<CommandCandidate[]> {
+  const runtimeYtDlp = await ensureYtDlpRuntimeBinary();
+  const configured = parseConfiguredYtDlpCommand(process.env.YTDLP_PATH);
+  const rawCandidates: CommandCandidate[] = [
+    ...configured,
+    ...(runtimeYtDlp ? [{ command: runtimeYtDlp }] : []),
     { command: "yt-dlp" },
     { command: "youtube-dl" },
     { command: "/opt/homebrew/bin/yt-dlp" },
@@ -95,6 +133,17 @@ function getYtDlpCandidates(): CommandCandidate[] {
     { command: "python3.10", args: ["-m", "yt_dlp"] },
     { command: "python3", args: ["-m", "yt_dlp"] },
   ];
+
+  const deduped = new Map<string, CommandCandidate>();
+  for (const candidate of rawCandidates) {
+    if (!candidate.command?.trim()) continue;
+    const key = `${candidate.command}::${(candidate.args || []).join(" ")}`;
+    if (!deduped.has(key)) {
+      deduped.set(key, candidate);
+    }
+  }
+
+  return [...deduped.values()];
 }
 
 function ytDlpDownloadAttempts(
@@ -793,7 +842,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const ytdlpCandidates = getYtDlpCandidates();
+    const ytdlpCandidates = await getYtDlpCandidates();
     const ytdlpCommand = ytdlpCandidates[0];
     if (!ytdlpCommand) {
       return NextResponse.json(
@@ -990,7 +1039,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "A valid YouTube or Kick URL is required." }, { status: 400 });
     }
 
-    const ytdlpCandidates = getYtDlpCandidates();
+    const ytdlpCandidates = await getYtDlpCandidates();
     if (!ytdlpCandidates.length) {
       return NextResponse.json(
         {
