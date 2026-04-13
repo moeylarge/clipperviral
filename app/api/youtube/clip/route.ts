@@ -29,10 +29,20 @@ const ffmpegStatic = (() => {
   }
 })();
 
+const ffmpegInstallerPath = (() => {
+  try {
+    const installer = require("@ffmpeg-installer/ffmpeg");
+    return installer && typeof installer.path === "string" ? installer.path : null;
+  } catch {
+    return null;
+  }
+})();
+
 function getCandidates() {
   return [
     process.env.FFMPEG_PATH?.trim(),
     ffmpegStatic,
+    ffmpegInstallerPath,
     "ffmpeg",
     "/usr/local/bin/ffmpeg",
     "/opt/homebrew/bin/ffmpeg",

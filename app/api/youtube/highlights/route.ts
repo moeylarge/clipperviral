@@ -31,6 +31,15 @@ const requireFfmpegPath = () => {
   }
 };
 
+const requireInstallerFfmpegPath = () => {
+  try {
+    const installer = require("@ffmpeg-installer/ffmpeg");
+    return installer && typeof installer.path === "string" ? installer.path : null;
+  } catch {
+    return null;
+  }
+};
+
 type CommandCandidate = {
   command: string;
   args?: string[];
@@ -50,6 +59,7 @@ function getBinaryCandidates() {
   return [
     ffmpegPath,
     requireFfmpegPath(),
+    requireInstallerFfmpegPath(),
     "ffmpeg",
     "/usr/local/bin/ffmpeg",
     "/opt/homebrew/bin/ffmpeg",

@@ -40,7 +40,7 @@ export const dashboardTools: DashboardTool[] = [
     id: "youtube",
     label: "YouTube AI Clips",
     shortLabel: "YouTube AI",
-    href: "/caption-template.html#youtube-auto-highlights",
+    href: "/format-template.html#youtube-auto-highlights",
     routeSlug: "youtube-ai-clips",
     description: "Paste a URL and get ranked AI clip candidates with quick export.",
     status: "Production ready",
