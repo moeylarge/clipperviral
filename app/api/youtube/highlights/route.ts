@@ -652,6 +652,7 @@ async function downloadSourceViaProxy(options: {
   ffmpegLocation: string | null;
   outputTemplate: string;
   workdir: string;
+  audioOnly?: boolean;
 }): Promise<ProxyDownloadResult> {
   const proxyUrl = getYtDlpProxyUrl();
   if (!proxyUrl) {
@@ -686,6 +687,7 @@ async function downloadSourceViaProxy(options: {
         formatPref: options.formatPref,
         ffmpegLocation: options.ffmpegLocation,
         outputTemplate: options.outputTemplate,
+        audioOnly: Boolean(options.audioOnly),
       }),
       signal: controller.signal,
     });
@@ -760,6 +762,11 @@ async function downloadSourceViaProxy(options: {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function looksLikeAudioFile(filePath: string) {
+  const ext = path.extname(filePath).toLowerCase();
+  return [".m4a", ".mp3", ".aac", ".wav", ".ogg", ".opus", ".flac", ".webm"].includes(ext);
 }
 
 function toCommandCandidates(commands: string[]): CommandCandidate[] {
@@ -1314,9 +1321,9 @@ export async function POST(req: NextRequest) {
 
     const ffmpegCommand = (() => {
       const candidates = getBinaryCandidates();
-      return candidates[0];
+      return candidates[0] || null;
     })();
-    if (!ffmpegCommand) {
+    if (!ffmpegCommand && !hasYtDlpProxy()) {
       return NextResponse.json(
         { error: "FFmpeg is not installed. Install ffmpeg or set FFMPEG_PATH." },
         { status: 500 },
@@ -1451,13 +1458,16 @@ export async function POST(req: NextRequest) {
       if (!sourceStats.size) {
         return NextResponse.json({ error: "Downloaded file is empty." }, { status: 500 });
       }
-      let duration = await getDurationSeconds(ffmpegCommand, resolvedSourcePath);
-      if (!duration || !Number.isFinite(duration)) {
-        const normalized = await normalizeSourceForProbe(ffmpegCommand, resolvedSourcePath, workdir);
-        if (normalized) {
-          const normalizedDuration = await getDurationSeconds(ffmpegCommand, normalized);
-          if (normalizedDuration && Number.isFinite(normalizedDuration)) {
-            duration = normalizedDuration;
+      let duration: number | null = null;
+      if (ffmpegCommand) {
+        duration = await getDurationSeconds(ffmpegCommand, resolvedSourcePath);
+        if (!duration || !Number.isFinite(duration)) {
+          const normalized = await normalizeSourceForProbe(ffmpegCommand, resolvedSourcePath, workdir);
+          if (normalized) {
+            const normalizedDuration = await getDurationSeconds(ffmpegCommand, normalized);
+            if (normalizedDuration && Number.isFinite(normalizedDuration)) {
+              duration = normalizedDuration;
+            }
           }
         }
       }
@@ -1467,27 +1477,62 @@ export async function POST(req: NextRequest) {
           : 0;
       }
 
-      const audioPath = path.join(workdir, "audio_for_transcript.m4a");
-      const extractResult = await runWithFallback(() => toCommandCandidates([ffmpegCommand]), [
-        "-y",
-        "-i",
-        resolvedSourcePath,
-        "-vn",
-        "-ar",
-        "16000",
-        "-ac",
-        "1",
-        "-c:a",
-        "aac",
-        "-b:a",
-        "64k",
-        audioPath,
-      ]);
-      if (!extractResult.ok) {
-        const message = `${(extractResult.error as Error)?.message || "Audio extraction failed."} ${
-          (extractResult.error as { code?: string })?.code === "ENOENT" ? "FFmpeg not available." : ""
-        }`;
-        return NextResponse.json({ error: "Could not extract audio for transcription.", details: message }, { status: 500 });
+      let audioPath: string | null = looksLikeAudioFile(resolvedSourcePath) ? resolvedSourcePath : null;
+      let extractFailure: string | null = null;
+      if (!audioPath && ffmpegCommand) {
+        const candidateAudioPath = path.join(workdir, "audio_for_transcript.m4a");
+        const extractResult = await runWithFallback(() => toCommandCandidates([ffmpegCommand]), [
+          "-y",
+          "-i",
+          resolvedSourcePath,
+          "-vn",
+          "-ar",
+          "16000",
+          "-ac",
+          "1",
+          "-c:a",
+          "aac",
+          "-b:a",
+          "64k",
+          candidateAudioPath,
+        ]);
+        if (extractResult.ok) {
+          audioPath = candidateAudioPath;
+        } else {
+          extractFailure = `${(extractResult.error as Error)?.message || "Audio extraction failed."} ${
+            (extractResult.error as { code?: string })?.code === "ENOENT" ? "FFmpeg not available." : ""
+          }`;
+        }
+      }
+
+      if (!audioPath && proxyConfigured) {
+        const proxyAudioResult = await downloadSourceViaProxy({
+          sourceUrl,
+          sourceKind,
+          formatPref,
+          ffmpegLocation: ytdlpFfmpegLocation,
+          outputTemplate: path.join(workdir, "source-audio.%(ext)s"),
+          workdir,
+          audioOnly: true,
+        });
+        if (proxyAudioResult.ok) {
+          audioPath = proxyAudioResult.sourcePath;
+        } else {
+          const details = [extractFailure, `External audio extraction failed: ${proxyAudioResult.error}`]
+            .filter(Boolean)
+            .join(" | ");
+          return NextResponse.json(
+            { error: "Could not extract audio for transcription.", details },
+            { status: 500 },
+          );
+        }
+      }
+
+      if (!audioPath) {
+        return NextResponse.json(
+          { error: "Could not extract audio for transcription.", details: extractFailure || "FFmpeg not available." },
+          { status: 500 },
+        );
       }
 
       const transcripts = await transcribeAudio(audioPath, apiKey, language);

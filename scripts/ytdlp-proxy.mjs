@@ -88,7 +88,7 @@ function runCommand(command, args, timeoutMs = 15 * 60 * 1000) {
   });
 }
 
-function buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref }) {
+function buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, audioOnly }) {
   const args = [
     "--no-playlist",
     "--no-warnings",
@@ -103,8 +103,6 @@ function buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref }) {
     "20",
     "--user-agent",
     USER_AGENT,
-    "--merge-output-format",
-    "mp4",
     "-o",
     outputTemplate,
   ];
@@ -116,12 +114,23 @@ function buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref }) {
     args.push("--cookies", COOKIE_FILE);
   }
 
+  if (audioOnly) {
+    args.push("-x", "--audio-format", "m4a", "--audio-quality", "0");
+  } else {
+    args.push("--merge-output-format", "mp4");
+  }
+
   if (sourceKind === "youtube") {
     args.push("--geo-bypass");
-    args.push("-f", formatPref || "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best");
+    args.push(
+      "-f",
+      audioOnly
+        ? "bestaudio[ext=m4a]/bestaudio/best"
+        : formatPref || "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+    );
     args.push("--extractor-args", "youtube:player_client=android");
   } else {
-    args.push("-f", formatPref || "bestvideo+bestaudio/best");
+    args.push("-f", audioOnly ? "bestaudio/best" : formatPref || "bestvideo+bestaudio/best");
   }
 
   args.push(sourceUrl);
@@ -168,11 +177,15 @@ const server = createServer(async (req, res) => {
     }
 
     const sourceKind = normalizeSourceKind(payload.sourceKind || detectSourceKind(sourceUrl));
+    const audioOnly =
+      payload.audioOnly === true ||
+      payload.audioOnly === 1 ||
+      `${payload.audioOnly || ""}`.toLowerCase() === "true";
     const formatPref = `${payload.formatPref || ""}`.trim();
     const workdir = path.join(tmpdir(), `ytdlp-proxy-${randomUUID()}`);
     await mkdir(workdir, { recursive: true });
     const outputTemplate = path.join(workdir, "source.%(ext)s");
-    const args = buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref });
+    const args = buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, audioOnly });
     const result = await runCommand(YTDLP_BIN, args);
 
     if (!result.ok) {
