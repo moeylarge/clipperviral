@@ -8,6 +8,7 @@ import { createRequire } from "node:module";
 import { NextRequest, NextResponse } from "next/server";
 
 import { registerYoutubeJob } from "@/lib/youtube-job-store";
+import { requireAllowedApiUser } from "@/lib/auth/api-access";
 
 export const runtime = "nodejs";
 
@@ -741,6 +742,11 @@ async function askGptToScore(
 
 export async function POST(req: NextRequest) {
   try {
+    const access = await requireAllowedApiUser();
+    if (!access.ok) {
+      return access.response;
+    }
+
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
@@ -754,7 +760,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid request body. Send JSON with url." }, { status: 400 });
     }
 
-    const sourceUrl = `${body.youtubeUrl || body.url || ""}`.trim();
+    const sourceUrl = `${body.youtubeUrl || body.sourceUrl || body.url || ""}`.trim();
     const sourceKind = detectSourceKind(sourceUrl);
     const clipDuration = clipDurationSafe(body.clipDuration as string | undefined);
     const maxClips = maxClipsSafe(body.maxClips as string | undefined);

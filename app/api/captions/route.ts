@@ -6,6 +6,7 @@ import { promises as fs } from "node:fs";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import os from "node:os";
+import { requireAllowedApiUser } from "@/lib/auth/api-access";
 
 export const runtime = "nodejs";
 
@@ -142,6 +143,24 @@ function normalizeLanguage(value: unknown) {
   return next && next !== "auto" ? next : null;
 }
 
+function isDecodeOrFormatError(details: unknown) {
+  if (typeof details !== "string") return false;
+  const message = details.toLowerCase();
+  return (
+    message.includes("could not be decoded") ||
+    message.includes("format is not supported") ||
+    message.includes("unsupported format")
+  );
+}
+
+function isMissingAudioStreamError(message: string | null | undefined, stderr: string | null | undefined) {
+  const combined = `${message || ""}\n${stderr || ""}`.toLowerCase();
+  return (
+    combined.includes("output file does not contain any stream") ||
+    combined.includes("stream map '0:a' matches no streams")
+  );
+}
+
 async function transcribeByChunking(file: File, apiKey: string, language: string | null) {
   const workdir = path.join(os.tmpdir(), `spotlight-caption-split-${randomUUID()}`);
   let cumulativeOffset = 0;
@@ -191,6 +210,18 @@ async function transcribeByChunking(file: File, apiKey: string, language: string
         message === "Failed to split clip into chunks." && !stderr && splitResult.attempted
           ? `No ffmpeg binary worked. Attempted: ${describeFfmpegCandidates()}`
           : `${message}${stderr ? `\n${stderr}` : ""}`;
+
+      if (isMissingAudioStreamError(message, stderr)) {
+        return {
+          ok: false as const,
+          error: {
+            error: "No audio track detected in this clip.",
+            details:
+              "This video appears to have no audio stream, so captions cannot be generated. Upload a clip with audio or add audio to the video first.",
+            status: 400,
+          },
+        };
+      }
 
       const commandNotFound = typed.code === "ENOENT" || message.includes("spawn") && message.includes("ENOENT");
       if (splitResult.attempted && commandNotFound) {
@@ -282,6 +313,11 @@ type WhisperResponse = {
 
 export async function POST(req: NextRequest) {
   try {
+    const access = await requireAllowedApiUser();
+    if (!access.ok) {
+      return access.response;
+    }
+
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
@@ -320,6 +356,21 @@ export async function POST(req: NextRequest) {
     const resultData = await transcribeSingle(uploaded, apiKey, language);
     if (!resultData.ok) {
       const errorPayload = resultData.error;
+
+      // Some uploads are valid video files but use audio/container combos Whisper won't decode directly.
+      // Retry via ffmpeg conversion/chunking to produce Whisper-safe audio before failing.
+      if (isDecodeOrFormatError(errorPayload.details)) {
+        const fallback = await transcribeByChunking(uploaded, apiKey, language);
+        if (fallback.ok) {
+          return NextResponse.json({
+            text: fallback.result.text,
+            segments: fallback.result.segments,
+          });
+        }
+
+        return NextResponse.json(fallback.error, { status: fallback.error.status === 413 ? 413 : 502 });
+      }
+
       return NextResponse.json(
         {
           error: errorPayload.error,

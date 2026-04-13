@@ -8,6 +8,7 @@ import { createRequire } from "node:module";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getYoutubeJob, touchYoutubeJob } from "@/lib/youtube-job-store";
+import { requireAllowedApiUser } from "@/lib/auth/api-access";
 
 export const runtime = "nodejs";
 
@@ -66,6 +67,11 @@ function filenameSafe(name: string) {
 }
 
 export async function GET(req: NextRequest) {
+  const access = await requireAllowedApiUser();
+  if (!access.ok) {
+    return access.response;
+  }
+
   const params = new URL(req.url).searchParams;
   const jobId = params.get("jobId") || "";
   const clipIndexRaw = params.get("index");
