@@ -204,14 +204,21 @@ async function ensureYtDlpRuntimeBinary() {
   ytdlpBootstrapPromise = (async () => {
     try {
       await fs.access(YTDLP_RUNTIME_BINARY_PATH, fsConstants.X_OK);
-      return YTDLP_RUNTIME_BINARY_PATH;
+      const existingIsNative = await isNativeYtDlpBinary(YTDLP_RUNTIME_BINARY_PATH);
+      if (existingIsNative) {
+        return YTDLP_RUNTIME_BINARY_PATH;
+      }
+      await fs.rm(YTDLP_RUNTIME_BINARY_PATH, { force: true });
     } catch {
-      // continue to download
+      // continue to download or refresh
     }
 
     try {
       const downloaded = await tryDownloadYtDlpBinary(YTDLP_RUNTIME_BINARY_PATH);
-      if (downloaded) return YTDLP_RUNTIME_BINARY_PATH;
+      if (downloaded) {
+        const downloadedIsNative = await isNativeYtDlpBinary(YTDLP_RUNTIME_BINARY_PATH);
+        if (downloadedIsNative) return YTDLP_RUNTIME_BINARY_PATH;
+      }
     } catch {
       // fall through
     }
@@ -233,7 +240,59 @@ function parseConfiguredYtDlpCommand(value: string | undefined): CommandCandidat
   return [{ command: configured }];
 }
 
+function isPythonYtDlpCandidate(candidate: CommandCandidate) {
+  const command = candidate.command.toLowerCase();
+  const argsJoined = (candidate.args || []).join(" ").toLowerCase();
+  const usesPythonCommand = command.includes("python");
+  const runsYtDlpModule = argsJoined.includes("yt_dlp");
+  return usesPythonCommand || runsYtDlpModule;
+}
+
+function isLikelyPath(value: string) {
+  return value.startsWith("/") || value.startsWith("./") || value.startsWith("../");
+}
+
+async function sanitizeConfiguredYtDlpCandidates(candidates: CommandCandidate[], allowPythonFallback: boolean) {
+  const validated: CommandCandidate[] = [];
+
+  for (const candidate of candidates) {
+    if (isPythonYtDlpCandidate(candidate) && !allowPythonFallback) {
+      continue;
+    }
+
+    const command = candidate.command.trim();
+    if (!command) continue;
+
+    if (!isLikelyPath(command)) {
+      validated.push(candidate);
+      continue;
+    }
+
+    const absolutePath = path.isAbsolute(command) ? command : path.resolve(process.cwd(), command);
+    try {
+      await fs.access(absolutePath, fsConstants.X_OK);
+    } catch {
+      continue;
+    }
+
+    const commandName = path.basename(absolutePath).toLowerCase();
+    const isYtDlpBinaryPath = commandName === "yt-dlp" || commandName === "youtube-dl";
+    if (isYtDlpBinaryPath) {
+      const native = await isNativeYtDlpBinary(absolutePath);
+      if (!native && !allowPythonFallback) {
+        continue;
+      }
+    }
+
+    validated.push({ ...candidate, command: absolutePath });
+  }
+
+  return validated;
+}
+
 async function getYtDlpCandidates(): Promise<CommandCandidate[]> {
+  const isVercelRuntime = process.env.VERCEL === "1" || Boolean(process.env.VERCEL_URL);
+  const allowPythonFallback = !isVercelRuntime || process.env.YTDLP_ALLOW_PYTHON === "1";
   let runtimeYtDlp: string | null = null;
   const bundledYtDlp = path.join(process.cwd(), "bin", "yt-dlp");
   const bundledIsNative = await isNativeYtDlpBinary(bundledYtDlp);
@@ -247,19 +306,26 @@ async function getYtDlpCandidates(): Promise<CommandCandidate[]> {
   } else {
     runtimeYtDlp = await ensureYtDlpRuntimeBinary();
   }
-  const configured = parseConfiguredYtDlpCommand(process.env.YTDLP_PATH);
+  const configured = await sanitizeConfiguredYtDlpCandidates(
+    parseConfiguredYtDlpCommand(process.env.YTDLP_PATH),
+    allowPythonFallback,
+  );
   const rawCandidates: CommandCandidate[] = [
-    ...configured,
     ...(runtimeYtDlp ? [{ command: runtimeYtDlp }] : []),
+    ...configured,
     { command: "yt-dlp" },
     { command: "youtube-dl" },
     { command: "/opt/homebrew/bin/yt-dlp" },
     { command: "/usr/local/bin/yt-dlp" },
-    { command: process.env.YTDLP_PYTHON?.trim() || "python3", args: ["-m", "yt_dlp"] },
-    { command: "python3.12", args: ["-m", "yt_dlp"] },
-    { command: "python3.11", args: ["-m", "yt_dlp"] },
-    { command: "python3.10", args: ["-m", "yt_dlp"] },
-    { command: "python3", args: ["-m", "yt_dlp"] },
+    ...(allowPythonFallback
+      ? [
+          { command: process.env.YTDLP_PYTHON?.trim() || "python3", args: ["-m", "yt_dlp"] },
+          { command: "python3.12", args: ["-m", "yt_dlp"] },
+          { command: "python3.11", args: ["-m", "yt_dlp"] },
+          { command: "python3.10", args: ["-m", "yt_dlp"] },
+          { command: "python3", args: ["-m", "yt_dlp"] },
+        ]
+      : []),
   ];
 
   const deduped = new Map<string, CommandCandidate>();
@@ -1025,7 +1091,11 @@ export async function POST(req: NextRequest) {
         if ((downloadResult as { saw403?: boolean }).saw403 && sourceKind === "youtube") {
           suggestions.push("YouTube blocked this request (403). Add cookies: set YTDLP_COOKIES_B64 in Vercel from a YouTube cookie export.");
           suggestions.push("Also try setting YTDLP_USER_AGENT to a recent Chrome user agent.");
-          suggestions.push("Optional: set YTDLP_PYTHON to a Python 3.10+ binary (python3.12 recommended).");
+          if (process.env.VERCEL !== "1") {
+            suggestions.push("Optional: set YTDLP_PYTHON to a Python 3.10+ binary (python3.12 recommended).");
+          } else {
+            suggestions.push("If YTDLP_PATH or YTDLP_PYTHON is set in Vercel, remove them so the bundled native /bin/yt-dlp is used.");
+          }
         } else if (sourceKind === "kick") {
           suggestions.push("For private/protected Kick VODs, set YTDLP_COOKIE_FILE from your browser session.");
           suggestions.push("For live channels, use a replay/VOD URL for best results.");
