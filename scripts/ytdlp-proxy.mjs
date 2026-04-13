@@ -274,7 +274,7 @@ async function fetchTranscriptFromMetadata({ sourceUrl, sourceKind, language }) 
     : { ok: false, error: "Caption track contained no parseable text." };
 }
 
-function buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, audioOnly }) {
+function buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, audioOnly, clipStart, clipDuration }) {
   const args = [
     "--no-playlist",
     "--no-warnings",
@@ -319,6 +319,13 @@ function buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, aud
 
   if (audioOnly && FFMPEG_PATH) {
     args.push("--extract-audio", "--audio-format", "m4a", "--postprocessor-args", "ffmpeg:-ar 16000 -ac 1 -b:a 24k");
+  }
+
+  const start = Number(clipStart);
+  const duration = Number(clipDuration);
+  if (!audioOnly && FFMPEG_PATH && Number.isFinite(start) && start >= 0 && Number.isFinite(duration) && duration > 0) {
+    const end = start + duration;
+    args.push("--download-sections", `*${start}-${end}`, "--force-keyframes-at-cuts");
   }
 
   args.push(sourceUrl);
@@ -399,6 +406,8 @@ const server = createServer(async (req, res) => {
     const transcriptOnly = parseBoolean(payload.transcriptOnly);
     const language = `${payload.language || "en"}`.trim();
     const formatPref = `${payload.formatPref || ""}`.trim();
+    const clipStart = Number(payload.clipStart ?? payload.start);
+    const clipDuration = Number(payload.clipDuration ?? payload.duration);
     const workdir = path.join(tmpdir(), `ytdlp-proxy-${randomUUID()}`);
     await mkdir(workdir, { recursive: true });
     const outputTemplate = transcriptOnly
@@ -406,7 +415,7 @@ const server = createServer(async (req, res) => {
       : path.join(workdir, "source.%(ext)s");
     const args = transcriptOnly
       ? buildTranscriptArgs({ sourceUrl, sourceKind, outputTemplate, language })
-      : buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, audioOnly });
+      : buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, audioOnly, clipStart, clipDuration });
     const result = await runCommand(YTDLP_BIN, args);
 
     if (!result.ok) {

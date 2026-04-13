@@ -76,6 +76,105 @@ function filenameSafe(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "-");
 }
 
+function getYtDlpProxyUrl() {
+  return (
+    process.env.YTDLP_PROXY_URL?.trim() ||
+    process.env.YTDLP_DOWNLOADER_URL?.trim() ||
+    ""
+  );
+}
+
+function detectSourceKind(url: string) {
+  const value = url.toLowerCase();
+  if (value.includes("youtube.com") || value.includes("youtu.be")) return "youtube";
+  if (value.includes("kick.com")) return "kick";
+  return "generic";
+}
+
+function parseProxyError(payload: Record<string, unknown>) {
+  const error = typeof payload.error === "string" ? payload.error.trim() : "";
+  const message = typeof payload.message === "string" ? payload.message.trim() : "";
+  const details = typeof payload.details === "string" ? payload.details.trim() : "";
+  if (details && (!error || /^yt-dlp failed\.?$/i.test(error))) return details;
+  const value = error || message || details;
+  return value.length ? value : null;
+}
+
+async function renderClipViaProxy(sourceUrl: string, start: number, duration: number) {
+  const proxyUrl = getYtDlpProxyUrl();
+  if (!proxyUrl) {
+    return NextResponse.json({ error: "Job not found or expired." }, { status: 404 });
+  }
+
+  const authToken = process.env.YTDLP_PROXY_TOKEN?.trim();
+  const authHeader = process.env.YTDLP_PROXY_AUTH_HEADER?.trim() || "x-api-key";
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    accept: "video/*,application/octet-stream,application/json",
+  };
+  if (authToken) {
+    headers[authHeader] = authToken;
+    headers.authorization = `Bearer ${authToken}`;
+  }
+
+  const response = await fetch(proxyUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      sourceUrl,
+      sourceKind: detectSourceKind(sourceUrl),
+      formatPref: detectSourceKind(sourceUrl) === "youtube"
+        ? "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best"
+        : "bestvideo+bestaudio/best",
+      clipStart: start,
+      clipDuration: duration,
+    }),
+  });
+
+  const contentType = response.headers.get("content-type") || "";
+  if (!response.ok) {
+    const rawText = await response.text();
+    let payload: Record<string, unknown> = {};
+    try {
+      payload = rawText ? JSON.parse(rawText) as Record<string, unknown> : {};
+    } catch {
+      // keep text fallback below
+    }
+    return NextResponse.json(
+      {
+        error: "Could not render clip via external downloader.",
+        details: parseProxyError(payload) || rawText || `${response.status} ${response.statusText}`,
+      },
+      { status: 502 },
+    );
+  }
+
+  if (contentType.toLowerCase().includes("application/json")) {
+    const payload = await response.json().catch(() => ({}));
+    return NextResponse.json(
+      {
+        error: "External downloader did not return a clip file.",
+        details: parseProxyError(payload) || "Proxy returned JSON instead of media.",
+      },
+      { status: 502 },
+    );
+  }
+
+  const clipBuffer = Buffer.from(await response.arrayBuffer());
+  if (!clipBuffer.byteLength) {
+    return NextResponse.json({ error: "External downloader returned an empty clip." }, { status: 502 });
+  }
+  const base = filenameSafe((sourceUrl || "stream").split("/").pop() || "clip");
+  const outName = `clipperviral-${base}-${String(start).replace(".", "-")}s-${String(start + duration).replace(".", "-")}s.mp4`;
+  return new NextResponse(clipBuffer, {
+    headers: {
+      "Content-Type": contentType || "video/mp4",
+      "Content-Disposition": `attachment; filename="${outName}"`,
+    },
+    status: 200,
+  });
+}
+
 export async function GET(req: NextRequest) {
   const access = await requireAllowedApiUser();
   if (!access.ok) {
@@ -86,7 +185,17 @@ export async function GET(req: NextRequest) {
   const jobId = params.get("jobId") || "";
   const clipIndexRaw = params.get("index");
   const clipIndex = Number(clipIndexRaw);
-  if (!jobId) {
+  const sourceUrl = params.get("sourceUrl") || "";
+  const start = Number(params.get("start"));
+  const duration = Number(params.get("duration"));
+  const canUseProxyFallback =
+    /^https?:\/\/.+/i.test(sourceUrl) &&
+    Number.isFinite(start) &&
+    start >= 0 &&
+    Number.isFinite(duration) &&
+    duration > 0;
+
+  if (!jobId && !canUseProxyFallback) {
     return NextResponse.json({ error: "jobId is required." }, { status: 400 });
   }
 
@@ -96,6 +205,9 @@ export async function GET(req: NextRequest) {
 
   const job = getYoutubeJob(jobId);
   if (!job) {
+    if (canUseProxyFallback) {
+      return renderClipViaProxy(sourceUrl, start, duration);
+    }
     return NextResponse.json({ error: "Job not found or expired." }, { status: 404 });
   }
 

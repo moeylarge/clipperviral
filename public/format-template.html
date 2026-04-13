@@ -700,8 +700,15 @@
         }
       }
 
-      async function fetchYoutubeClipBlob(index) {
-        const response = await fetch(`/api/youtube/clip?jobId=${encodeURIComponent(youtubeJobId)}&index=${index}`, { method: "GET" });
+      async function fetchYoutubeClipBlob(index, clip) {
+        const params = new URLSearchParams({
+          jobId: youtubeJobId,
+          index: String(index),
+          sourceUrl: youtubeUrlInput.value.trim(),
+          start: String(clip.start),
+          duration: String(clip.duration || Math.max(1, Number(clip.end) - Number(clip.start))),
+        });
+        const response = await fetch(`/api/youtube/clip?${params.toString()}`, { method: "GET" });
         if (!response.ok) throw new Error(await readResponseError(response));
         const blob = await response.blob();
         if (!blob.size) throw new Error("Rendered clip is empty.");
@@ -729,7 +736,7 @@
           previewButton.addEventListener("click", async () => {
             previewButton.disabled = true;
             try {
-              const blob = await fetchYoutubeClipBlob(index);
+              const blob = await fetchYoutubeClipBlob(index, clip);
               if (videoUrl) URL.revokeObjectURL(videoUrl);
               videoUrl = URL.createObjectURL(blob);
               previewVideo.src = videoUrl;
@@ -749,7 +756,7 @@
           downloadButton.addEventListener("click", async () => {
             downloadButton.disabled = true;
             try {
-              const blob = await fetchYoutubeClipBlob(index);
+              const blob = await fetchYoutubeClipBlob(index, clip);
               const filename = `${safeFileName(youtubeUrlInput.value || "stream")}-clip-${String(clip.start).replace(".", "-")}-${String(clip.end).replace(".", "-")}.mp4`;
               const a = document.createElement("a");
               a.style.display = "none";
