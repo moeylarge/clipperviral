@@ -182,81 +182,6 @@
         min-height: 280px;
       }
 
-      .format-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 10px;
-        margin-top: 8px;
-      }
-
-      .choice-group {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: rgba(0, 0, 0, 0.24);
-        padding: 10px;
-      }
-
-      .choice-group-title {
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.75);
-        margin-bottom: 8px;
-      }
-
-      .choice-group label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        margin-bottom: 8px;
-      }
-
-      .choice-group label:last-child {
-        margin-bottom: 0;
-      }
-
-      .choice-group input[type="radio"] {
-        accent-color: #53fc18;
-      }
-
-      .layout-controls-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-        gap: 10px;
-        margin-top: 10px;
-      }
-
-      .control-block {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: rgba(0, 0, 0, 0.24);
-        padding: 10px;
-      }
-
-      .label-mini {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: rgba(255, 255, 255, 0.75);
-        margin-bottom: 7px;
-        font-weight: 700;
-      }
-
-      .control-block input[type="range"] {
-        width: 100%;
-      }
-
-      .value-pill {
-        margin-top: 6px;
-        display: inline-block;
-        font-size: 10px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 4px 8px;
-      }
-
       .video-wrap {
         margin-top: 14px;
         border-radius: 10px;
@@ -332,7 +257,7 @@
       </div>
 
       <h1 style="margin: 0 0 8px 0; font-family: Impact, Arial Black, sans-serif">Clip Format Studio</h1>
-      <p class="hint">Standalone layout page for horizontal/vertical formats, camera framing, and direct video download.</p>
+      <p class="hint">Paste a YouTube or Kick URL to analyze clip candidates and download selected MP4 clips.</p>
 
       <div class="youtube-box" id="youtube-auto-highlights">
         <div class="label">0) Pull clips from YouTube or Kick URL</div>
@@ -351,91 +276,7 @@
         <div class="hint" id="youtubeHint">No job loaded yet.</div>
         <div class="youtube-layout">
           <div class="youtube-list" id="youtubeCandidates"></div>
-          <div class="youtube-panel-note">Preview loads the clip into the studio. Download mp4 exports the selected clip immediately.</div>
-        </div>
-      </div>
-
-      <div class="label" style="margin-top: 12px">1) Upload local clip</div>
-      <div class="row">
-        <input id="clipInput" type="file" accept="video/*" />
-        <button id="clearButton" type="button">Clear</button>
-      </div>
-
-      <div class="youtube-box" id="format-layout">
-        <div class="label">2) Format and layout</div>
-        <div class="format-grid">
-          <div class="choice-group">
-            <div class="choice-group-title">Format</div>
-            <label><input type="radio" name="clipFormat" value="horizontal" checked /><span>Horizontal</span></label>
-            <label><input type="radio" name="clipFormat" value="vertical" /><span>Vertical</span></label>
-          </div>
-          <div class="choice-group">
-            <div class="choice-group-title">Layout</div>
-            <select id="layoutModeSelect"></select>
-            <div class="hint" id="layoutModeNote"></div>
-          </div>
-        </div>
-        <div class="layout-controls-grid">
-          <div class="control-block">
-            <div class="label-mini">Panel</div>
-            <select id="layoutPanelSelect"></select>
-            <div class="value-pill" id="layoutPanelNote">Main panel framing</div>
-          </div>
-          <div class="control-block">
-            <div class="label-mini">Crop focus</div>
-            <select id="layoutFocusSelect">
-              <option value="center">Center</option>
-              <option value="left">Left focus</option>
-              <option value="right">Right focus</option>
-              <option value="top">Top focus</option>
-              <option value="bottom">Bottom focus</option>
-            </select>
-          </div>
-          <div class="control-block">
-            <div class="label-mini">Alignment</div>
-            <select id="layoutAlignSelect">
-              <option value="center">Center</option>
-              <option value="left">Left</option>
-              <option value="right">Right</option>
-              <option value="top">Top</option>
-              <option value="bottom">Bottom</option>
-            </select>
-          </div>
-          <div class="control-block">
-            <div class="label-mini">Zoom</div>
-            <input id="layoutZoomInput" type="range" min="1" max="3" value="1" step="0.01" />
-            <div class="value-pill" id="layoutZoomValue">1.00x</div>
-          </div>
-          <div class="control-block">
-            <div class="label-mini">X position</div>
-            <input id="layoutXInput" type="range" min="-100" max="100" value="0" step="1" />
-            <div class="value-pill" id="layoutXValue">0</div>
-          </div>
-          <div class="control-block">
-            <div class="label-mini">Y position</div>
-            <input id="layoutYInput" type="range" min="-100" max="100" value="0" step="1" />
-            <div class="value-pill" id="layoutYValue">0</div>
-          </div>
-          <div class="control-block" id="layoutSplitWrap">
-            <div class="label-mini">Split ratio</div>
-            <input id="layoutSplitInput" type="range" min="20" max="80" value="50" step="1" />
-            <div class="value-pill" id="layoutSplitValue">50%</div>
-          </div>
-          <div class="control-block" id="layoutCamSizeWrap">
-            <div class="label-mini">Base cam size</div>
-            <input id="layoutCamSizeInput" type="range" min="12" max="45" value="30" step="1" />
-            <div class="value-pill" id="layoutCamSizeValue">30%</div>
-          </div>
-          <div class="control-block" id="layoutCamXWrap">
-            <div class="label-mini">Base cam X</div>
-            <input id="layoutCamXInput" type="range" min="0" max="100" value="68" step="1" />
-            <div class="value-pill" id="layoutCamXValue">68%</div>
-          </div>
-          <div class="control-block" id="layoutCamYWrap">
-            <div class="label-mini">Base cam Y</div>
-            <input id="layoutCamYInput" type="range" min="0" max="100" value="8" step="1" />
-            <div class="value-pill" id="layoutCamYValue">8%</div>
-          </div>
+          <div class="youtube-panel-note">Preview loads the selected clip below. Download mp4 exports the selected clip immediately.</div>
         </div>
       </div>
 
@@ -462,8 +303,6 @@
     </main>
 
     <script>
-      const clipInput = document.getElementById("clipInput");
-      const clearButton = document.getElementById("clearButton");
       const status = document.getElementById("status");
       const previewVideo = document.getElementById("previewVideo");
       const previewSeekInput = document.getElementById("previewSeekInput");
@@ -483,33 +322,6 @@
       const analyzeYoutubeButton = document.getElementById("analyzeYoutubeButton");
       const youtubeCandidates = document.getElementById("youtubeCandidates");
       const youtubeHint = document.getElementById("youtubeHint");
-
-      const formatInputs = document.querySelectorAll('input[name="clipFormat"]');
-      const layoutModeSelect = document.getElementById("layoutModeSelect");
-      const layoutModeNote = document.getElementById("layoutModeNote");
-      const layoutPanelSelect = document.getElementById("layoutPanelSelect");
-      const layoutPanelNote = document.getElementById("layoutPanelNote");
-      const layoutPanelBlock = layoutPanelSelect ? layoutPanelSelect.closest(".control-block") : null;
-      const layoutFocusSelect = document.getElementById("layoutFocusSelect");
-      const layoutAlignSelect = document.getElementById("layoutAlignSelect");
-      const layoutZoomInput = document.getElementById("layoutZoomInput");
-      const layoutZoomValue = document.getElementById("layoutZoomValue");
-      const layoutXInput = document.getElementById("layoutXInput");
-      const layoutXValue = document.getElementById("layoutXValue");
-      const layoutYInput = document.getElementById("layoutYInput");
-      const layoutYValue = document.getElementById("layoutYValue");
-      const layoutSplitWrap = document.getElementById("layoutSplitWrap");
-      const layoutSplitInput = document.getElementById("layoutSplitInput");
-      const layoutSplitValue = document.getElementById("layoutSplitValue");
-      const layoutCamSizeWrap = document.getElementById("layoutCamSizeWrap");
-      const layoutCamSizeInput = document.getElementById("layoutCamSizeInput");
-      const layoutCamSizeValue = document.getElementById("layoutCamSizeValue");
-      const layoutCamXWrap = document.getElementById("layoutCamXWrap");
-      const layoutCamXInput = document.getElementById("layoutCamXInput");
-      const layoutCamXValue = document.getElementById("layoutCamXValue");
-      const layoutCamYWrap = document.getElementById("layoutCamYWrap");
-      const layoutCamYInput = document.getElementById("layoutCamYInput");
-      const layoutCamYValue = document.getElementById("layoutCamYValue");
 
       let videoUrl = null;
       let youtubeJobId = "";
@@ -562,6 +374,54 @@
       function setStatus(message, isError = false) {
         status.textContent = message;
         status.classList.toggle("error", isError);
+      }
+
+      function compactYoutubeErrorMessage(message) {
+        if (!message) return "";
+        return `${message}`.split(" Attempts:")[0].trim();
+      }
+
+      function isYoutubeBotBlockError(message) {
+        const lower = `${message || ""}`.toLowerCase();
+        return (
+          lower.includes("sign in to confirm") ||
+          lower.includes("you’re not a bot") ||
+          lower.includes("you're not a bot") ||
+          lower.includes("http error 403")
+        );
+      }
+
+      function isInvalidCookieFormatError(message) {
+        const lower = `${message || ""}`.toLowerCase();
+        return lower.includes("netscape format cookies file") || lower.includes("skipping cookie file entry due to invalid length");
+      }
+
+      function getYoutubeFallbackMessage(message) {
+        if (isInvalidCookieFormatError(message)) {
+          return "Cookie authentication is misconfigured on the server. Try another URL or retry after the downloader is fixed.";
+        }
+        if (isYoutubeBotBlockError(message)) {
+          return "YouTube blocked automated download for this link from the server. Try another URL or retry after the downloader is fixed.";
+        }
+        return "";
+      }
+
+      function showYoutubeUploadFallback(message) {
+        const fallbackMessage = getYoutubeFallbackMessage(message);
+        if (!fallbackMessage) return false;
+
+        setStatus(fallbackMessage, true);
+        youtubeHint.textContent = "URL analysis blocked.";
+        youtubeCandidates.innerHTML = "";
+
+        const item = document.createElement("div");
+        item.className = "youtube-item";
+        const hint = document.createElement("div");
+        hint.className = "hint";
+        hint.textContent = fallbackMessage;
+        item.appendChild(hint);
+        youtubeCandidates.appendChild(item);
+        return true;
       }
 
       function clamp(value, min, max) {
@@ -727,7 +587,7 @@
         resizeLayoutCanvas();
         applyVideoAreaAspect();
         if (!previewVideo.src || previewVideo.readyState < 2 || !previewVideo.videoWidth || !previewVideo.videoHeight) {
-          renderLayoutPlaceholder("Load a clip to preview format layout");
+          renderLayoutPlaceholder("Preview will appear here");
           return;
         }
         const width = layoutCanvas.width;
@@ -791,70 +651,7 @@
         layoutRenderLoop();
       }
 
-      function renderLayoutModeOptions() {
-        const list = LAYOUT_OPTIONS[layoutState.format] || [];
-        layoutModeSelect.innerHTML = "";
-        list.forEach((item) => {
-          const option = document.createElement("option");
-          option.value = item.value;
-          option.textContent = item.label;
-          layoutModeSelect.appendChild(option);
-        });
-        const selected = currentLayoutValue();
-        if (!list.some((item) => item.value === selected) && list[0]) setCurrentLayoutValue(list[0].value);
-        layoutModeSelect.value = currentLayoutValue();
-        layoutModeNote.textContent = layoutModeSelect.options[layoutModeSelect.selectedIndex]?.textContent || "";
-      }
-
-      function renderLayoutPanelOptions() {
-        const layout = currentLayoutValue();
-        const defs = panelDefsForLayout(layout);
-        const current = activePanelKey();
-        layoutPanelSelect.innerHTML = "";
-        defs.forEach((panel) => {
-          const option = document.createElement("option");
-          option.value = panel.key;
-          option.textContent = panel.label;
-          layoutPanelSelect.appendChild(option);
-        });
-        layoutPanelSelect.value = defs.some((panel) => panel.key === current) ? current : defs[0].key;
-        layoutState.activePanelByLayout[layout] = layoutPanelSelect.value;
-        layoutPanelNote.textContent = defs.length > 1 ? "Adjust each panel independently" : "Main panel framing";
-        if (layoutPanelBlock) layoutPanelBlock.style.display = defs.length > 1 ? "block" : "none";
-      }
-
-      function syncLayoutControlValues() {
-        const layout = currentLayoutValue();
-        const panelKey = activePanelKey();
-        const transform = transformForPanel(panelKey);
-        layoutFocusSelect.value = transform.focus;
-        layoutAlignSelect.value = transform.align;
-        layoutZoomInput.value = String(transform.zoom);
-        layoutXInput.value = String(transform.x);
-        layoutYInput.value = String(transform.y);
-        layoutZoomValue.textContent = `${Number(transform.zoom).toFixed(2)}x`;
-        layoutXValue.textContent = `${Math.round(Number(transform.x))}`;
-        layoutYValue.textContent = `${Math.round(Number(transform.y))}`;
-        layoutSplitInput.value = String(layoutState.splitRatio);
-        layoutSplitValue.textContent = `${Math.round(layoutState.splitRatio)}%`;
-        layoutCamSizeInput.value = String(layoutState.pip.size);
-        layoutCamSizeValue.textContent = `${Math.round(layoutState.pip.size)}%`;
-        layoutCamXInput.value = String(layoutState.pip.x);
-        layoutCamXValue.textContent = `${Math.round(layoutState.pip.x)}%`;
-        layoutCamYInput.value = String(layoutState.pip.y);
-        layoutCamYValue.textContent = `${Math.round(layoutState.pip.y)}%`;
-        const showSplit = layout === "vertical-half" || layout === "vertical-dual-face-cam" || layout === "vertical-duo-split-angles";
-        const showBaseCam = layout === "vertical-base-cam";
-        layoutSplitWrap.style.display = showSplit ? "block" : "none";
-        layoutCamSizeWrap.style.display = showBaseCam ? "block" : "none";
-        layoutCamXWrap.style.display = showBaseCam ? "block" : "none";
-        layoutCamYWrap.style.display = showBaseCam ? "block" : "none";
-      }
-
       function applyLayoutControls() {
-        renderLayoutModeOptions();
-        renderLayoutPanelOptions();
-        syncLayoutControlValues();
         renderLayoutPreview();
       }
 
@@ -1008,7 +805,9 @@
           const isJson = (response.headers.get("content-type") || "").includes("application/json");
           const payload = isJson ? await response.json() : { error: await response.text() };
           if (!response.ok) {
-            setStatus([payload?.error, payload?.details].filter(Boolean).join(" | ") || "Analysis failed.", true);
+            const message = compactYoutubeErrorMessage([payload?.error, payload?.details].filter(Boolean).join(" | ") || "Analysis failed.");
+            if (showYoutubeUploadFallback(message)) return;
+            setStatus(message, true);
             youtubeHint.textContent = "Analysis failed.";
             return;
           }
@@ -1018,7 +817,9 @@
           youtubeHint.textContent = `Found ${youtubeClips.length} candidate clip(s).`;
           setStatus(`URL analyze complete: ${youtubeClips.length} candidate(s).`);
         } catch (error) {
-          setStatus(`URL analyze failed: ${error instanceof Error ? error.message : "Unknown error."}`, true);
+          const message = compactYoutubeErrorMessage(error instanceof Error ? error.message : "Unknown error.");
+          if (showYoutubeUploadFallback(message)) return;
+          setStatus(`URL analyze failed: ${message}`, true);
           youtubeHint.textContent = "Analysis failed.";
         } finally {
           analyzeYoutubeButton.disabled = false;
@@ -1031,7 +832,7 @@
           setStatus("No preview clip loaded yet.", true);
           return false;
         }
-        const baseName = safeFileName((clipInput.files?.[0]?.name || youtubeUrlInput.value || "preview-clip").replace(/\.[^.]+$/, ""));
+        const baseName = safeFileName((youtubeUrlInput.value || "preview-clip").replace(/\.[^.]+$/, ""));
         const a = document.createElement("a");
         a.style.display = "none";
         a.href = src;
@@ -1084,87 +885,12 @@
       });
       previewVideo.addEventListener("timeupdate", syncPreviewControls);
 
-      clipInput.addEventListener("change", () => {
-        const file = clipInput.files && clipInput.files[0];
-        if (!file) return;
-        if (videoUrl) URL.revokeObjectURL(videoUrl);
-        videoUrl = URL.createObjectURL(file);
-        previewVideo.src = videoUrl;
-        previewVideo.load();
-        downloadVideoButton.disabled = false;
-        setStatus(`Loaded ${file.name}`);
-        renderLayoutPreview();
-      });
-
-      formatInputs.forEach((input) => {
-        input.addEventListener("change", () => {
-          if (!input.checked) return;
-          layoutState.format = input.value === "vertical" ? "vertical" : "horizontal";
-          applyLayoutControls();
-        });
-      });
-      layoutModeSelect.addEventListener("change", () => {
-        setCurrentLayoutValue(layoutModeSelect.value);
-        applyLayoutControls();
-      });
-      layoutPanelSelect.addEventListener("change", () => {
-        layoutState.activePanelByLayout[currentLayoutValue()] = layoutPanelSelect.value;
-        syncLayoutControlValues();
-        renderLayoutPreview();
-      });
-      layoutFocusSelect.addEventListener("change", () => {
-        transformForPanel(activePanelKey()).focus = layoutFocusSelect.value;
-        syncLayoutControlValues();
-        renderLayoutPreview();
-      });
-      layoutAlignSelect.addEventListener("change", () => {
-        transformForPanel(activePanelKey()).align = layoutAlignSelect.value;
-        syncLayoutControlValues();
-        renderLayoutPreview();
-      });
-      layoutZoomInput.addEventListener("input", () => {
-        transformForPanel(activePanelKey()).zoom = clamp(Number(layoutZoomInput.value) || 1, 1, 3);
-        syncLayoutControlValues();
-        renderLayoutPreview();
-      });
-      layoutXInput.addEventListener("input", () => {
-        transformForPanel(activePanelKey()).x = clamp(Number(layoutXInput.value) || 0, -100, 100);
-        syncLayoutControlValues();
-        renderLayoutPreview();
-      });
-      layoutYInput.addEventListener("input", () => {
-        transformForPanel(activePanelKey()).y = clamp(Number(layoutYInput.value) || 0, -100, 100);
-        syncLayoutControlValues();
-        renderLayoutPreview();
-      });
-      layoutSplitInput.addEventListener("input", () => {
-        layoutState.splitRatio = clamp(Number(layoutSplitInput.value) || 50, 20, 80);
-        syncLayoutControlValues();
-        renderLayoutPreview();
-      });
-      layoutCamSizeInput.addEventListener("input", () => {
-        layoutState.pip.size = clamp(Number(layoutCamSizeInput.value) || 30, 12, 45);
-        syncLayoutControlValues();
-        renderLayoutPreview();
-      });
-      layoutCamXInput.addEventListener("input", () => {
-        layoutState.pip.x = clamp(Number(layoutCamXInput.value) || 68, 0, 100);
-        syncLayoutControlValues();
-        renderLayoutPreview();
-      });
-      layoutCamYInput.addEventListener("input", () => {
-        layoutState.pip.y = clamp(Number(layoutCamYInput.value) || 8, 0, 100);
-        syncLayoutControlValues();
-        renderLayoutPreview();
-      });
-
       analyzeYoutubeButton.addEventListener("click", analyzeYoutube);
       downloadVideoButton.addEventListener("click", downloadCurrentPreviewClip);
-      clearButton.addEventListener("click", clearAll);
 
       applyLayoutControls();
       syncPreviewControls();
-      setStatus("Ready. Load or preview a clip, adjust layout, and download video.");
+      setStatus("Ready. Paste a URL to analyze clips.");
     </script>
   </body>
 </html>
