@@ -1,0 +1,3 @@
+ClipperViral deploy verification marker
+Updated: 2026-04-13
+Purpose: tiny non-functional commit to verify Git -> Vercel production pipeline.
