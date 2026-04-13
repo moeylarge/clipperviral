@@ -639,10 +639,12 @@ function parseProxyDownloadUrl(payload: Record<string, unknown>) {
 }
 
 function parseProxyError(payload: Record<string, unknown>) {
-  const value = payload.error || payload.message || payload.details;
-  return typeof value === "string" && value.trim().length
-    ? value.trim()
-    : null;
+  const error = typeof payload.error === "string" ? payload.error.trim() : "";
+  const message = typeof payload.message === "string" ? payload.message.trim() : "";
+  const details = typeof payload.details === "string" ? payload.details.trim() : "";
+  if (details && (!error || /^yt-dlp failed\.?$/i.test(error))) return details;
+  const value = error || message || details;
+  return value.length ? value : null;
 }
 
 async function downloadSourceViaProxy(options: {

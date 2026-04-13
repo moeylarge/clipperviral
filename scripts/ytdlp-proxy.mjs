@@ -114,9 +114,7 @@ function buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, aud
     args.push("--cookies", COOKIE_FILE);
   }
 
-  if (audioOnly) {
-    args.push("-x", "--audio-format", "m4a", "--audio-quality", "0");
-  } else {
+  if (!audioOnly) {
     args.push("--merge-output-format", "mp4");
   }
 
@@ -189,6 +187,14 @@ const server = createServer(async (req, res) => {
     const result = await runCommand(YTDLP_BIN, args);
 
     if (!result.ok) {
+      console.error("[ytdlp-proxy] yt-dlp failed", {
+        sourceUrl,
+        sourceKind,
+        audioOnly,
+        code: result.code,
+        timedOut: result.timedOut,
+        stderr: (result.stderr || "").slice(0, 800),
+      });
       await rm(workdir, { recursive: true, force: true });
       return sendJson(res, 502, {
         error: "yt-dlp failed.",
