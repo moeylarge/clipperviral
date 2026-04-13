@@ -352,6 +352,15 @@ async function runYtDlpWithFallback(
   const attempts = ytDlpDownloadAttempts(formatPref, outputTemplate, sourceKind, ffmpegLocation, cookieFile);
   let lastError: unknown = null;
   let saw403 = false;
+  const shouldRetryYoutubeAuthGate = (message: string) => {
+    const lower = message.toLowerCase();
+    return (
+      lower.includes("http error 403") ||
+      lower.includes("sign in to confirm you're not a bot") ||
+      lower.includes("sign in to confirm you’re not a bot") ||
+      lower.includes("use --cookies-from-browser or --cookies")
+    );
+  };
 
   for (const candidate of ytdlpCandidates) {
     for (const attempt of attempts) {
@@ -364,7 +373,7 @@ async function runYtDlpWithFallback(
       failureMessages.push(`${result.command} ${attempt.join(" ")}`.trim());
       if (error?.code !== "ENOENT") {
         const message = error.message || "yt-dlp command failed.";
-        if (message.includes("HTTP Error 403")) {
+        if (sourceKind === "youtube" && shouldRetryYoutubeAuthGate(message)) {
           saw403 = true;
           continue;
         }
