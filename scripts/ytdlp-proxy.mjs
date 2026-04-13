@@ -123,12 +123,12 @@ function buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, aud
     args.push(
       "-f",
       audioOnly
-        ? "bestaudio[ext=m4a]/bestaudio/best"
+        ? "worstaudio[abr<=64]/worstaudio/worst"
         : formatPref || "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
     );
     args.push("--extractor-args", "youtube:player_client=android");
   } else {
-    args.push("-f", audioOnly ? "bestaudio/best" : formatPref || "bestvideo+bestaudio/best");
+    args.push("-f", audioOnly ? "worstaudio/worst" : formatPref || "bestvideo+bestaudio/best");
   }
 
   args.push(sourceUrl);
