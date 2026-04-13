@@ -294,18 +294,40 @@ async function getYtDlpCandidates(): Promise<CommandCandidate[]> {
   const isVercelRuntime = process.env.VERCEL === "1" || Boolean(process.env.VERCEL_URL);
   const allowPythonFallback = !isVercelRuntime || process.env.YTDLP_ALLOW_PYTHON === "1";
   let runtimeYtDlp: string | null = null;
-  const bundledYtDlp = path.join(process.cwd(), "bin", "yt-dlp");
-  const bundledIsNative = await isNativeYtDlpBinary(bundledYtDlp);
-  if (bundledIsNative) {
-    try {
-      await fs.access(bundledYtDlp, fsConstants.X_OK);
-      runtimeYtDlp = bundledYtDlp;
-    } catch {
+
+  if (isVercelRuntime) {
+    // In Vercel runtime, prefer /tmp downloaded binary over bundled path.
+    // Bundled binaries can exist but still fail to execute due runtime loader mismatch.
+    runtimeYtDlp = await ensureYtDlpRuntimeBinary();
+  } else {
+    const bundledYtDlp = path.join(process.cwd(), "bin", "yt-dlp");
+    const bundledIsNative = await isNativeYtDlpBinary(bundledYtDlp);
+    if (bundledIsNative) {
+      try {
+        await fs.access(bundledYtDlp, fsConstants.X_OK);
+        runtimeYtDlp = bundledYtDlp;
+      } catch {
+        runtimeYtDlp = await ensureYtDlpRuntimeBinary();
+      }
+    } else {
       runtimeYtDlp = await ensureYtDlpRuntimeBinary();
     }
-  } else {
-    runtimeYtDlp = await ensureYtDlpRuntimeBinary();
   }
+
+  if (runtimeYtDlp) {
+    const probe = await runCommand({ command: runtimeYtDlp }, ["--version"], 10_000);
+    if (!probe.ok) {
+      if (runtimeYtDlp === YTDLP_RUNTIME_BINARY_PATH) {
+        try {
+          await fs.rm(YTDLP_RUNTIME_BINARY_PATH, { force: true });
+        } catch {
+          // ignore cleanup errors
+        }
+      }
+      runtimeYtDlp = null;
+    }
+  }
+
   const configured = await sanitizeConfiguredYtDlpCandidates(
     parseConfiguredYtDlpCommand(process.env.YTDLP_PATH),
     allowPythonFallback,
@@ -337,7 +359,20 @@ async function getYtDlpCandidates(): Promise<CommandCandidate[]> {
     }
   }
 
-  return [...deduped.values()];
+  const candidates = [...deduped.values()];
+  const working = await filterWorkingYtDlpCandidates(candidates);
+  return working;
+}
+
+async function filterWorkingYtDlpCandidates(candidates: CommandCandidate[]) {
+  const working: CommandCandidate[] = [];
+  for (const candidate of candidates) {
+    const probe = await runCommand(candidate, ["--version"], 10_000);
+    if (probe.ok) {
+      working.push(candidate);
+    }
+  }
+  return working;
 }
 
 function ytDlpDownloadAttempts(
