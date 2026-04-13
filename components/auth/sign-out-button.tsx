@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 
 export function SignOutButton() {
@@ -12,12 +11,15 @@ export function SignOutButton() {
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
-    const supabase = createBrowserSupabaseClient();
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
+    try {
+      await fetch("/api/auth/manual-signout", {
+        method: "POST",
+      });
+      router.replace("/auth/signin");
       router.refresh();
+    } finally {
+      setIsSigningOut(false);
     }
-    setIsSigningOut(false);
   };
 
   return (

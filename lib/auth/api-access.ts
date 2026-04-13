@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getManualSessionEmail } from "@/lib/auth/manual-session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 function getAllowedEmails() {
@@ -24,6 +25,26 @@ export async function requireAllowedApiUser() {
         },
         { status: 500 }
       ),
+    };
+  }
+
+  const manualEmail = await getManualSessionEmail();
+  if (manualEmail) {
+    if (!allowedEmails.has(manualEmail)) {
+      return {
+        ok: false as const,
+        response: NextResponse.json(
+          {
+            error: "Forbidden",
+            details: `Signed-in email (${manualEmail}) is not on this deployment allowlist.`,
+          },
+          { status: 403 }
+        ),
+      };
+    }
+    return {
+      ok: true as const,
+      user: { email: manualEmail },
     };
   }
 

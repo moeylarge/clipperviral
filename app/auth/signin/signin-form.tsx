@@ -1,146 +1,50 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 
 export function SignInForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
-  const oauthCallbackError = searchParams.get("error") === "oauth_callback_failed";
-
-  useEffect(() => {
-    const hash = window.location.hash.replace(/^#/, "");
-    if (!hash) return;
-
-    const params = new URLSearchParams(hash);
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
-
-    if (!accessToken || !refreshToken) return;
-
-    const finalizeHashSession = async () => {
-      setIsGoogleSubmitting(true);
-      setError("");
-      try {
-        const supabase = createBrowserSupabaseClient();
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-
-        if (sessionError) {
-          setError(sessionError.message);
-          return;
-        }
-
-        window.history.replaceState(null, "", window.location.pathname);
-        router.replace("/");
-        router.refresh();
-      } catch (sessionUnexpectedError) {
-        setError(
-          sessionUnexpectedError instanceof Error
-            ? sessionUnexpectedError.message
-            : "Failed to finalize Google session."
-        );
-      } finally {
-        setIsGoogleSubmitting(false);
-      }
-    };
-
-    void finalizeHashSession();
-  }, [router]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
     setError("");
 
-    const supabase = createBrowserSupabaseClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (signInError) {
-      setError(signInError.message);
-      setIsSubmitting(false);
-      return;
-    }
-
-    router.push("/");
-    router.refresh();
-  };
-
-  const handleGoogleSignIn = async () => {
-    setIsGoogleSubmitting(true);
-    setError("");
     try {
-      const supabaseUrlRaw = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      if (!supabaseUrlRaw) {
-        setError("Missing NEXT_PUBLIC_SUPABASE_URL.");
+      const response = await fetch("/api/auth/manual-signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        setError(payload?.error || "Sign-in failed.");
         return;
       }
 
-      const supabaseUrl = supabaseUrlRaw.trim().replace(/\/+$/, "");
-      if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(supabaseUrl)) {
-        setError("Invalid NEXT_PUBLIC_SUPABASE_URL format. Expected https://<project-ref>.supabase.co");
-        return;
-      }
-
-      const redirectTo = `${window.location.origin}/auth/callback`;
-      const authorizeUrl =
-        `${supabaseUrl}/auth/v1/authorize?provider=google` +
-        `&redirect_to=${encodeURIComponent(redirectTo)}`;
-
-      window.location.assign(authorizeUrl);
-    } catch (oauthUnexpectedError) {
-      setError(
-        oauthUnexpectedError instanceof Error
-          ? oauthUnexpectedError.message
-          : "Failed to start Google sign-in."
-      );
+      router.replace("/");
+      router.refresh();
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Sign-in failed.");
     } finally {
-      setIsGoogleSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="space-y-4">
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        className="w-full"
-        disabled={isGoogleSubmitting || isSubmitting}
-        onClick={handleGoogleSignIn}
-      >
-        {isGoogleSubmitting ? "Redirecting to Google..." : "Continue with Google"}
-      </Button>
-
-      {oauthCallbackError ? (
-        <p className="text-sm text-rose-600">
-          Google OAuth callback failed. Check Supabase Google provider redirect settings and try again.
-        </p>
-      ) : null}
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-          <span className="bg-white px-2">Or use email</span>
-        </div>
-      </div>
-
       <form className="space-y-3" onSubmit={handleSubmit}>
         <div className="grid gap-2">
           <label className="text-xs uppercase tracking-[0.14em] text-muted-foreground" htmlFor="email">
@@ -154,6 +58,7 @@ export function SignInForm() {
             onChange={(event) => setEmail(event.target.value)}
             className="h-10 rounded-md border border-border bg-white px-3 text-sm text-foreground"
             placeholder="you@clipperviral.com"
+            autoComplete="email"
           />
         </div>
 
@@ -169,17 +74,18 @@ export function SignInForm() {
             onChange={(event) => setPassword(event.target.value)}
             className="h-10 rounded-md border border-border bg-white px-3 text-sm text-foreground"
             placeholder="Your password"
+            autoComplete="current-password"
           />
         </div>
 
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
 
-        <Button type="submit" size="sm" className="w-full" disabled={isSubmitting || isGoogleSubmitting}>
+        <Button type="submit" size="sm" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? "Signing in..." : "Sign in"}
         </Button>
 
         <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-          Existing users only (Supabase auth). Add your own sign-up flow in next pass.
+          Manual owner login is enabled for this deployment.
         </p>
         <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
           <Link href="/" className="text-foreground underline-offset-4 hover:underline">
