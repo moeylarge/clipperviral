@@ -75,6 +75,46 @@ function getYtDlpFfmpegLocation() {
   return absolute || null;
 }
 
+const YTDLP_COOKIES_TMP_PATH = path.join(os.tmpdir(), "clipperviral-ytdlp-cookies.txt");
+let ytdlpCookiesPromise: Promise<string | null> | null = null;
+
+async function resolveYtDlpCookieFile() {
+  if (ytdlpCookiesPromise) {
+    return ytdlpCookiesPromise;
+  }
+
+  ytdlpCookiesPromise = (async () => {
+    const configuredPath = process.env.YTDLP_COOKIE_FILE?.trim();
+    if (configuredPath) {
+      try {
+        await fs.access(configuredPath, fsConstants.R_OK);
+        return configuredPath;
+      } catch {
+        // fall through to env payload options
+      }
+    }
+
+    const cookieText = process.env.YTDLP_COOKIES?.trim();
+    if (cookieText) {
+      await fs.writeFile(YTDLP_COOKIES_TMP_PATH, cookieText, "utf8");
+      return YTDLP_COOKIES_TMP_PATH;
+    }
+
+    const cookieB64 = process.env.YTDLP_COOKIES_B64?.trim();
+    if (cookieB64) {
+      const decoded = Buffer.from(cookieB64, "base64").toString("utf8");
+      if (decoded.trim().length) {
+        await fs.writeFile(YTDLP_COOKIES_TMP_PATH, decoded, "utf8");
+        return YTDLP_COOKIES_TMP_PATH;
+      }
+    }
+
+    return null;
+  })();
+
+  return ytdlpCookiesPromise;
+}
+
 function getYtDlpReleaseUrls() {
   const configured = process.env.YTDLP_BINARY_URL?.trim();
   if (configured) return [configured];
@@ -203,9 +243,9 @@ function ytDlpDownloadAttempts(
   outputTemplate: string,
   sourceKind: SourceKind,
   ffmpegLocation: string | null,
+  cookieFile: string | null,
 ) {
   const userAgent = process.env.YTDLP_USER_AGENT?.trim() || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-  const cookieFile = process.env.YTDLP_COOKIE_FILE?.trim();
   const country = process.env.YTDLP_GEO_BYPASS?.trim();
   const attempts: string[][] = [];
   const baseArgs = [
@@ -306,9 +346,10 @@ async function runYtDlpWithFallback(
   sourceUrl: string,
   sourceKind: SourceKind,
   ffmpegLocation: string | null,
+  cookieFile: string | null,
 ) {
   const failureMessages: string[] = [];
-  const attempts = ytDlpDownloadAttempts(formatPref, outputTemplate, sourceKind, ffmpegLocation);
+  const attempts = ytDlpDownloadAttempts(formatPref, outputTemplate, sourceKind, ffmpegLocation, cookieFile);
   let lastError: unknown = null;
   let saw403 = false;
 
@@ -457,14 +498,22 @@ function estimateYoutubeTotalSeconds(videoDurationSeconds: number | null, clipDu
   return Math.max(min, Math.min(max, estimate));
 }
 
-async function getDurationFromSourceMetadata(sourceUrl: string, ytdlpCandidates: CommandCandidate[]) {
+async function getDurationFromSourceMetadata(
+  sourceUrl: string,
+  ytdlpCandidates: CommandCandidate[],
+  cookieFile: string | null,
+) {
   const attempts = [
     ["--skip-download", "--no-playlist", "--no-warnings", "-J"],
     ["--skip-download", "--no-playlist", "--no-warnings", "--print", "duration"],
   ];
   for (const candidate of ytdlpCandidates) {
     for (const baseArgs of attempts) {
-      const result = await runCommand(candidate, [...baseArgs, sourceUrl]);
+      const args = [...baseArgs];
+      if (cookieFile) {
+        args.push("--cookies", cookieFile);
+      }
+      const result = await runCommand(candidate, [...args, sourceUrl]);
       if (!result.ok) continue;
 
       const stdout = `${result.stdout || ""}`.trim();
@@ -895,6 +944,7 @@ export async function POST(req: NextRequest) {
     }
 
     const ytdlpCandidates = await getYtDlpCandidates();
+    const ytdlpCookieFile = await resolveYtDlpCookieFile();
     const ytdlpCommand = ytdlpCandidates[0];
     if (!ytdlpCommand) {
       return NextResponse.json(
@@ -922,14 +972,13 @@ export async function POST(req: NextRequest) {
         sourceUrl,
         sourceKind,
         ytdlpFfmpegLocation,
+        ytdlpCookieFile,
       );
       if (!downloadResult.ok) {
         const failedCommand = `${ytdlpCommand.command}${(ytdlpCommand.args || []).join(" ") ? " " + ytdlpCommand.args?.join(" ") : ""}`;
         const suggestions: string[] = [];
         if ((downloadResult as { saw403?: boolean }).saw403 && sourceKind === "youtube") {
-          suggestions.push(
-            "YouTube blocked this request (403). Try setting YTDLP_COOKIE_FILE to a cookie export from your browser",
-          );
+          suggestions.push("YouTube blocked this request (403). Add cookies: set YTDLP_COOKIES_B64 in Vercel from a YouTube cookie export.");
           suggestions.push("Also try setting YTDLP_USER_AGENT to a recent Chrome user agent.");
           suggestions.push("Optional: set YTDLP_PYTHON to a Python 3.10+ binary (python3.12 recommended).");
         } else if (sourceKind === "kick") {
@@ -968,7 +1017,7 @@ export async function POST(req: NextRequest) {
         }
       }
       if (!duration || !Number.isFinite(duration)) {
-        duration = (await getDurationFromSourceMetadata(sourceUrl, ytdlpCandidates)) || 0;
+        duration = (await getDurationFromSourceMetadata(sourceUrl, ytdlpCandidates, ytdlpCookieFile)) || 0;
       }
 
       const audioPath = path.join(workdir, "audio_for_transcript.m4a");
@@ -1092,6 +1141,7 @@ export async function GET(req: NextRequest) {
     }
 
     const ytdlpCandidates = await getYtDlpCandidates();
+    const ytdlpCookieFile = await resolveYtDlpCookieFile();
     if (!ytdlpCandidates.length) {
       return NextResponse.json(
         {
@@ -1102,7 +1152,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const duration = await getDurationFromSourceMetadata(sourceUrl, ytdlpCandidates);
+    const duration = await getDurationFromSourceMetadata(sourceUrl, ytdlpCandidates, ytdlpCookieFile);
 
     const estimatedTotalSeconds = estimateYoutubeTotalSeconds(duration, clipDuration, maxClips);
 
