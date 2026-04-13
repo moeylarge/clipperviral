@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Flame, PlayCircle, UserCircle2 } from "lucide-react";
+import { Clapperboard, UserCircle2, WandSparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SessionStatus } from "@/components/auth/session-status";
@@ -16,14 +16,24 @@ export function SiteHeader() {
           )}
         >
           <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-white/[0.06] transition-colors group-hover:bg-white/[0.14]">
-            <Flame className="h-3.5 w-3.5 text-primary" />
+            <Clapperboard className="h-3.5 w-3.5 text-primary" />
           </span>
-          <span className="tracking-[0.22em]">Spotlight</span>
+          <span className="tracking-[0.22em]">ClipperViral</span>
         </Link>
-        <p className="hidden items-center gap-2 text-[11px] tracking-[0.16em] text-muted-foreground md:inline-flex">
-          <PlayCircle className="h-3.5 w-3.5 text-accent" />
-          LIVE SHOWROOM
-        </p>
+        <nav className="hidden items-center gap-2 md:flex">
+          <Button asChild size="sm" variant="ghost" className="h-9 px-3 font-medium tracking-[0.08em]">
+            <Link href="/kick-template.html">Kick Template</Link>
+          </Button>
+          <Button asChild size="sm" variant="ghost" className="h-9 px-3 font-medium tracking-[0.08em]">
+            <Link href="/caption-template.html">Caption Studio</Link>
+          </Button>
+          <Button asChild size="sm" variant="ghost" className="h-9 px-3 font-medium tracking-[0.08em]">
+            <Link href="/caption-template.html#youtube-auto-highlights">
+              <WandSparkles className="h-3.5 w-3.5" />
+              YouTube AI
+            </Link>
+          </Button>
+        </nav>
         <div className="flex items-center gap-2">
           <SessionStatus />
           <Button asChild size="sm" variant="ghost" className="h-9 px-3 font-medium tracking-[0.08em]">
@@ -33,8 +43,8 @@ export function SiteHeader() {
             </Link>
           </Button>
           <Button asChild size="sm" variant="outline" className="font-medium tracking-[0.08em] uppercase">
-            <Link href="/shows" className="tracking-[0.08em]">
-              Watch Live
+            <Link href="/" className="tracking-[0.08em]">
+              Dashboard
             </Link>
           </Button>
         </div>

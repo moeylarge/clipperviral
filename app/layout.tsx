@@ -17,9 +17,9 @@ const body = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Spotlight | Live Competition Platform",
+  title: "ClipperViral | Clip Dashboard",
   description:
-    "Scheduled live shows where viewers compete for 60-second stage time and audience votes decide the moments that become clips.",
+    "ClipperViral dashboard for Kick templates, caption generation, and YouTube AI clip workflows.",
 };
 
 export default function RootLayout({
