@@ -450,8 +450,19 @@ function ytDlpDownloadAttempts(
       "--add-header",
       "Referer: https://www.youtube.com/",
     ];
-    const youtubeBase = [...baseArgs, "--geo-bypass", ...commonHeaders, "-o", outputTemplate];
+    const youtubeBase = [...baseArgs, "--geo-bypass", "-o", outputTemplate];
+    const youtubeBaseWithHeaders = [...baseArgs, "--geo-bypass", ...commonHeaders, "-o", outputTemplate];
     const youtubeFallback = [
+      "-f",
+      "best",
+      "--merge-output-format",
+      "mp4",
+      "--user-agent",
+      userAgent,
+      "-o",
+      outputTemplate,
+    ];
+    const youtubeFallbackWithHeaders = [
       "-f",
       "best",
       "--merge-output-format",
@@ -473,30 +484,39 @@ function ytDlpDownloadAttempts(
     const cookieArgs = cookieFile ? ["--cookies", cookieFile] : [];
 
     // If cookies are present, prefer authenticated attempts first.
+    // Try without forced Origin/Referer first because those headers can
+    // increase bot challenges on some YouTube flows.
     if (cookieArgs.length) {
       for (const variant of youtubeVariants) {
         attempts.push([...youtubeBase, ...cookieArgs, ...variant]);
       }
+      for (const variant of youtubeVariants) {
+        attempts.push([...youtubeBaseWithHeaders, ...cookieArgs, ...variant]);
+      }
     }
     for (const variant of youtubeVariants) {
-      attempts.push([...youtubeBase, ...variant]);
+      attempts.push([...youtubeBaseWithHeaders, ...variant]);
     }
 
     if (country) {
       if (cookieArgs.length) {
         attempts.push([...youtubeBase, ...cookieArgs, `--geo-bypass-country`, country]);
         attempts.push([...youtubeBase, ...cookieArgs, `--geo-bypass-ip-block`, country]);
+        attempts.push([...youtubeBaseWithHeaders, ...cookieArgs, `--geo-bypass-country`, country]);
+        attempts.push([...youtubeBaseWithHeaders, ...cookieArgs, `--geo-bypass-ip-block`, country]);
       }
-      attempts.push([...youtubeBase, `--geo-bypass-country`, country]);
-      attempts.push([...youtubeBase, `--geo-bypass-ip-block`, country]);
+      attempts.push([...youtubeBaseWithHeaders, `--geo-bypass-country`, country]);
+      attempts.push([...youtubeBaseWithHeaders, `--geo-bypass-ip-block`, country]);
     }
 
     if (cookieArgs.length) {
       attempts.push([...youtubeFallback, ...cookieArgs]);
       attempts.push([...youtubeFallback, ...cookieArgs, "--extractor-args", "youtube:player_client=android"]);
+      attempts.push([...youtubeFallbackWithHeaders, ...cookieArgs]);
+      attempts.push([...youtubeFallbackWithHeaders, ...cookieArgs, "--extractor-args", "youtube:player_client=android"]);
     }
-    attempts.push([...youtubeFallback]);
-    attempts.push([...youtubeFallback, "--extractor-args", "youtube:player_client=android"]);
+    attempts.push([...youtubeFallbackWithHeaders]);
+    attempts.push([...youtubeFallbackWithHeaders, "--extractor-args", "youtube:player_client=android"]);
   } else {
     const genericBase = [...baseArgs, "-o", outputTemplate];
     const genericFallback = [
