@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LayoutGrid, Scissors, Subtitles, WandSparkles } from "lucide-react";
+import { Clapperboard, LayoutGrid, Scissors, Subtitles, WandSparkles } from "lucide-react";
 import { Inter, Sora } from "next/font/google";
 
 import { SiteHeader } from "@/components/shell/site-header";
@@ -19,14 +19,15 @@ const body = Inter({
 
 const navLinks = [
   { href: "/", label: "Dashboard", icon: LayoutGrid },
-  { href: "/shows/kick-template", label: "Kick Template", icon: Scissors },
-  { href: "/shows/caption-studio", label: "Caption Studio", icon: Subtitles },
-  { href: "/shows/youtube-ai-clips", label: "YouTube AI Clips", icon: WandSparkles },
+  { href: "/editor.html", label: "Unified Editor", icon: Clapperboard },
+  { href: "/shows/youtube-ai-clips", label: "URL Clips", icon: WandSparkles },
+  { href: "/shows/caption-studio", label: "Captions", icon: Subtitles },
+  { href: "/shows/kick-template", label: "Kick Fallback", icon: Scissors },
 ];
 
 export const metadata: Metadata = {
   title: "ClipperViral Dashboard",
-  description: "Workflow dashboard for Kick templates, caption generation, and YouTube AI clips.",
+  description: "Unified editor dashboard for uploads, YouTube AI clips, captions, layouts, and exports.",
 };
 
 export default function RootLayout({

@@ -9,9 +9,9 @@ export default function ShowsPage() {
     <div className="page-stack">
       <section className="surface-panel-strong p-6 md:p-7">
         <p className="section-kicker">Workflow library</p>
-        <h1 className="mt-2 text-3xl md:text-4xl">All tool workflows</h1>
+        <h1 className="mt-2 text-3xl md:text-4xl">All clip workflows</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-          Open a dedicated workflow page for each tool with step sequence and clean execution context.
+          Use the Unified Clip Editor for the main flow. The older dedicated workspaces stay here as fallbacks while we fold their strongest pieces into the editor.
         </p>
       </section>
 

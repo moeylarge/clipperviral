@@ -1,5 +1,5 @@
 export type DashboardTool = {
-  id: "kick" | "captions" | "youtube";
+  id: "editor" | "kick" | "captions" | "youtube";
   label: string;
   shortLabel: string;
   href: string;
@@ -13,13 +13,31 @@ export type DashboardTool = {
 
 export const dashboardTools: DashboardTool[] = [
   {
+    id: "editor",
+    label: "Unified Clip Editor",
+    shortLabel: "Editor",
+    href: "/editor.html",
+    routeSlug: "unified-editor",
+    description:
+      "The main step-by-step workflow: choose source, pick vertical or horizontal layout, add captions, then export.",
+    status: "Primary workflow",
+    steps: [
+      "Upload a local video or generate candidates from a YouTube/Kick URL",
+      "Choose vertical or horizontal layout with multi-angle options",
+      "Add captions, audio polish, and export settings",
+      "Preview and download the finished clip",
+    ],
+    checks: ["Single uncluttered flow", "URL and upload entry points", "Preview before export"],
+    eta: "~5 min",
+  },
+  {
     id: "kick",
     label: "Kick Template",
     shortLabel: "Kick",
     href: "/kick-template.html",
     routeSlug: "kick-template",
     description: "Format stream clips fast with reusable Kick-first layout controls.",
-    status: "Production ready",
+    status: "Fallback workspace",
     steps: ["Upload source clip", "Tune title, framing, and layout", "Preview and export"],
     checks: ["Readable title safe area", "Brand-safe framing", "Download output"],
     eta: "~2 min",
@@ -31,7 +49,7 @@ export const dashboardTools: DashboardTool[] = [
     href: "/caption-template.html",
     routeSlug: "caption-studio",
     description: "Generate captions, style subtitles, and export social-ready edits.",
-    status: "Production ready",
+    status: "Fallback workspace",
     steps: ["Upload video", "Generate and style captions", "Export subtitle or MP4"],
     checks: ["Timing quality", "Style consistency", "Correct output format"],
     eta: "~4 min",
@@ -43,7 +61,7 @@ export const dashboardTools: DashboardTool[] = [
     href: "/format-template.html#youtube-auto-highlights",
     routeSlug: "youtube-ai-clips",
     description: "Paste a URL and get ranked AI clip candidates with quick export.",
-    status: "Production ready",
+    status: "Fallback workspace",
     steps: ["Paste YouTube or Kick URL", "Run AI candidate generation", "Preview and download winners"],
     checks: ["Valid source URL", "Ranked candidate quality", "Clip download pass"],
     eta: "~5-10 min",

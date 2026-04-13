@@ -326,6 +326,9 @@
       .layout-card[data-layout="basecam"] .thumb::before { top: auto; bottom: 8px; left: 22px; }
       .layout-card[data-layout="mosaic"] .thumb { background: conic-gradient(from 90deg, #70d9ec, #415837, #e7f5f4, #384737, #70d9ec); }
       .layout-card[data-layout="dual"] .thumb::after { display: block; }
+      .layout-card[data-layout="duo"] .thumb::before,
+      .layout-card[data-layout="duo"] .thumb::after { display: block; width: 44px; height: 60px; top: 12px; border-radius: 7px; }
+      .layout-card[data-layout="half"] .thumb::before { width: 86px; height: 78px; left: 28px; top: 8px; border-radius: 8px; }
 
       .caption-card-grid {
         display: grid;
@@ -416,6 +419,46 @@
         justify-content: space-between;
         gap: 16px;
         padding: 16px 22px 8px;
+      }
+
+      .editor-context {
+        display: grid;
+        gap: 3px;
+        min-width: 190px;
+      }
+
+      .editor-context strong {
+        font-size: 16px;
+        letter-spacing: -0.02em;
+      }
+
+      .editor-context span {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .fallback-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 6px;
+      }
+
+      .fallback-links a {
+        border: 1px solid #dddfea;
+        border-radius: 999px;
+        background: #fff;
+        color: #565969;
+        padding: 7px 10px;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .fallback-links a:hover {
+        border-color: #9fb7ff;
+        color: #3158d4;
       }
 
       .undo-group, .select-group {
@@ -546,6 +589,85 @@
       .facecam.right { right: 22px; bottom: 34px; }
       .facecam.left .label-chip { left: -10px; top: -31px; background: #b332ff; color: #fff; }
       .facecam.right .label-chip { right: -14px; top: -31px; background: var(--pink); color: #fff; }
+
+      .map-box {
+        position: absolute;
+        display: none;
+        left: 14px;
+        top: 14px;
+        width: 78px;
+        height: 58px;
+        border: 3px solid var(--pink);
+        background: rgba(235, 52, 184, 0.12);
+      }
+
+      .map-box .label-chip {
+        top: -29px;
+        left: 10px;
+        background: var(--pink);
+        color: #fff;
+      }
+
+      .editor-canvas[data-layout="small"] .focus-panel { left: 28%; width: 44%; }
+      .editor-canvas[data-layout="small"] .facecam.left { display: block; left: 18px; top: 18px; bottom: auto; }
+      .editor-canvas[data-layout="small"] .facecam.right { display: none; }
+
+      .editor-canvas[data-layout="circle"] .focus-panel { left: 30%; width: 42%; }
+      .editor-canvas[data-layout="circle"] .facecam.left { display: block; left: 18px; bottom: 20px; }
+      .editor-canvas[data-layout="circle"] .facecam.right { display: none; }
+
+      .editor-canvas[data-layout="game-ui"] .focus-panel { left: 31%; width: 36%; }
+      .editor-canvas[data-layout="game-ui"] .facecam.left { display: none; }
+      .editor-canvas[data-layout="game-ui"] .facecam.right { display: block; width: 104px; height: 66px; border-radius: 8px; right: 12px; bottom: 18px; }
+
+      .editor-canvas[data-layout="split"] .focus-panel { left: 25%; width: 46%; }
+      .editor-canvas[data-layout="split"] .facecam.left { display: none; }
+      .editor-canvas[data-layout="split"] .facecam.right { display: block; width: 112px; height: 66px; border-radius: 4px; right: 18px; bottom: 12px; }
+
+      .editor-canvas[data-layout="blurred"] video { filter: blur(2px) saturate(0.9); }
+      .editor-canvas[data-layout="blurred"] .focus-panel { left: 22%; width: 52%; background: rgba(0, 0, 0, 0.18); }
+      .editor-canvas[data-layout="blurred"] .facecam,
+      .editor-canvas[data-layout="blurred"] .map-box { display: none; }
+
+      .editor-canvas[data-layout="fullscreen"] .focus-panel { left: 32%; width: 31%; }
+      .editor-canvas[data-layout="fullscreen"] .facecam,
+      .editor-canvas[data-layout="fullscreen"] .map-box { display: none; }
+
+      .editor-canvas[data-layout="basecam"] .focus-panel { left: 26%; width: 44%; }
+      .editor-canvas[data-layout="basecam"] .facecam.left { display: none; }
+      .editor-canvas[data-layout="basecam"] .facecam.right { display: block; width: 118px; height: 66px; border-radius: 4px; right: 18px; bottom: 12px; }
+
+      .editor-canvas[data-layout="mosaic"] .focus-panel { left: 25%; width: 44%; }
+      .editor-canvas[data-layout="mosaic"] .map-box { display: block; }
+      .editor-canvas[data-layout="mosaic"] .facecam.left { display: none; }
+      .editor-canvas[data-layout="mosaic"] .facecam.right { display: block; width: 96px; height: 70px; border-radius: 5px; right: 22px; bottom: 16px; }
+
+      .editor-canvas[data-layout="dual"] .focus-panel { left: 32%; width: 30%; }
+      .editor-canvas[data-layout="dual"] .facecam.left,
+      .editor-canvas[data-layout="dual"] .facecam.right { display: block; }
+
+      .editor-canvas[data-layout="duo"] .focus-panel { left: 27%; width: 42%; }
+      .editor-canvas[data-layout="duo"] .facecam.left,
+      .editor-canvas[data-layout="duo"] .facecam.right {
+        display: block;
+        width: 104px;
+        height: 82px;
+        border-radius: 4px;
+        bottom: 0;
+      }
+      .editor-canvas[data-layout="duo"] .facecam.left { left: 0; }
+      .editor-canvas[data-layout="duo"] .facecam.right { right: 0; }
+
+      .editor-canvas[data-layout="half"] .focus-panel { left: 18%; width: 58%; }
+      .editor-canvas[data-layout="half"] .facecam.left { display: none; }
+      .editor-canvas[data-layout="half"] .facecam.right {
+        display: block;
+        width: 120px;
+        height: 92px;
+        border-radius: 4px;
+        right: 18px;
+        bottom: 12px;
+      }
 
       .canvas-toolbar {
         min-height: 44px;
@@ -711,6 +833,7 @@
         body { overflow: auto; }
         .app-shell { height: auto; min-height: 100vh; grid-template-columns: 64px 1fr; }
         .workspace { grid-column: 1 / -1; height: auto; min-height: 900px; }
+        .topbar { flex-wrap: wrap; }
         .stage-row { grid-template-columns: 1fr; }
         .preview-column { display: none; }
       }
@@ -889,8 +1012,17 @@
 
       <section class="workspace">
         <header class="topbar">
+          <div class="editor-context">
+            <strong>Unified Clip Editor</strong>
+            <span>Source → Layouts → Captions → Export</span>
+          </div>
           <div class="undo-group"><button type="button">↶ Undo</button><button type="button">↷</button></div>
           <div class="select-group"><select id="platformSelect"><option>TikTok preview</option><option>YouTube Shorts preview</option><option>Reels preview</option><option>YouTube horizontal</option></select><select id="fitSelect"><option>Fit (21.6%)</option><option>Fit</option><option>Fill</option></select></div>
+          <div class="fallback-links" aria-label="Fallback workspaces">
+            <a href="/format-template.html">Format fallback</a>
+            <a href="/caption-template.html">Caption fallback</a>
+            <a href="/kick-template.html">Kick fallback</a>
+          </div>
         </header>
 
         <section class="stage-row">
@@ -901,6 +1033,7 @@
               <div id="canvasPlaceholder" class="canvas-placeholder">Add a clip from Source to begin</div>
               <div class="selection-box" aria-hidden="true">
                 <div class="focus-panel"><span class="handle tl"></span><span class="handle tr"></span><span class="handle bl"></span><span class="handle br"></span></div>
+                <div class="map-box"><span class="label-chip">Map</span></div>
                 <div class="facecam left"><span class="label-chip">Facecam Left</span></div>
                 <div class="facecam right"><span class="label-chip">Facecam Right</span></div>
               </div>
@@ -958,14 +1091,18 @@
       const youtubeCandidates = document.getElementById("youtubeCandidates");
       const localClipInput = document.getElementById("localClipInput");
       const layoutGrid = document.getElementById("layoutGrid");
+      const editorCanvas = document.getElementById("editorCanvas");
       const playButton = document.getElementById("playButton");
       const exportButton = document.getElementById("exportButton");
 
       const layouts = [
         ["small", "Small facecam"], ["circle", "Circle facecam"], ["game-ui", "Game UI"],
         ["split", "Split"], ["blurred", "Blurred"], ["fullscreen", "Fullscreen"],
-        ["basecam", "Basecam"], ["mosaic", "Mosaic"], ["dual", "Dual facecam"]
+        ["basecam", "Basecam"], ["mosaic", "Mosaic"], ["dual", "Dual facecam"],
+        ["duo", "Duo Split"], ["half", "Half"]
       ];
+
+      const layoutLabels = Object.fromEntries(layouts);
 
       function setStep(step) {
         currentStep = step;
@@ -1124,11 +1261,17 @@
           button.innerHTML = `<span>${label}</span><span class="thumb"></span>`;
           button.addEventListener("click", () => {
             selectedLayout = key;
-            layoutTitle.textContent = label;
+            applyLayout();
             renderLayoutCards();
           });
           layoutGrid.appendChild(button);
         });
+      }
+
+      function applyLayout() {
+        editorCanvas.dataset.layout = selectedLayout;
+        mainVideo.style.filter = "";
+        layoutTitle.textContent = layoutLabels[selectedLayout] || "Custom layout";
       }
 
       toolButtons.forEach((button) => button.addEventListener("click", () => setStep(button.dataset.step)));
@@ -1193,6 +1336,7 @@
       });
 
       renderLayoutCards();
+      applyLayout();
       setStep("source");
     </script>
   </body>

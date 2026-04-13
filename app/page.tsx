@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, CheckCircle2, Film, ListChecks, Sparkles, Subtitles, WandSparkles } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Clapperboard, Film, ListChecks, Sparkles, Subtitles, WandSparkles } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,14 @@ import { dashboardTools, type DashboardTool } from "@/lib/tool-catalog";
 import { cn } from "@/lib/utils";
 
 const TOOL_ICONS: Record<DashboardTool["id"], ReactNode> = {
+  editor: <Clapperboard className="h-4 w-4" />,
   kick: <Film className="h-4 w-4" />,
   captions: <Subtitles className="h-4 w-4" />,
   youtube: <WandSparkles className="h-4 w-4" />,
 };
 
 export default function HomePage() {
-  const [selectedToolId, setSelectedToolId] = useState<DashboardTool["id"]>("kick");
+  const [selectedToolId, setSelectedToolId] = useState<DashboardTool["id"]>("editor");
 
   const selectedTool = useMemo(
     () => dashboardTools.find((tool) => tool.id === selectedToolId) ?? dashboardTools[0],
@@ -26,16 +27,28 @@ export default function HomePage() {
     <div className="page-stack">
       <section className="surface-panel-strong p-6 md:p-7">
         <p className="section-kicker">ClipperViral</p>
-        <h1 className="mt-2 text-3xl md:text-4xl">Dashboard</h1>
+        <h1 className="mt-2 text-3xl md:text-4xl">Creator clip workflow</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-          Manage Kick templates, captions, and YouTube AI clipping from one clean control surface.
+          Start with a video upload or AI-generated YouTube/Kick clips, choose vertical or horizontal layout,
+          add captions, then export from one cleaner editor surface.
         </p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Button asChild size="lg" variant="cta">
+            <Link href="/editor.html">
+              Open unified editor
+              <ArrowUpRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link href="/shows">View fallback workspaces</Link>
+          </Button>
+        </div>
       </section>
 
       <section className="data-grid">
         <article className="metric-card">
           <p className="metric-label">Tools online</p>
-          <p className="metric-value">3 / 3</p>
+          <p className="metric-value">4 / 4</p>
         </article>
         <article className="metric-card">
           <p className="metric-label">Production status</p>
@@ -43,7 +56,7 @@ export default function HomePage() {
         </article>
         <article className="metric-card">
           <p className="metric-label">Primary workflow</p>
-          <p className="metric-value">URL to Clips</p>
+          <p className="metric-value">Editor</p>
         </article>
         <article className="metric-card">
           <p className="metric-label">Active view</p>
@@ -53,7 +66,7 @@ export default function HomePage() {
 
       <section className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
         <aside className="surface-panel p-3">
-          <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Tool tabs</p>
+          <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Workflow map</p>
           <div className="grid gap-2">
             {dashboardTools.map((tool) => (
               <button
@@ -87,7 +100,7 @@ export default function HomePage() {
             </div>
             <Button asChild size="lg" variant="cta">
               <Link href={selectedTool.href}>
-                Open tool
+                {selectedTool.id === "editor" ? "Open editor" : "Open fallback"}
                 <ArrowUpRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
