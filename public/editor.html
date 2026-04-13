@@ -407,7 +407,7 @@
       .workspace {
         min-width: 0;
         display: grid;
-        grid-template-rows: auto 1fr 176px;
+        grid-template-rows: auto 1fr 246px;
         height: 100vh;
         overflow: hidden;
       }
@@ -605,6 +605,55 @@
         left: 10px;
         background: var(--pink);
         color: #fff;
+      }
+
+      .kick-lower-third {
+        position: absolute;
+        left: 5%;
+        right: 5%;
+        bottom: 7%;
+        min-height: 34px;
+        display: none;
+        align-items: center;
+        border: 2px solid #1f7f55;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #06140c;
+        box-shadow: 0 12px 26px rgba(0,0,0,0.35);
+        z-index: 10;
+      }
+
+      .kick-lower-third.active {
+        display: flex;
+      }
+
+      .kick-wordmark {
+        align-self: stretch;
+        display: grid;
+        place-items: center;
+        padding: 4px 13px;
+        color: var(--green);
+        background: #0b2013;
+        font-size: 28px;
+        font-weight: 1000;
+        letter-spacing: -0.08em;
+        text-transform: uppercase;
+        text-shadow: 2px 0 0 #001e07, 0 2px 0 #001e07;
+      }
+
+      .kick-handle {
+        flex: 1;
+        min-width: 0;
+        padding: 0 12px;
+        color: var(--green);
+        font-size: 13px;
+        font-weight: 1000;
+        letter-spacing: 0.02em;
+        text-align: center;
+        text-transform: uppercase;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .editor-canvas[data-layout="small"] .focus-panel { left: 28%; width: 44%; }
@@ -943,6 +992,27 @@
         font-weight: 800;
       }
 
+      .phone-preview .kick-lower-third {
+        left: 6%;
+        right: 6%;
+        bottom: 9%;
+        min-height: 17px;
+        border-width: 1px;
+        border-radius: 4px;
+      }
+
+      .phone-preview .kick-wordmark {
+        padding: 1px 5px;
+        font-size: 10px;
+        letter-spacing: -0.06em;
+        text-shadow: 1px 0 0 #001e07;
+      }
+
+      .phone-preview .kick-handle {
+        padding: 0 4px;
+        font-size: 4px;
+      }
+
       .platform-pill {
         border: 1px solid #dfe1eb;
         border-radius: 7px;
@@ -964,7 +1034,7 @@
         background: #fff;
         border-top: 1px solid var(--line);
         display: grid;
-        grid-template-rows: 32px 1fr 48px;
+        grid-template-rows: 32px 1fr 76px 48px;
       }
 
       .timeline-tools {
@@ -995,6 +1065,151 @@
         border: 8px solid var(--purple);
         background: repeating-linear-gradient(90deg, #bd7446 0 32px, #6b3323 32px 36px, #d29562 36px 64px);
         position: relative;
+      }
+
+      .overlay-lane {
+        position: relative;
+        height: 32px;
+        margin: 8px 0 0;
+        border-radius: 8px;
+        border: 1px solid #e3e5ee;
+        background: #f8f9fc;
+      }
+
+      .kick-overlay-clip {
+        position: absolute;
+        top: 4px;
+        bottom: 4px;
+        left: 0;
+        width: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border-radius: 7px;
+        border: 2px solid #1f7f55;
+        background: #2f7d5b;
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 1000;
+        overflow: hidden;
+        text-transform: uppercase;
+      }
+
+      .kick-overlay-clip.active {
+        display: flex;
+      }
+
+      .trim-editor {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        align-items: center;
+        gap: 14px;
+        padding: 8px 28px;
+        border-top: 1px solid #f0f0f5;
+      }
+
+      .trim-control {
+        display: grid;
+        gap: 4px;
+      }
+
+      .trim-control label {
+        font-size: 12px;
+        color: #565969;
+        font-weight: 900;
+      }
+
+      .trim-control input[type="range"] {
+        width: 100%;
+        accent-color: var(--purple);
+      }
+
+      .trim-summary {
+        min-width: 138px;
+        border: 1px solid #e0e2ea;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 12px;
+        font-weight: 900;
+        color: #383b45;
+        background: #fff;
+      }
+
+      .element-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .element-card {
+        border: 1px solid #e1e2eb;
+        border-radius: 12px;
+        background: #fff;
+        padding: 13px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .element-card strong {
+        display: block;
+        font-size: 16px;
+      }
+
+      .element-card p {
+        margin: 3px 0 0;
+        font-size: 13px;
+      }
+
+      .mini-preview {
+        min-height: 54px;
+        border-radius: 10px;
+        background: #07140d;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        border: 2px solid #247a54;
+      }
+
+      .mini-preview .kick-wordmark {
+        font-size: 22px;
+      }
+
+      .mini-preview .kick-handle {
+        font-size: 11px;
+      }
+
+      .segmented {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border: 1px solid #dfe1eb;
+        border-radius: 9px;
+        overflow: hidden;
+      }
+
+      .segmented button {
+        border: 0;
+        background: #fff;
+        padding: 9px 10px;
+        font-weight: 900;
+        color: #4b4e5b;
+      }
+
+      .segmented button.active {
+        background: #f0ecff;
+        color: var(--purple);
+      }
+
+      .range-fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .range-fields input {
+        width: 100%;
+        border: 1px solid #d9dbe8;
+        border-radius: 9px;
+        min-height: 38px;
+        padding: 8px 10px;
       }
 
       .playhead {
@@ -1136,15 +1351,40 @@
           <div class="panel-head">
             <div>
               <h1>Elements</h1>
-              <p>Add stickers, labels, lower thirds, progress bars, and brand marks.</p>
+              <p>Add Kick verbiage, lower thirds and brand overlays to part of the clip or the whole clip.</p>
             </div>
             <button class="collapse-btn" type="button">▱</button>
           </div>
-          <div class="caption-card-grid">
-            <button class="caption-card" type="button">LOGO</button>
-            <button class="caption-card" type="button">CTA</button>
-            <button class="caption-card" type="button">ARROW</button>
-            <button class="caption-card" type="button">FRAME</button>
+          <div class="element-list">
+            <article class="element-card">
+              <div>
+                <strong>Kick lower third</strong>
+                <p>Use this for the branded Kick strip shown in the screenshots.</p>
+              </div>
+              <button id="kickTemplateToggle" class="mini-preview" type="button" aria-pressed="false">
+                <span class="kick-wordmark">KICK</span>
+                <span id="kickMiniHandle" class="kick-handle">KICK.COM/EDMATTHEWS</span>
+              </button>
+              <div class="field-stack">
+                <label for="kickHandleInput">Kick text</label>
+                <input id="kickHandleInput" type="text" value="KICK.COM/EDMATTHEWS" />
+              </div>
+              <div class="segmented" aria-label="Kick overlay timing">
+                <button class="active" data-kick-apply="whole" type="button">Whole clip</button>
+                <button data-kick-apply="range" type="button">Selected range</button>
+              </div>
+              <div class="range-fields">
+                <label>Start sec<input id="kickStartInput" type="number" min="0" step="0.1" value="0" /></label>
+                <label>End sec<input id="kickEndInput" type="number" min="0" step="0.1" value="20" /></label>
+              </div>
+              <button id="kickApplyCurrentButton" class="primary-btn source-action" type="button">Add template to timeline</button>
+            </article>
+            <article class="element-card">
+              <div>
+                <strong>More overlays soon</strong>
+                <p>This section will also hold CTA stickers, arrows, labels and reusable Kick templates.</p>
+              </div>
+            </article>
           </div>
         </section>
 
@@ -1252,6 +1492,7 @@
             <div class="editor-canvas" id="editorCanvas">
               <video id="mainVideo" playsinline controls></video>
               <div id="canvasPlaceholder" class="canvas-placeholder">Add a clip from Source to begin</div>
+              <div id="kickCanvasOverlay" class="kick-lower-third" aria-hidden="true"><span class="kick-wordmark">KICK</span><span id="kickCanvasHandle" class="kick-handle">KICK.COM/EDMATTHEWS</span></div>
               <div class="selection-box" aria-hidden="true">
                 <div class="focus-panel"><span class="handle tl"></span><span class="handle tr"></span><span class="handle bl"></span><span class="handle br"></span></div>
                 <div class="map-box"><span class="label-chip">Map</span></div>
@@ -1275,6 +1516,7 @@
                 <video id="phoneMapVideo" class="phone-map" muted playsinline></video>
                 <video id="phoneFacecamLeftVideo" class="phone-facecam-left" muted playsinline></video>
                 <video id="phoneFacecamRightVideo" class="phone-facecam-right" muted playsinline></video>
+                <div id="kickPhoneOverlay" class="kick-lower-third" aria-hidden="true"><span class="kick-wordmark">KICK</span><span id="kickPhoneHandle" class="kick-handle">KICK.COM/EDMATTHEWS</span></div>
               </div>
             </div>
             <button class="platform-pill" type="button">♪ TikTok preview⌄</button>
@@ -1286,7 +1528,19 @@
           <div class="timeline-track">
             <div class="ticks"><span>00:00</span><span>00:12</span><span>00:24</span><span id="durationLabel">00:34</span></div>
             <div class="thumb-strip"></div>
+            <div class="overlay-lane" aria-label="Element overlay lane"><div id="kickTimelineClip" class="kick-overlay-clip">KICK</div></div>
             <div class="playhead"></div>
+          </div>
+          <div class="trim-editor">
+            <div class="trim-control">
+              <label for="trimStartRange">Clip starts at <span id="trimStartLabel">00:00.0</span></label>
+              <input id="trimStartRange" type="range" min="0" max="34" step="0.1" value="0" />
+            </div>
+            <div class="trim-control">
+              <label for="trimEndRange">Clip ends at <span id="trimEndLabel">00:34.0</span></label>
+              <input id="trimEndRange" type="range" min="0" max="34" step="0.1" value="34" />
+            </div>
+            <div id="trimSummary" class="trim-summary">Trim: full clip</div>
           </div>
           <div class="footer-nav"><button id="backStep" class="back-step" type="button">← Source</button><button id="nextStep" class="next-btn" type="button">Layouts →</button></div>
         </section>
@@ -1302,6 +1556,9 @@
       let youtubeClips = [];
       let selectedLayout = "dual";
       let selectedFormat = "vertical";
+      let clipDuration = 34;
+      const trimState = { start: 0, end: 34 };
+      const kickState = { enabled: false, apply: "whole", start: 0, end: 34, text: "KICK.COM/EDMATTHEWS" };
 
       const toolButtons = document.querySelectorAll(".tool-btn");
       const views = document.querySelectorAll(".step-view");
@@ -1331,6 +1588,23 @@
       const editorCanvas = document.getElementById("editorCanvas");
       const playButton = document.getElementById("playButton");
       const exportButton = document.getElementById("exportButton");
+      const durationLabel = document.getElementById("durationLabel");
+      const kickTemplateToggle = document.getElementById("kickTemplateToggle");
+      const kickHandleInput = document.getElementById("kickHandleInput");
+      const kickMiniHandle = document.getElementById("kickMiniHandle");
+      const kickCanvasOverlay = document.getElementById("kickCanvasOverlay");
+      const kickPhoneOverlay = document.getElementById("kickPhoneOverlay");
+      const kickCanvasHandle = document.getElementById("kickCanvasHandle");
+      const kickPhoneHandle = document.getElementById("kickPhoneHandle");
+      const kickStartInput = document.getElementById("kickStartInput");
+      const kickEndInput = document.getElementById("kickEndInput");
+      const kickApplyCurrentButton = document.getElementById("kickApplyCurrentButton");
+      const kickTimelineClip = document.getElementById("kickTimelineClip");
+      const trimStartRange = document.getElementById("trimStartRange");
+      const trimEndRange = document.getElementById("trimEndRange");
+      const trimStartLabel = document.getElementById("trimStartLabel");
+      const trimEndLabel = document.getElementById("trimEndLabel");
+      const trimSummary = document.getElementById("trimSummary");
 
       const layouts = [
         ["small", "Small facecam"], ["circle", "Circle facecam"], ["game-ui", "Game UI"],
@@ -1367,6 +1641,7 @@
 
       function syncPhonePreview(options = {}) {
         if (!mainVideo.src) return;
+        updateKickOverlay();
         const force = !!options.force;
         phoneLayerVideos.forEach((video) => {
           if (!video.src) return;
@@ -1390,8 +1665,93 @@
         return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}.${tenth}`;
       }
 
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, Number(value) || 0));
+      }
+
+      function getEffectiveDuration() {
+        return Math.max(1, Number(mainVideo.duration) || clipDuration || 34);
+      }
+
+      function setDuration(duration) {
+        clipDuration = Math.max(1, Number(duration) || 34);
+        durationLabel.textContent = formatClock(clipDuration);
+        trimStartRange.max = String(clipDuration);
+        trimEndRange.max = String(clipDuration);
+        if (!Number.isFinite(Number(trimEndRange.value)) || Number(trimEndRange.value) > clipDuration) {
+          trimEndRange.value = String(clipDuration);
+        }
+        trimState.start = clamp(trimState.start, 0, clipDuration - 0.1);
+        trimState.end = clamp(trimState.end || clipDuration, trimState.start + 0.1, clipDuration);
+        trimStartRange.value = String(trimState.start);
+        trimEndRange.value = String(trimState.end);
+        if (kickState.apply === "whole") {
+          kickState.start = 0;
+          kickState.end = clipDuration;
+        } else {
+          kickState.start = clamp(kickState.start, 0, clipDuration - 0.1);
+          kickState.end = clamp(kickState.end, kickState.start + 0.1, clipDuration);
+        }
+        updateTrimControls();
+        updateKickOverlay();
+      }
+
       function safeFileName(value) {
         return `${value}`.replace(/[^a-zA-Z0-9._-]+/g, "-");
+      }
+
+      function overlayShouldShow() {
+        if (!kickState.enabled) return false;
+        if (kickState.apply === "whole") return true;
+        const current = Number(mainVideo.currentTime) || 0;
+        return current >= kickState.start && current <= kickState.end;
+      }
+
+      function updateKickOverlay() {
+        const duration = getEffectiveDuration();
+        const start = kickState.apply === "whole" ? 0 : clamp(kickState.start, 0, duration);
+        const end = kickState.apply === "whole" ? duration : clamp(kickState.end, start + 0.1, duration);
+        kickState.start = start;
+        kickState.end = end;
+        kickState.text = (kickHandleInput.value || "KICK.COM/EDMATTHEWS").trim().toUpperCase();
+
+        kickMiniHandle.textContent = kickState.text;
+        kickCanvasHandle.textContent = kickState.text;
+        kickPhoneHandle.textContent = kickState.text;
+        kickStartInput.value = String(Number(start.toFixed(1)));
+        kickEndInput.value = String(Number(end.toFixed(1)));
+
+        const visible = overlayShouldShow();
+        kickCanvasOverlay.classList.toggle("active", visible);
+        kickPhoneOverlay.classList.toggle("active", visible);
+        kickTemplateToggle.setAttribute("aria-pressed", String(kickState.enabled));
+        kickTemplateToggle.style.outline = kickState.enabled ? "2px solid #70a7ff" : "";
+
+        const left = (start / duration) * 100;
+        const width = Math.max(2, ((end - start) / duration) * 100);
+        kickTimelineClip.classList.toggle("active", kickState.enabled);
+        kickTimelineClip.style.left = `${left}%`;
+        kickTimelineClip.style.width = `${width}%`;
+        kickTimelineClip.textContent = kickState.apply === "whole" ? "KICK whole clip" : `KICK ${formatClock(start)}-${formatClock(end)}`;
+      }
+
+      function updateTrimControls() {
+        const duration = getEffectiveDuration();
+        trimState.start = clamp(trimStartRange.value, 0, duration - 0.1);
+        trimState.end = clamp(trimEndRange.value, trimState.start + 0.1, duration);
+        trimStartRange.value = String(trimState.start);
+        trimEndRange.value = String(trimState.end);
+        trimStartLabel.textContent = formatClock(trimState.start);
+        trimEndLabel.textContent = formatClock(trimState.end);
+        const isFullClip = trimState.start <= 0 && Math.abs(trimState.end - duration) < 0.2;
+        trimSummary.textContent = isFullClip ? "Trim: full clip" : `Trim: ${formatClock(trimState.start)} → ${formatClock(trimState.end)}`;
+      }
+
+      function seekToTrimStart() {
+        if (!mainVideo.src) return;
+        if ((Number(mainVideo.currentTime) || 0) < trimState.start || (Number(mainVideo.currentTime) || 0) > trimState.end) {
+          mainVideo.currentTime = trimState.start;
+        }
       }
 
       async function readResponseError(response) {
@@ -1532,6 +1892,7 @@
         phonePreview.dataset.layout = selectedLayout;
         mainVideo.style.filter = "";
         layoutTitle.textContent = layoutLabels[selectedLayout] || "Custom layout";
+        updateKickOverlay();
         syncPhonePreview({ force: true });
       }
 
@@ -1571,6 +1932,7 @@
       });
       playButton.addEventListener("click", () => {
         if (!mainVideo.src) return;
+        seekToTrimStart();
         if (mainVideo.paused) {
           mainVideo.play().catch(() => {});
           syncPhonePreview({ force: true });
@@ -1583,15 +1945,76 @@
       });
       mainVideo.addEventListener("play", () => {
         playButton.textContent = "⏸";
+        seekToTrimStart();
         syncPhonePreview({ force: true });
       });
       mainVideo.addEventListener("pause", () => {
         playButton.textContent = "▶";
         syncPhonePreview();
       });
+      mainVideo.addEventListener("loadedmetadata", () => setDuration(mainVideo.duration));
       mainVideo.addEventListener("seeked", () => syncPhonePreview({ force: true }));
-      mainVideo.addEventListener("timeupdate", () => syncPhonePreview());
+      mainVideo.addEventListener("timeupdate", () => {
+        if (mainVideo.src && !mainVideo.paused && mainVideo.currentTime > trimState.end) {
+          mainVideo.pause();
+          mainVideo.currentTime = trimState.start;
+        }
+        syncPhonePreview();
+      });
       mainVideo.addEventListener("ratechange", () => syncPhonePreview({ force: true }));
+      kickTemplateToggle.addEventListener("click", () => {
+        kickState.enabled = !kickState.enabled;
+        if (kickState.enabled && kickState.apply === "whole") {
+          kickState.start = 0;
+          kickState.end = getEffectiveDuration();
+        }
+        updateKickOverlay();
+      });
+      kickApplyCurrentButton.addEventListener("click", () => {
+        kickState.enabled = true;
+        if (kickState.apply === "range") {
+          const current = clamp(mainVideo.currentTime || trimState.start, trimState.start, trimState.end);
+          kickState.start = clamp(current, 0, getEffectiveDuration() - 0.1);
+          kickState.end = clamp(current + 6, kickState.start + 0.1, getEffectiveDuration());
+        }
+        updateKickOverlay();
+      });
+      kickHandleInput.addEventListener("input", updateKickOverlay);
+      document.querySelectorAll("[data-kick-apply]").forEach((button) => {
+        button.addEventListener("click", () => {
+          kickState.apply = button.dataset.kickApply;
+          document.querySelectorAll("[data-kick-apply]").forEach((item) => item.classList.toggle("active", item === button));
+          if (kickState.apply === "whole") {
+            kickState.start = 0;
+            kickState.end = getEffectiveDuration();
+          } else {
+            kickState.start = clamp(kickStartInput.value || trimState.start, trimState.start, getEffectiveDuration() - 0.1);
+            kickState.end = clamp(kickEndInput.value || trimState.end, kickState.start + 0.1, getEffectiveDuration());
+          }
+          updateKickOverlay();
+        });
+      });
+      [kickStartInput, kickEndInput].forEach((input) => {
+        input.addEventListener("input", () => {
+          kickState.apply = "range";
+          document.querySelectorAll("[data-kick-apply]").forEach((item) => item.classList.toggle("active", item.dataset.kickApply === "range"));
+          kickState.start = Number(kickStartInput.value) || 0;
+          kickState.end = Number(kickEndInput.value) || getEffectiveDuration();
+          updateKickOverlay();
+        });
+      });
+      [trimStartRange, trimEndRange].forEach((input) => {
+        input.addEventListener("input", () => {
+          updateTrimControls();
+          if (mainVideo.src) mainVideo.currentTime = input === trimStartRange ? trimState.start : Math.min(trimState.end, getEffectiveDuration());
+          if (kickState.apply === "whole") {
+            kickState.start = 0;
+            kickState.end = getEffectiveDuration();
+          }
+          updateKickOverlay();
+          syncPhonePreview({ force: true });
+        });
+      });
       exportButton.addEventListener("click", () => {
         if (!videoUrl) {
           setStep("source");
@@ -1609,6 +2032,7 @@
 
       renderLayoutCards();
       applyLayout();
+      setDuration(34);
       setStep("source");
     </script>
   </body>
