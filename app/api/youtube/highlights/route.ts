@@ -203,7 +203,14 @@ function parseConfiguredYtDlpCommand(value: string | undefined): CommandCandidat
 }
 
 async function getYtDlpCandidates(): Promise<CommandCandidate[]> {
-  const runtimeYtDlp = await ensureYtDlpRuntimeBinary();
+  let runtimeYtDlp: string | null = null;
+  const bundledYtDlp = path.join(process.cwd(), "bin", "yt-dlp");
+  try {
+    await fs.access(bundledYtDlp, fsConstants.X_OK);
+    runtimeYtDlp = bundledYtDlp;
+  } catch {
+    runtimeYtDlp = await ensureYtDlpRuntimeBinary();
+  }
   const configured = parseConfiguredYtDlpCommand(process.env.YTDLP_PATH);
   const rawCandidates: CommandCandidate[] = [
     ...configured,

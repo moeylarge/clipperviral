@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
     "/api/youtube/highlights": [
       "./node_modules/ffmpeg-static/**",
       "./node_modules/@ffmpeg-installer/ffmpeg/**",
+      "./bin/yt-dlp",
     ],
     "/api/youtube/clip": [
       "./node_modules/ffmpeg-static/**",
