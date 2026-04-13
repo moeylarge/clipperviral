@@ -41,18 +41,35 @@ export function SignInForm() {
   const handleGoogleSignIn = async () => {
     setIsGoogleSubmitting(true);
     setError("");
+    try {
+      const supabase = createBrowserSupabaseClient();
+      const redirectTo = `${window.location.origin}/auth/callback`;
+      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+        },
+      });
 
-    const supabase = createBrowserSupabaseClient();
-    const redirectTo = `${window.location.origin}/auth/callback`;
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo,
-      },
-    });
+      if (oauthError) {
+        setError(oauthError.message);
+        return;
+      }
 
-    if (oauthError) {
-      setError(oauthError.message);
+      if (data?.url) {
+        window.location.assign(data.url);
+        return;
+      }
+
+      setError("Google sign-in did not return a redirect URL.");
+    } catch (oauthUnexpectedError) {
+      setError(
+        oauthUnexpectedError instanceof Error
+          ? oauthUnexpectedError.message
+          : "Google sign-in failed unexpectedly."
+      );
+    } finally {
       setIsGoogleSubmitting(false);
     }
   };
