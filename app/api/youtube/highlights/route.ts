@@ -135,9 +135,14 @@ function getYtDlpReleaseUrls() {
     }
   }
 
-  // Generic fallback from upstream in case platform-specific asset mapping changes.
-  urls.push("https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp");
+  // Do not fallback to the generic "yt-dlp" script URL since Vercel has no python runtime.
   return [...new Set(urls)];
+}
+
+function looksLikePythonScript(bytes: Uint8Array) {
+  if (!bytes.length) return false;
+  const header = Buffer.from(bytes.subarray(0, Math.min(bytes.length, 256))).toString("utf8");
+  return header.startsWith("#!") && /python/i.test(header);
 }
 
 async function tryDownloadYtDlpBinary(targetPath: string) {
@@ -148,6 +153,7 @@ async function tryDownloadYtDlpBinary(targetPath: string) {
       if (!response.ok) continue;
       const bytes = new Uint8Array(await response.arrayBuffer());
       if (!bytes.length) continue;
+      if (looksLikePythonScript(bytes)) continue;
       await fs.writeFile(targetPath, bytes);
       await fs.chmod(targetPath, 0o755);
       await fs.access(targetPath, fsConstants.X_OK);
@@ -177,19 +183,6 @@ async function ensureYtDlpRuntimeBinary() {
       if (downloaded) return YTDLP_RUNTIME_BINARY_PATH;
     } catch {
       // fall through
-    }
-
-    // Legacy fallback if direct release download fails.
-    try {
-      const loaded = require("yt-dlp-wrap");
-      const YtDlpWrap = loaded?.default || loaded;
-      if (YtDlpWrap && typeof YtDlpWrap.downloadFromGithub === "function") {
-        await YtDlpWrap.downloadFromGithub(YTDLP_RUNTIME_BINARY_PATH);
-        await fs.chmod(YTDLP_RUNTIME_BINARY_PATH, 0o755);
-        return YTDLP_RUNTIME_BINARY_PATH;
-      }
-    } catch {
-      // fall back to system-level candidates
     }
 
     return null;
