@@ -83,19 +83,34 @@ export function SignInForm() {
   const handleGoogleSignIn = async () => {
     setIsGoogleSubmitting(true);
     setError("");
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (!supabaseUrl) {
-      setError("Missing NEXT_PUBLIC_SUPABASE_URL.");
+    try {
+      const supabaseUrlRaw = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (!supabaseUrlRaw) {
+        setError("Missing NEXT_PUBLIC_SUPABASE_URL.");
+        return;
+      }
+
+      const supabaseUrl = supabaseUrlRaw.trim().replace(/\/+$/, "");
+      if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(supabaseUrl)) {
+        setError("Invalid NEXT_PUBLIC_SUPABASE_URL format. Expected https://<project-ref>.supabase.co");
+        return;
+      }
+
+      const redirectTo = `${window.location.origin}/auth/callback`;
+      const authorizeUrl =
+        `${supabaseUrl}/auth/v1/authorize?provider=google` +
+        `&redirect_to=${encodeURIComponent(redirectTo)}`;
+
+      window.location.assign(authorizeUrl);
+    } catch (oauthUnexpectedError) {
+      setError(
+        oauthUnexpectedError instanceof Error
+          ? oauthUnexpectedError.message
+          : "Failed to start Google sign-in."
+      );
+    } finally {
       setIsGoogleSubmitting(false);
-      return;
     }
-
-    const redirectTo = `${window.location.origin}/auth/callback`;
-    const authorizeUrl =
-      `${supabaseUrl}/auth/v1/authorize?provider=google` +
-      `&redirect_to=${encodeURIComponent(redirectTo)}`;
-
-    window.location.assign(authorizeUrl);
   };
 
   return (
