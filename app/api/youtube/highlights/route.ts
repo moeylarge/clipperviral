@@ -462,29 +462,40 @@ function ytDlpDownloadAttempts(
       "-o",
       outputTemplate,
     ];
+    const youtubeVariants: string[][] = [
+      [],
+      ["--extractor-args", "youtube:player_client=android"],
+      ["--extractor-args", "youtube:player_client=ios"],
+      ["--extractor-args", "youtube:player_client=web"],
+      ["--extractor-args", "youtube:player_client=tv_embedded"],
+      ["--extractor-args", "youtube:player_client=mweb"],
+    ];
+    const cookieArgs = cookieFile ? ["--cookies", cookieFile] : [];
 
-    attempts.push(youtubeBase);
-    attempts.push([...youtubeBase, "--extractor-args", "youtube:player_client=android"]);
-    attempts.push([...youtubeBase, "--extractor-args", "youtube:player_client=ios"]);
-    attempts.push([...youtubeBase, "--extractor-args", "youtube:player_client=web"]);
-    attempts.push([...youtubeBase, "--extractor-args", "youtube:player_client=tv_embedded"]);
-    attempts.push([...youtubeBase, "--extractor-args", "youtube:player_client=mweb"]);
-
-    if (cookieFile) {
-      attempts.push([...youtubeBase, "--cookies", cookieFile]);
-      attempts.push([...youtubeBase, "--cookies", cookieFile, "--extractor-args", "youtube:player_client=android"]);
-      attempts.push([...youtubeBase, "--cookies", cookieFile, "--extractor-args", "youtube:player_client=ios"]);
-      attempts.push([...youtubeBase, "--cookies", cookieFile, "--extractor-args", "youtube:player_client=web"]);
-      attempts.push([...youtubeBase, "--cookies", cookieFile, "--extractor-args", "youtube:player_client=tv_embedded"]);
-      attempts.push([...youtubeBase, "--cookies", cookieFile, "--extractor-args", "youtube:player_client=mweb"]);
+    // If cookies are present, prefer authenticated attempts first.
+    if (cookieArgs.length) {
+      for (const variant of youtubeVariants) {
+        attempts.push([...youtubeBase, ...cookieArgs, ...variant]);
+      }
+    }
+    for (const variant of youtubeVariants) {
+      attempts.push([...youtubeBase, ...variant]);
     }
 
     if (country) {
+      if (cookieArgs.length) {
+        attempts.push([...youtubeBase, ...cookieArgs, `--geo-bypass-country`, country]);
+        attempts.push([...youtubeBase, ...cookieArgs, `--geo-bypass-ip-block`, country]);
+      }
       attempts.push([...youtubeBase, `--geo-bypass-country`, country]);
       attempts.push([...youtubeBase, `--geo-bypass-ip-block`, country]);
     }
 
-    attempts.push(youtubeFallback);
+    if (cookieArgs.length) {
+      attempts.push([...youtubeFallback, ...cookieArgs]);
+      attempts.push([...youtubeFallback, ...cookieArgs, "--extractor-args", "youtube:player_client=android"]);
+    }
+    attempts.push([...youtubeFallback]);
     attempts.push([...youtubeFallback, "--extractor-args", "youtube:player_client=android"]);
   } else {
     const genericBase = [...baseArgs, "-o", outputTemplate];
