@@ -3,7 +3,7 @@
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { mkdir, readdir, rm, stat } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
@@ -88,6 +88,75 @@ function runCommand(command, args, timeoutMs = 15 * 60 * 1000) {
   });
 }
 
+function parseBoolean(value) {
+  return value === true || value === 1 || `${value || ""}`.toLowerCase() === "true";
+}
+
+function parseVttTimestamp(value) {
+  const token = `${value || ""}`.trim();
+  const match = token.match(/^(?:(\d+):)?(\d{2}):(\d{2})\.(\d{3})$/);
+  if (!match) return null;
+  const h = Number(match[1] || 0);
+  const m = Number(match[2] || 0);
+  const s = Number(match[3] || 0);
+  const ms = Number(match[4] || 0);
+  const total = h * 3600 + m * 60 + s + ms / 1000;
+  return Number.isFinite(total) ? total : null;
+}
+
+function stripCueMarkup(text) {
+  return `${text || ""}`
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseVttSegments(vttText) {
+  const lines = `${vttText || ""}`.replace(/\r\n/g, "\n").split("\n");
+  const segments = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    if (!line || line === "WEBVTT") {
+      i += 1;
+      continue;
+    }
+
+    const timestampLine = line.includes("-->") ? line : (lines[i + 1] || "").trim();
+    if (!timestampLine.includes("-->")) {
+      i += 1;
+      continue;
+    }
+
+    const [rawStart, rawEndPart] = timestampLine.split("-->");
+    const rawEnd = (rawEndPart || "").trim().split(/\s+/)[0];
+    const start = parseVttTimestamp(rawStart.trim());
+    const end = parseVttTimestamp(rawEnd);
+    i += line.includes("-->") ? 1 : 2;
+
+    const cueLines = [];
+    while (i < lines.length && lines[i].trim()) {
+      cueLines.push(lines[i]);
+      i += 1;
+    }
+
+    const text = stripCueMarkup(cueLines.join(" "));
+    if (start != null && end != null && text.length) {
+      const last = segments[segments.length - 1];
+      if (last && last.text === text && Math.abs(last.end - start) < 0.15) {
+        last.end = end;
+      } else {
+        segments.push({ start, end, text });
+      }
+    }
+  }
+  return segments;
+}
+
 function buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, audioOnly }) {
   const args = [
     "--no-playlist",
@@ -135,6 +204,36 @@ function buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, aud
   return args;
 }
 
+function buildTranscriptArgs({ sourceUrl, sourceKind, outputTemplate, language }) {
+  const lang = `${language || ""}`.trim().toLowerCase() || "en";
+  const langSpec = `${lang}.*,${lang},en.*,en`;
+  const args = [
+    "--skip-download",
+    "--no-playlist",
+    "--no-warnings",
+    "--user-agent",
+    USER_AGENT,
+    "--write-auto-subs",
+    "--write-subs",
+    "--sub-langs",
+    langSpec,
+    "--sub-format",
+    "vtt",
+    "-o",
+    outputTemplate,
+  ];
+
+  if (COOKIE_FILE) {
+    args.push("--cookies", COOKIE_FILE);
+  }
+  if (sourceKind === "youtube") {
+    args.push("--geo-bypass");
+    args.push("--extractor-args", "youtube:player_client=android");
+  }
+  args.push(sourceUrl);
+  return args;
+}
+
 function contentTypeForExtension(fileName) {
   const ext = path.extname(fileName).toLowerCase();
   if (ext === ".mp4") return "video/mp4";
@@ -175,15 +274,18 @@ const server = createServer(async (req, res) => {
     }
 
     const sourceKind = normalizeSourceKind(payload.sourceKind || detectSourceKind(sourceUrl));
-    const audioOnly =
-      payload.audioOnly === true ||
-      payload.audioOnly === 1 ||
-      `${payload.audioOnly || ""}`.toLowerCase() === "true";
+    const audioOnly = parseBoolean(payload.audioOnly);
+    const transcriptOnly = parseBoolean(payload.transcriptOnly);
+    const language = `${payload.language || "en"}`.trim();
     const formatPref = `${payload.formatPref || ""}`.trim();
     const workdir = path.join(tmpdir(), `ytdlp-proxy-${randomUUID()}`);
     await mkdir(workdir, { recursive: true });
-    const outputTemplate = path.join(workdir, "source.%(ext)s");
-    const args = buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, audioOnly });
+    const outputTemplate = transcriptOnly
+      ? path.join(workdir, "subtitle.%(ext)s")
+      : path.join(workdir, "source.%(ext)s");
+    const args = transcriptOnly
+      ? buildTranscriptArgs({ sourceUrl, sourceKind, outputTemplate, language })
+      : buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, audioOnly });
     const result = await runCommand(YTDLP_BIN, args);
 
     if (!result.ok) {
@@ -191,6 +293,7 @@ const server = createServer(async (req, res) => {
         sourceUrl,
         sourceKind,
         audioOnly,
+        transcriptOnly,
         code: result.code,
         timedOut: result.timedOut,
         stderr: (result.stderr || "").slice(0, 800),
@@ -202,6 +305,20 @@ const server = createServer(async (req, res) => {
           ? "yt-dlp timed out."
           : result.stderr || result.stdout || `exit code ${result.code}`,
       });
+    }
+
+    if (transcriptOnly) {
+      const subtitleFiles = (await readdir(workdir)).filter((name) => name.toLowerCase().endsWith(".vtt"));
+      if (!subtitleFiles.length) {
+        await rm(workdir, { recursive: true, force: true });
+        return sendJson(res, 502, { error: "No subtitles were generated by yt-dlp." });
+      }
+      const subtitlePath = path.join(workdir, subtitleFiles[0]);
+      const subtitleText = await readFile(subtitlePath, "utf8");
+      const segments = parseVttSegments(subtitleText);
+      const text = segments.map((s) => s.text).join(" ").trim();
+      await rm(workdir, { recursive: true, force: true });
+      return sendJson(res, 200, { text, segments });
     }
 
     const files = (await readdir(workdir)).filter((name) => name.startsWith("source."));

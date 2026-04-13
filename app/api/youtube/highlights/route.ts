@@ -51,6 +51,9 @@ type SourceKind = "youtube" | "kick" | "generic";
 type ProxyDownloadResult =
   | { ok: true; sourcePath: string }
   | { ok: false; error: string };
+type ProxyTranscriptResult =
+  | { ok: true; text: string; segments: WhisperSegment[] }
+  | { ok: false; error: string };
 
 function getYtDlpProxyUrl() {
   return (
@@ -771,6 +774,82 @@ function looksLikeAudioFile(filePath: string) {
   return [".m4a", ".mp3", ".aac", ".wav", ".ogg", ".opus", ".flac", ".webm"].includes(ext);
 }
 
+async function fetchTranscriptViaProxy(options: {
+  sourceUrl: string;
+  sourceKind: SourceKind;
+  language: string | null;
+}): Promise<ProxyTranscriptResult> {
+  const proxyUrl = getYtDlpProxyUrl();
+  if (!proxyUrl) return { ok: false, error: "Proxy downloader is not configured." };
+
+  const authToken = process.env.YTDLP_PROXY_TOKEN?.trim();
+  const authHeader = process.env.YTDLP_PROXY_AUTH_HEADER?.trim() || "x-api-key";
+  const requestHeaders: Record<string, string> = {
+    "content-type": "application/json",
+    accept: "application/json",
+  };
+  if (authToken) {
+    requestHeaders[authHeader] = authToken;
+    requestHeaders.authorization = `Bearer ${authToken}`;
+  }
+
+  try {
+    const response = await fetch(proxyUrl, {
+      method: "POST",
+      headers: requestHeaders,
+      body: JSON.stringify({
+        sourceUrl: options.sourceUrl,
+        sourceKind: options.sourceKind,
+        transcriptOnly: true,
+        language: options.language || "en",
+      }),
+    });
+
+    const rawText = await response.text();
+    let payload: Record<string, unknown> = {};
+    if (rawText.trim()) {
+      try {
+        payload = JSON.parse(rawText) as Record<string, unknown>;
+      } catch {
+        return { ok: false, error: `Proxy transcript response was not JSON: ${rawText.slice(0, 240)}` };
+      }
+    }
+
+    if (!response.ok) {
+      const message = parseProxyError(payload) || `Proxy returned ${response.status}`;
+      return { ok: false, error: message };
+    }
+
+    const text = typeof payload.text === "string" ? payload.text : "";
+    const rawSegments = Array.isArray(payload.segments) ? payload.segments : [];
+    const segments = rawSegments
+      .map((segment) => {
+        const item = segment as { start?: unknown; end?: unknown; text?: unknown };
+        return {
+          start: Number(item.start),
+          end: Number(item.end),
+          text: `${item.text || ""}`.trim(),
+        };
+      })
+      .filter((segment) => Number.isFinite(segment.start) && Number.isFinite(segment.end) && segment.text.length > 0);
+
+    if (!segments.length && !text.trim().length) {
+      return { ok: false, error: "Proxy transcript returned no text." };
+    }
+
+    return {
+      ok: true,
+      text: text.trim(),
+      segments: segments as WhisperSegment[],
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Unknown proxy transcript error.",
+    };
+  }
+}
+
 function toCommandCandidates(commands: string[]): CommandCandidate[] {
   return commands.filter((command): command is string => command.length > 0).map((command) => ({ command }));
 }
@@ -1479,77 +1558,94 @@ export async function POST(req: NextRequest) {
           : 0;
       }
 
-      let audioPath: string | null = looksLikeAudioFile(resolvedSourcePath) ? resolvedSourcePath : null;
-      let extractFailure: string | null = null;
-      if (!audioPath && ffmpegCommand) {
-        const candidateAudioPath = path.join(workdir, "audio_for_transcript.m4a");
-        const extractResult = await runWithFallback(() => toCommandCandidates([ffmpegCommand]), [
-          "-y",
-          "-i",
-          resolvedSourcePath,
-          "-vn",
-          "-ar",
-          "16000",
-          "-ac",
-          "1",
-          "-c:a",
-          "aac",
-          "-b:a",
-          "64k",
-          candidateAudioPath,
-        ]);
-        if (extractResult.ok) {
-          audioPath = candidateAudioPath;
-        } else {
-          extractFailure = `${(extractResult.error as Error)?.message || "Audio extraction failed."} ${
-            (extractResult.error as { code?: string })?.code === "ENOENT" ? "FFmpeg not available." : ""
-          }`;
+      let transcriptSegments: WhisperSegment[] = [];
+
+      // Prefer subtitle/auto-caption transcript from the proxy for YouTube when available.
+      if (proxyConfigured && sourceKind === "youtube") {
+        const proxyTranscript = await fetchTranscriptViaProxy({
+          sourceUrl,
+          sourceKind,
+          language,
+        });
+        if (proxyTranscript.ok && proxyTranscript.segments.length) {
+          transcriptSegments = proxyTranscript.segments;
         }
       }
 
-      if (!audioPath && proxyConfigured) {
-        const proxyAudioResult = await downloadSourceViaProxy({
-          sourceUrl,
-          sourceKind,
-          formatPref,
-          ffmpegLocation: ytdlpFfmpegLocation,
-          outputTemplate: path.join(workdir, "source-audio.%(ext)s"),
-          workdir,
-          audioOnly: true,
-        });
-        if (proxyAudioResult.ok) {
-          audioPath = proxyAudioResult.sourcePath;
-        } else {
-          const details = [extractFailure, `External audio extraction failed: ${proxyAudioResult.error}`]
-            .filter(Boolean)
-            .join(" | ");
+      if (!transcriptSegments.length) {
+        let audioPath: string | null = looksLikeAudioFile(resolvedSourcePath) ? resolvedSourcePath : null;
+        let extractFailure: string | null = null;
+        if (!audioPath && ffmpegCommand) {
+          const candidateAudioPath = path.join(workdir, "audio_for_transcript.m4a");
+          const extractResult = await runWithFallback(() => toCommandCandidates([ffmpegCommand]), [
+            "-y",
+            "-i",
+            resolvedSourcePath,
+            "-vn",
+            "-ar",
+            "16000",
+            "-ac",
+            "1",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "64k",
+            candidateAudioPath,
+          ]);
+          if (extractResult.ok) {
+            audioPath = candidateAudioPath;
+          } else {
+            extractFailure = `${(extractResult.error as Error)?.message || "Audio extraction failed."} ${
+              (extractResult.error as { code?: string })?.code === "ENOENT" ? "FFmpeg not available." : ""
+            }`;
+          }
+        }
+
+        if (!audioPath && proxyConfigured) {
+          const proxyAudioResult = await downloadSourceViaProxy({
+            sourceUrl,
+            sourceKind,
+            formatPref,
+            ffmpegLocation: ytdlpFfmpegLocation,
+            outputTemplate: path.join(workdir, "source-audio.%(ext)s"),
+            workdir,
+            audioOnly: true,
+          });
+          if (proxyAudioResult.ok) {
+            audioPath = proxyAudioResult.sourcePath;
+          } else {
+            const details = [extractFailure, `External audio extraction failed: ${proxyAudioResult.error}`]
+              .filter(Boolean)
+              .join(" | ");
+            return NextResponse.json(
+              { error: "Could not extract audio for transcription.", details },
+              { status: 500 },
+            );
+          }
+        }
+
+        if (!audioPath) {
           return NextResponse.json(
-            { error: "Could not extract audio for transcription.", details },
+            { error: "Could not extract audio for transcription.", details: extractFailure || "FFmpeg not available." },
             { status: 500 },
           );
         }
+
+        const transcripts = await transcribeAudio(audioPath, apiKey, language);
+        if (!transcripts.ok) {
+          return NextResponse.json(
+            { error: "Transcription failed.", details: transcripts.error },
+            { status: 502 },
+          );
+        }
+        transcriptSegments = transcripts.segments;
       }
 
-      if (!audioPath) {
-        return NextResponse.json(
-          { error: "Could not extract audio for transcription.", details: extractFailure || "FFmpeg not available." },
-          { status: 500 },
-        );
-      }
-
-      const transcripts = await transcribeAudio(audioPath, apiKey, language);
-      if (!transcripts.ok) {
-        return NextResponse.json(
-          { error: "Transcription failed.", details: transcripts.error },
-          { status: 502 },
-        );
-      }
-
-      if (!transcripts.segments.length) {
+      if (!transcriptSegments.length) {
         return NextResponse.json({ error: "No transcript text was extracted from this clip." }, { status: 400 });
       }
 
-      const windows = buildWindows(transcripts.segments, clipDuration, overlap, duration);
+      const windows = buildWindows(transcriptSegments, clipDuration, overlap, duration);
       if (!windows.length) {
         return NextResponse.json({ error: "No 30-second segments found in this video transcript." }, { status: 400 });
       }
