@@ -48,6 +48,21 @@ type CommandCandidate = {
 };
 
 type SourceKind = "youtube" | "kick" | "generic";
+type ProxyDownloadResult =
+  | { ok: true; sourcePath: string }
+  | { ok: false; error: string };
+
+function getYtDlpProxyUrl() {
+  return (
+    process.env.YTDLP_PROXY_URL?.trim() ||
+    process.env.YTDLP_DOWNLOADER_URL?.trim() ||
+    ""
+  );
+}
+
+function hasYtDlpProxy() {
+  return getYtDlpProxyUrl().length > 0;
+}
 
 function detectSourceKind(url: string): SourceKind {
   const value = url.toLowerCase();
@@ -590,6 +605,151 @@ async function runYtDlpWithFallback(
     attempted: failureMessages,
     saw403,
   };
+}
+
+function extensionForContentType(contentType: string) {
+  const lower = contentType.toLowerCase();
+  if (lower.includes("video/mp4")) return "mp4";
+  if (lower.includes("video/webm")) return "webm";
+  if (lower.includes("video/quicktime")) return "mov";
+  if (lower.includes("audio/mp4")) return "m4a";
+  if (lower.includes("audio/mpeg")) return "mp3";
+  return "mp4";
+}
+
+function parseProxyDownloadUrl(payload: Record<string, unknown>) {
+  const value =
+    payload.downloadUrl ||
+    payload.fileUrl ||
+    payload.url ||
+    payload.sourceUrl;
+  return typeof value === "string" && /^https?:\/\//i.test(value.trim())
+    ? value.trim()
+    : null;
+}
+
+function parseProxyError(payload: Record<string, unknown>) {
+  const value = payload.error || payload.message || payload.details;
+  return typeof value === "string" && value.trim().length
+    ? value.trim()
+    : null;
+}
+
+async function downloadSourceViaProxy(options: {
+  sourceUrl: string;
+  sourceKind: SourceKind;
+  formatPref: string;
+  ffmpegLocation: string | null;
+  outputTemplate: string;
+  workdir: string;
+}): Promise<ProxyDownloadResult> {
+  const proxyUrl = getYtDlpProxyUrl();
+  if (!proxyUrl) {
+    return { ok: false, error: "Proxy downloader is not configured." };
+  }
+
+  const authToken = process.env.YTDLP_PROXY_TOKEN?.trim();
+  const authHeader = process.env.YTDLP_PROXY_AUTH_HEADER?.trim() || "x-api-key";
+  const timeoutMs = Math.min(
+    20 * 60 * 1000,
+    Math.max(10_000, Number(process.env.YTDLP_PROXY_TIMEOUT_MS || 180_000)),
+  );
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const requestHeaders: Record<string, string> = {
+      "content-type": "application/json",
+      accept: "application/json,video/*,application/octet-stream",
+    };
+    if (authToken) {
+      requestHeaders[authHeader] = authToken;
+      requestHeaders.authorization = `Bearer ${authToken}`;
+    }
+
+    const proxyResponse = await fetch(proxyUrl, {
+      method: "POST",
+      headers: requestHeaders,
+      body: JSON.stringify({
+        sourceUrl: options.sourceUrl,
+        sourceKind: options.sourceKind,
+        formatPref: options.formatPref,
+        ffmpegLocation: options.ffmpegLocation,
+        outputTemplate: options.outputTemplate,
+      }),
+      signal: controller.signal,
+    });
+
+    const contentType = proxyResponse.headers.get("content-type") || "";
+    const outputExt = extensionForContentType(contentType);
+    const outputPath = path.join(options.workdir, `source.proxy.${outputExt}`);
+
+    if (proxyResponse.ok && !contentType.toLowerCase().includes("application/json")) {
+      if (contentType.toLowerCase().startsWith("text/")) {
+        const textBody = (await proxyResponse.text()).trim();
+        if (/^https?:\/\//i.test(textBody)) {
+          const assetResponse = await fetch(textBody, { signal: controller.signal });
+          if (!assetResponse.ok) {
+            return { ok: false, error: `Proxy text URL failed: ${assetResponse.status} ${assetResponse.statusText}` };
+          }
+          const assetBytes = Buffer.from(await assetResponse.arrayBuffer());
+          if (!assetBytes.length) {
+            return { ok: false, error: "Proxy text URL returned an empty file." };
+          }
+          await fs.writeFile(outputPath, assetBytes);
+          return { ok: true, sourcePath: outputPath };
+        }
+      }
+      const bytes = Buffer.from(await proxyResponse.arrayBuffer());
+      if (!bytes.length) return { ok: false, error: "Proxy returned an empty media file." };
+      await fs.writeFile(outputPath, bytes);
+      return { ok: true, sourcePath: outputPath };
+    }
+
+    const bodyText = await proxyResponse.text();
+    let payload: Record<string, unknown> = {};
+    if (bodyText.trim().length) {
+      try {
+        payload = JSON.parse(bodyText) as Record<string, unknown>;
+      } catch {
+        if (!proxyResponse.ok) {
+          return { ok: false, error: `Proxy returned ${proxyResponse.status}: ${bodyText.slice(0, 240)}` };
+        }
+      }
+    }
+
+    if (!proxyResponse.ok) {
+      const proxyError = parseProxyError(payload);
+      return {
+        ok: false,
+        error: proxyError
+          ? `Proxy returned ${proxyResponse.status}: ${proxyError}`
+          : `Proxy returned ${proxyResponse.status}: ${bodyText.slice(0, 240)}`,
+      };
+    }
+
+    const proxiedDownloadUrl = parseProxyDownloadUrl(payload);
+    if (!proxiedDownloadUrl) {
+      return { ok: false, error: "Proxy response was OK but missing download URL." };
+    }
+
+    const assetResponse = await fetch(proxiedDownloadUrl, { signal: controller.signal });
+    if (!assetResponse.ok) {
+      return { ok: false, error: `Proxy download URL failed: ${assetResponse.status} ${assetResponse.statusText}` };
+    }
+    const bytes = Buffer.from(await assetResponse.arrayBuffer());
+    if (!bytes.length) {
+      return { ok: false, error: "Proxy download URL returned an empty file." };
+    }
+    await fs.writeFile(outputPath, bytes);
+    return { ok: true, sourcePath: outputPath };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown proxy download error.";
+    return { ok: false, error: message };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function toCommandCandidates(commands: string[]): CommandCandidate[] {
@@ -1153,10 +1313,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const proxyConfigured = hasYtDlpProxy();
     const ytdlpCandidates = await getYtDlpCandidates();
     const ytdlpCookieFile = await resolveYtDlpCookieFile();
     const ytdlpCommand = ytdlpCandidates[0];
-    if (!ytdlpCommand) {
+    if (!ytdlpCommand && !proxyConfigured) {
       return NextResponse.json(
         {
           error:
@@ -1175,54 +1336,97 @@ export async function POST(req: NextRequest) {
       (sourceKind === "youtube" ? "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" : "bestvideo+bestaudio/best");
 
     try {
-      const downloadResult = await runYtDlpWithFallback(
-        ytdlpCandidates,
-        formatPref,
-        sourceOutputTemplate,
-        sourceUrl,
-        sourceKind,
-        ytdlpFfmpegLocation,
-        ytdlpCookieFile,
-      );
-      if (!downloadResult.ok) {
-        const failedCommand = `${ytdlpCommand.command}${(ytdlpCommand.args || []).join(" ") ? " " + ytdlpCommand.args?.join(" ") : ""}`;
-        const suggestions: string[] = [];
-        if ((downloadResult as { saw403?: boolean }).saw403 && sourceKind === "youtube") {
-          suggestions.push("YouTube blocked this request (403). Add cookies: set YTDLP_COOKIES_B64 in Vercel from a YouTube cookie export.");
-          suggestions.push("Also try setting YTDLP_USER_AGENT to a recent Chrome user agent.");
-          if (process.env.VERCEL !== "1") {
-            suggestions.push("Optional: set YTDLP_PYTHON to a Python 3.10+ binary (python3.12 recommended).");
-          } else {
-            suggestions.push("If YTDLP_PATH or YTDLP_PYTHON is set in Vercel, remove them so the bundled native /bin/yt-dlp is used.");
-          }
-        } else if (sourceKind === "kick") {
-          suggestions.push("For private/protected Kick VODs, set YTDLP_COOKIE_FILE from your browser session.");
-          suggestions.push("For live channels, use a replay/VOD URL for best results.");
+      let sourcePath: string | null = null;
+      let proxyFailure: string | null = null;
+
+      if (proxyConfigured) {
+        const proxyResult = await downloadSourceViaProxy({
+          sourceUrl,
+          sourceKind,
+          formatPref,
+          ffmpegLocation: ytdlpFfmpegLocation,
+          outputTemplate: sourceOutputTemplate,
+          workdir,
+        });
+        if (proxyResult.ok) {
+          sourcePath = proxyResult.sourcePath;
+        } else {
+          proxyFailure = proxyResult.error;
         }
-        if (!ytdlpFfmpegLocation) {
-          suggestions.push("FFmpeg path is missing for yt-dlp. Set FFMPEG_PATH in .env.local and restart `npm run dev`.");
-        }
-        const details =
-          `${downloadResult.error instanceof Error ? downloadResult.error.message : "Failed to fetch source content."} ${
-            (downloadResult.error as { code?: string })?.code === "ENOENT" ? `${failedCommand} command not found.` : ""
-          }` +
-          `${(downloadResult as { attempted?: string[] }).attempted?.length ? `\nAttempts: ${(downloadResult as { attempted?: string[] }).attempted?.join(" | ")}` : ""}` +
-          `${suggestions.length ? `\nTips: ${suggestions.join(" | ")}` : ""}`;
-        return NextResponse.json({ error: "Failed to download source URL.", details }, { status: 500 });
       }
 
-      const sourceFiles = (await fs.readdir(workdir)).filter((name) => /^source\./.test(name));
-      if (!sourceFiles.length) {
-        return NextResponse.json({ error: "Could not find downloaded source file." }, { status: 500 });
+      if (!sourcePath) {
+        if (!ytdlpCommand) {
+          return NextResponse.json(
+            {
+              error: "Failed to download source URL.",
+              details: proxyFailure
+                ? `External downloader failed: ${proxyFailure}`
+                : "No yt-dlp binary available and external downloader is not configured.",
+            },
+            { status: 500 },
+          );
+        }
+
+        const downloadResult = await runYtDlpWithFallback(
+          ytdlpCandidates,
+          formatPref,
+          sourceOutputTemplate,
+          sourceUrl,
+          sourceKind,
+          ytdlpFfmpegLocation,
+          ytdlpCookieFile,
+        );
+        if (!downloadResult.ok) {
+          const failedCommand = `${ytdlpCommand.command}${(ytdlpCommand.args || []).join(" ") ? " " + ytdlpCommand.args?.join(" ") : ""}`;
+          const suggestions: string[] = [];
+          if (proxyConfigured) {
+            suggestions.push("External downloader is configured but failed. Verify YTDLP_PROXY_URL and YTDLP_PROXY_TOKEN.");
+            if (proxyFailure) suggestions.push(`External downloader error: ${proxyFailure}`);
+          }
+          if ((downloadResult as { saw403?: boolean }).saw403 && sourceKind === "youtube") {
+            suggestions.push("YouTube blocked this request (403). Add cookies: set YTDLP_COOKIES_B64 in Vercel from a YouTube cookie export.");
+            suggestions.push("Also try setting YTDLP_USER_AGENT to a recent Chrome user agent.");
+            if (process.env.VERCEL !== "1") {
+              suggestions.push("Optional: set YTDLP_PYTHON to a Python 3.10+ binary (python3.12 recommended).");
+            } else {
+              suggestions.push("If YTDLP_PATH or YTDLP_PYTHON is set in Vercel, remove them so the bundled native /bin/yt-dlp is used.");
+            }
+          } else if (sourceKind === "kick") {
+            suggestions.push("For private/protected Kick VODs, set YTDLP_COOKIE_FILE from your browser session.");
+            suggestions.push("For live channels, use a replay/VOD URL for best results.");
+          }
+          if (!ytdlpFfmpegLocation) {
+            suggestions.push("FFmpeg path is missing for yt-dlp. Set FFMPEG_PATH in .env.local and restart `npm run dev`.");
+          }
+          const details =
+            `${downloadResult.error instanceof Error ? downloadResult.error.message : "Failed to fetch source content."} ${
+              (downloadResult.error as { code?: string })?.code === "ENOENT" ? `${failedCommand} command not found.` : ""
+            }` +
+            `${(downloadResult as { attempted?: string[] }).attempted?.length ? `\nAttempts: ${(downloadResult as { attempted?: string[] }).attempted?.join(" | ")}` : ""}` +
+            `${suggestions.length ? `\nTips: ${suggestions.join(" | ")}` : ""}`;
+          return NextResponse.json({ error: "Failed to download source URL.", details }, { status: 500 });
+        }
+
+        const sourceFiles = (await fs.readdir(workdir)).filter((name) => /^source\./.test(name));
+        if (!sourceFiles.length) {
+          return NextResponse.json({ error: "Could not find downloaded source file." }, { status: 500 });
+        }
+        sourcePath = path.join(workdir, sourceFiles[0]);
       }
-      const sourcePath = path.join(workdir, sourceFiles[0]);
-      const sourceStats = await fs.stat(sourcePath);
+
+      const resolvedSourcePath = sourcePath;
+      if (!resolvedSourcePath) {
+        return NextResponse.json({ error: "Could not resolve downloaded source path." }, { status: 500 });
+      }
+
+      const sourceStats = await fs.stat(resolvedSourcePath);
       if (!sourceStats.size) {
         return NextResponse.json({ error: "Downloaded file is empty." }, { status: 500 });
       }
-      let duration = await getDurationSeconds(ffmpegCommand, sourcePath);
+      let duration = await getDurationSeconds(ffmpegCommand, resolvedSourcePath);
       if (!duration || !Number.isFinite(duration)) {
-        const normalized = await normalizeSourceForProbe(ffmpegCommand, sourcePath, workdir);
+        const normalized = await normalizeSourceForProbe(ffmpegCommand, resolvedSourcePath, workdir);
         if (normalized) {
           const normalizedDuration = await getDurationSeconds(ffmpegCommand, normalized);
           if (normalizedDuration && Number.isFinite(normalizedDuration)) {
@@ -1231,14 +1435,16 @@ export async function POST(req: NextRequest) {
         }
       }
       if (!duration || !Number.isFinite(duration)) {
-        duration = (await getDurationFromSourceMetadata(sourceUrl, ytdlpCandidates, ytdlpCookieFile)) || 0;
+        duration = ytdlpCandidates.length
+          ? (await getDurationFromSourceMetadata(sourceUrl, ytdlpCandidates, ytdlpCookieFile)) || 0
+          : 0;
       }
 
       const audioPath = path.join(workdir, "audio_for_transcript.m4a");
       const extractResult = await runWithFallback(() => toCommandCandidates([ffmpegCommand]), [
         "-y",
         "-i",
-        sourcePath,
+        resolvedSourcePath,
         "-vn",
         "-ar",
         "16000",
@@ -1310,7 +1516,7 @@ export async function POST(req: NextRequest) {
 
       const jobId = registerYoutubeJob({
         sourceUrl,
-        sourcePath,
+        sourcePath: resolvedSourcePath,
         workdir,
         clipDuration,
         maxClips,
@@ -1357,6 +1563,18 @@ export async function GET(req: NextRequest) {
     const ytdlpCandidates = await getYtDlpCandidates();
     const ytdlpCookieFile = await resolveYtDlpCookieFile();
     if (!ytdlpCandidates.length) {
+      if (hasYtDlpProxy()) {
+        const estimatedTotalSeconds = estimateYoutubeTotalSeconds(null, clipDuration, maxClips);
+        return NextResponse.json({
+          mode: "estimate",
+          sourceUrl,
+          durationSeconds: null,
+          estimatedTotalSeconds,
+          maxClips: Math.min(Math.max(Math.round(Number.isFinite(maxClips) ? maxClips : 8), 1), 20),
+          clipDuration: Math.min(Math.max(Number.isFinite(clipDuration) ? clipDuration : 30, 10), 120),
+          note: "Using external downloader; precise duration estimate unavailable from local yt-dlp.",
+        });
+      }
       return NextResponse.json(
         {
           error:
