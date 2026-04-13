@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, ClipboardList, Gauge, MonitorPlay } from "lucide-react";
 
 interface HostConsolePageProps {
   params: Promise<{ showId: string }>;
@@ -6,20 +6,24 @@ interface HostConsolePageProps {
 
 const hostPanels = [
   {
-    title: "Stage Control",
-    description: "Pull next contestant, hard-cut camera, and enforce countdown.",
+    title: "Source Intake",
+    description: "Validate incoming files and URLs before starting processing.",
+    icon: ClipboardList,
   },
   {
-    title: "Queue Board",
-    description: "Review contestant readiness and reorder without breaking the show.",
+    title: "Process Queue",
+    description: "Track active render jobs and identify failed tasks quickly.",
+    icon: Gauge,
   },
   {
-    title: "Vote Pulse",
-    description: "Track live audience vote velocity during each 60-second turn.",
+    title: "Live Preview",
+    description: "Review active output preview before final export release.",
+    icon: MonitorPlay,
   },
   {
-    title: "Clip Markers",
-    description: "Mark top moments for instant post-turn clip generation.",
+    title: "Incident Panel",
+    description: "See warnings and retry failed operations with clear logs.",
+    icon: AlertCircle,
   },
 ];
 
@@ -27,37 +31,27 @@ export default async function HostConsolePage({ params }: HostConsolePageProps) 
   const { showId } = await params;
 
   return (
-    <section className="space-y-6">
-      <div>
-        <p className="text-sm uppercase tracking-[0.2em] text-accent">Host Console Shell</p>
-        <h1 className="mt-3 text-5xl leading-none">Control Room: {showId.replace(/-/g, " ")}</h1>
-        <p className="mt-3 max-w-2xl text-muted-foreground">
-          Host-first architecture foundation. Live controls and moderation logic will be layered in next iterations.
-        </p>
-      </div>
+    <div className="page-stack">
+      <section className="surface-panel-strong p-6 md:p-7">
+        <p className="section-kicker">Ops console</p>
+        <h1 className="mt-2 text-3xl md:text-4xl">Host Workspace: {showId.replace(/-/g, " ")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Operational controls for monitoring and validating processing workflows.</p>
+      </section>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {hostPanels.map((panel) => (
-          <Card key={panel.title}>
-            <CardHeader>
-              <CardTitle className="text-2xl">{panel.title}</CardTitle>
-              <CardDescription>{panel.description}</CardDescription>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-3xl">Non-negotiables encoded in this foundation</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <p>1. Audience scale and stage scarcity are separate surfaces.</p>
-          <p>2. Host controls state transitions, not contestants.</p>
-          <p>3. 60-second turn timing is explicit in route-level UX.</p>
-          <p>4. Voting and clip moments are first-class planned panels.</p>
-        </CardContent>
-      </Card>
-    </section>
+      <section className="grid gap-4 md:grid-cols-2">
+        {hostPanels.map((panel) => {
+          const Icon = panel.icon;
+          return (
+            <article key={panel.title} className="surface-panel p-5">
+              <p className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-muted/55">
+                <Icon className="h-4 w-4 text-muted-foreground" />
+              </p>
+              <h2 className="mt-3 text-xl">{panel.title}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">{panel.description}</p>
+            </article>
+          );
+        })}
+      </section>
+    </div>
   );
 }

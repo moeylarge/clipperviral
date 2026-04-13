@@ -70,10 +70,10 @@ export function SignInForm() {
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-white/12" />
+          <span className="w-full border-t border-border" />
         </div>
-        <div className="relative flex justify-center text-[10px] uppercase tracking-[0.16em] text-white/45">
-          <span className="bg-black px-2">Or use email</span>
+        <div className="relative flex justify-center text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          <span className="bg-white px-2">Or use email</span>
         </div>
       </div>
 
@@ -88,8 +88,8 @@ export function SignInForm() {
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="h-10 rounded-md border border-white/20 bg-black/25 px-3 text-sm text-foreground"
-            placeholder="you@spotlight.com"
+            className="h-10 rounded-md border border-border bg-white px-3 text-sm text-foreground"
+            placeholder="you@clipperviral.com"
           />
         </div>
 
@@ -103,22 +103,22 @@ export function SignInForm() {
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="h-10 rounded-md border border-white/20 bg-black/25 px-3 text-sm text-foreground"
+            className="h-10 rounded-md border border-border bg-white px-3 text-sm text-foreground"
             placeholder="Your password"
           />
         </div>
 
-        {error ? <p className="text-sm text-rose-300">{error}</p> : null}
+        {error ? <p className="text-sm text-rose-600">{error}</p> : null}
 
         <Button type="submit" size="sm" className="w-full" disabled={isSubmitting || isGoogleSubmitting}>
           {isSubmitting ? "Signing in..." : "Sign in"}
         </Button>
 
-        <p className="text-xs uppercase tracking-[0.14em] text-white/55">
+        <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
           Existing users only (Supabase auth). Add your own sign-up flow in next pass.
         </p>
-        <p className="text-xs uppercase tracking-[0.14em] text-white/55">
-          <Link href="/" className="text-white underline-offset-4 hover:underline">
+        <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+          <Link href="/" className="text-foreground underline-offset-4 hover:underline">
             Back to home
           </Link>
         </p>

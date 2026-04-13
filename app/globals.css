@@ -3,23 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --background: 224 48% 4%;
-  --foreground: 0 0% 96%;
-  --card: 225 30% 8%;
-  --card-foreground: 0 0% 97%;
-  --muted: 226 21% 15%;
-  --muted-foreground: 214 17% 73%;
-  --border: 224 18% 24%;
-  --primary: 14 100% 58%;
-  --primary-foreground: 224 58% 7%;
-  --accent: 192 100% 54%;
-  --accent-foreground: 224 58% 7%;
-  --surface-0: 225 30% 10%;
-  --surface-1: 226 25% 7%;
-  --surface-2: 224 24% 12%;
-  --surface-gradient: 226 34% 28%;
-  --radius: 1rem;
-  --focus: 14 100% 64%;
+  --background: 220 23% 97%;
+  --foreground: 222 35% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 35% 15%;
+  --muted: 220 20% 95%;
+  --muted-foreground: 220 11% 44%;
+  --border: 220 18% 87%;
+  --primary: 218 82% 55%;
+  --primary-foreground: 210 40% 98%;
+  --accent: 261 80% 63%;
+  --accent-foreground: 210 40% 98%;
+  --radius: 0.75rem;
 }
 
 @layer base {
@@ -34,14 +29,13 @@
     overflow-x: hidden;
   }
 
-body {
+  body {
     font-family: var(--font-body), sans-serif;
     background:
-      radial-gradient(circle at 12% 20%, hsla(18, 100%, 56%, 0.2), transparent 35%),
-      radial-gradient(circle at 84% 10%, hsla(192, 100%, 54%, 0.15), transparent 38%),
-      linear-gradient(180deg, hsl(224 48% 5%), hsl(226 50% 4%));
+      radial-gradient(circle at 10% 0%, rgba(73, 106, 255, 0.08), transparent 40%),
+      radial-gradient(circle at 95% 4%, rgba(132, 86, 255, 0.08), transparent 36%),
+      hsl(var(--background));
     min-height: 100vh;
-    text-rendering: geometricPrecision;
   }
 
   h1,
@@ -49,226 +43,96 @@ body {
   h3,
   .heading {
     font-family: var(--font-heading), sans-serif;
-    letter-spacing: 0.02em;
+    letter-spacing: -0.01em;
   }
-}
-
-.cinematic-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 76px 76px;
-  mask-image: radial-gradient(circle at 50% 20%, black 15%, transparent 80%);
-  pointer-events: none;
 }
 
 @layer utilities {
-  .spotlight-shell {
-    max-width: 78rem;
+  .app-shell {
+    @apply min-h-screen lg:grid lg:grid-cols-[260px_minmax(0,1fr)];
   }
 
-  .spotlight-flow {
-    @apply space-y-10;
+  .app-sidebar {
+    @apply hidden border-r border-border/80 bg-white/85 p-5 backdrop-blur lg:flex lg:flex-col lg:gap-8;
   }
 
-  .kick-banner {
-    @apply flex items-end gap-3 rounded-lg border bg-black/45 px-4 py-3 text-foreground shadow-[0_16px_55px_-34px_rgba(0,0,0,0.9)] backdrop-blur;
-    border-color: rgba(255, 255, 255, 0.12);
-    border-width: 1px;
+  .sidebar-brand {
+    @apply flex items-center gap-3 rounded-xl border border-border/70 bg-white px-3 py-3;
   }
 
-  .kick-banner a,
-  .kick-banner p {
-    @apply m-0 text-3xl font-semibold leading-none md:text-[40px];
-    letter-spacing: 0;
-    color: hsl(var(--foreground));
-    text-decoration: none;
+  .sidebar-brand-badge {
+    @apply grid h-10 w-10 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground;
   }
 
-  .kick-logo {
-    @apply flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-md bg-[#53fc18] text-black;
+  .sidebar-brand-title {
+    @apply text-sm font-semibold text-foreground;
   }
 
-  .kick-logo svg {
-    width: 32px;
-    height: 32px;
-    fill: currentColor;
+  .sidebar-brand-subtitle {
+    @apply text-xs text-muted-foreground;
   }
 
-  .surface-panel {
-    @apply rounded-2xl border border-white/[0.18] bg-surface-2/85 backdrop-blur-[12px];
-  }
-
-  .surface-panel-soft {
-    @apply surface-panel bg-card/60;
-  }
-
-  .surface-panel-strong {
-    @apply surface-panel border-white/[0.24] bg-[linear-gradient(140deg,hsla(226,32%,11%,0.95)_0%,hsla(226,24%,9%,0.85)_45%,hsla(224,26%,7%,0.85)_100%)] shadow-[0_20px_75px_-44px_rgba(0,0,0,0.95)] ring-1 ring-white/[0.02];
-  }
-
-  .surface-grid {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-  }
-
-  .surface-grid::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(circle at 20% 0%, hsla(14, 100%, 58%, 0.16), transparent 50%),
-      radial-gradient(circle at 100% 100%, hsla(192, 100%, 55%, 0.12), transparent 58%);
-    z-index: -1;
-    pointer-events: none;
-  }
-
-  .section-title {
-    @apply text-sm uppercase tracking-[0.2em] text-accent;
-  }
-
-  .section-heading {
-    @apply text-3xl font-semibold text-foreground md:text-5xl leading-tight;
-  }
-
-  .eyebrow-chip {
-    @apply inline-flex items-center gap-2 rounded-full border border-white/18 bg-black/35 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em];
-    letter-spacing: 0.14em;
-  }
-
-  .eyebrow-chip-live {
-    @apply inline-flex items-center gap-2 rounded-full border border-primary/50 bg-primary/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-primary;
-    letter-spacing: 0.14em;
-  }
-
-  .eyebrow-chip-live::before {
-    content: "";
-    width: 0.42rem;
-    height: 0.42rem;
-    border-radius: 9999px;
-    background: hsl(var(--primary));
-    box-shadow: 0 0 0 0 hsla(14, 100%, 58%, 0.45);
-    animation: liveDot 1.3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  .hero-surface {
-    @apply relative overflow-hidden;
-    background:
-      radial-gradient(circle at 15% 20%, hsla(14, 100%, 58%, 0.2), transparent 38%),
-      radial-gradient(circle at 90% 0%, hsla(192, 100%, 55%, 0.16), transparent 30%),
-      linear-gradient(130deg, hsla(224, 24%, 12%, 0.9), hsla(225, 34%, 7%, 0.86));
-  }
-
-  .hero-surface::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-      linear-gradient(90deg, transparent 0 52%, rgba(0, 0, 0, 0.6) 86%),
-      repeating-linear-gradient(80deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 16px);
-    opacity: 0.55;
-  }
-
-  .stat-ticker {
-    @apply inline-flex w-full items-center justify-between gap-2 rounded-lg border border-border/65 bg-black/35 px-3 py-2 text-xs uppercase tracking-[0.14em] text-muted-foreground;
-  }
-
-  .stat-stack {
+  .sidebar-nav {
     @apply grid gap-1.5;
   }
 
-  .live-pulse {
-    @apply relative inline-flex items-center gap-2;
+  .sidebar-link {
+    @apply inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 transition hover:bg-muted hover:text-foreground;
   }
 
-  .live-pulse::before {
-    content: "";
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 9999px;
-    background-color: hsl(var(--primary));
-    animation: pulseRing 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    box-shadow:
-      0 0 0 0 hsla(14, 100%, 58%, 0.45),
-      0 0 0 8px transparent;
+  .app-main {
+    @apply min-h-screen;
+  }
+
+  .app-content {
+    @apply mx-auto w-full max-w-[1200px] px-4 py-6 md:px-6 md:py-8;
+  }
+
+  .topbar {
+    @apply sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/80 bg-white/90 px-4 backdrop-blur md:px-6;
+  }
+
+  .page-stack {
+    @apply space-y-6;
+  }
+
+  .surface-panel {
+    @apply rounded-xl border border-border/80 bg-white shadow-sm;
+  }
+
+  .surface-panel-strong {
+    @apply surface-panel shadow-[0_10px_28px_-22px_rgba(16,24,40,0.35)];
+  }
+
+  .section-kicker {
+    @apply text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground;
   }
 
   .chip {
-    @apply inline-flex items-center gap-2 rounded-md border border-border/70 bg-black/25 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground;
+    @apply inline-flex items-center gap-2 rounded-md border border-border bg-white px-2.5 py-1 text-xs font-medium text-foreground/85;
   }
 
-  .segment-pill {
-    @apply inline-flex items-center rounded-md border border-white/15 bg-white/[0.04] px-3 py-1.5 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground;
+  .status-dot {
+    @apply inline-block h-2 w-2 rounded-full bg-emerald-500;
   }
 
-  .rail {
-    @apply flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory;
+  .data-grid {
+    @apply grid gap-4 md:grid-cols-2 xl:grid-cols-4;
   }
 
-  .rail-item {
-    @apply min-w-[17rem] snap-start;
+  .metric-card {
+    @apply rounded-xl border border-border bg-white p-4 shadow-sm;
   }
 
-  .metric-tile {
-    @apply rounded-xl border border-white/12 bg-black/35 p-4;
+  .metric-label {
+    @apply text-xs uppercase tracking-[0.1em] text-muted-foreground;
   }
 
-  .clip-title {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    min-height: 2.45rem;
-    line-height: 1.2rem;
-  }
-}
-
-@keyframes pulseRing {
-  0% {
-    box-shadow: 0 0 0 0 hsla(14, 100%, 58%, 0.35);
+  .metric-value {
+    @apply mt-2 text-2xl font-semibold text-foreground;
   }
 
-  90%,
-  100% {
-    box-shadow: 0 0 0 12px transparent;
+  .step-item {
+    @apply flex items-start gap-3 rounded-lg border border-border bg-white px-3 py-3;
   }
-}
-
-@keyframes rise {
-  from {
-    transform: translateY(10px);
-    opacity: 0.8;
-  }
-
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes liveDot {
-  0% {
-    box-shadow: 0 0 0 0 hsla(14, 100%, 58%, 0.45);
-  }
-
-  85%,
-  100% {
-    box-shadow: 0 0 0 10px transparent;
-  }
-}
-
-.reveal {
-  animation: rise 0.45s cubic-bezier(0.2, 0.6, 0.2, 1) both;
-}
-
-.reveal-delay {
-  animation-delay: 0.12s;
-}
-
-.reveal-delay-2 {
-  animation-delay: 0.22s;
 }
