@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, CheckCircle2, Clapperboard, Film, ListChecks, Sparkles, Subtitles, WandSparkles } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Clapperboard, Film, ListChecks, MousePointerClick, Sparkles, Subtitles, WandSparkles } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -25,14 +25,24 @@ export default function HomePage() {
 
   return (
     <div className="page-stack">
-      <section className="surface-panel-strong p-6 md:p-7">
-        <p className="section-kicker">ClipperViral</p>
-        <h1 className="mt-2 text-3xl md:text-4xl">Creator clip workflow</h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-          Start with a video upload or AI-generated YouTube/Kick clips, choose vertical or horizontal layout,
-          add captions, then export from one cleaner editor surface.
-        </p>
-        <div className="mt-5 flex flex-wrap gap-2">
+      <section className="surface-panel-strong overflow-hidden p-6 md:p-8">
+        <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
+          <div>
+            <p className="section-kicker">ClipperViral</p>
+            <h1 className="mt-3 max-w-4xl text-4xl md:text-5xl">One premium editor for viral-ready clips.</h1>
+            <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">
+              Upload a clip or generate candidates from a YouTube/Kick URL, choose a layout, add captions and branded overlays, then export from one guided workspace.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-950 p-4 text-white shadow-[0_22px_70px_-42px_rgba(15,23,42,0.95)]">
+            <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-emerald-300">
+              <MousePointerClick className="h-4 w-4" />
+              Start here
+            </p>
+            <p className="mt-3 text-sm leading-6 text-white/70">The unified editor is the primary path. Older tools are available only as fallback workspaces.</p>
+          </div>
+        </div>
+        <div className="mt-7 flex flex-wrap gap-3">
           <Button asChild size="lg" variant="cta">
             <Link href="/editor.html">
               Open unified editor
@@ -65,7 +75,7 @@ export default function HomePage() {
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="surface-panel p-3">
+        <aside className="surface-panel p-4">
           <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Workflow map</p>
           <div className="grid gap-2">
             {dashboardTools.map((tool) => (
@@ -74,13 +84,16 @@ export default function HomePage() {
                 type="button"
                 onClick={() => setSelectedToolId(tool.id)}
                 className={cn(
-                  "w-full rounded-lg border px-3 py-3 text-left transition",
+                  "w-full rounded-xl border px-3.5 py-3.5 text-left shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/30",
                   tool.id === selectedTool.id
-                    ? "border-primary/45 bg-primary/5"
-                    : "border-border bg-white hover:border-primary/30 hover:bg-muted/45"
+                    ? "border-primary/60 bg-primary/5 shadow-[0_18px_42px_-34px_rgba(37,99,235,0.75)]"
+                    : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5"
                 )}
               >
-                <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                <span className={cn(
+                  "inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-black uppercase tracking-[0.08em]",
+                  tool.id === selectedTool.id ? "bg-primary text-white" : "bg-slate-100 text-slate-600"
+                )}>
                   {TOOL_ICONS[tool.id]}
                   {tool.status}
                 </span>
@@ -107,7 +120,7 @@ export default function HomePage() {
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
-            <div className="rounded-lg border border-border bg-white p-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 <ListChecks className="h-3.5 w-3.5" />
                 Step flow
@@ -124,7 +137,7 @@ export default function HomePage() {
               </ol>
             </div>
 
-            <div className="rounded-lg border border-border bg-white p-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 <Sparkles className="h-3.5 w-3.5" />
                 Quality checks

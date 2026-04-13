@@ -32,7 +32,7 @@ export default function ClipsPage() {
                 <Eye className="h-3.5 w-3.5" />
                 Preview
               </button>
-              <button type="button" className="chip">
+              <button type="button" className="chip bg-primary text-white hover:bg-primary hover:text-white">
                 <Download className="h-3.5 w-3.5" />
                 Download
               </button>

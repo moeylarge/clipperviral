@@ -25,8 +25,8 @@ export default function ShowsPage() {
               <Clock3 className="h-3.5 w-3.5" />
               Typical run: {tool.eta}
             </p>
-            <div className="mt-4">
-              <Button asChild variant="default">
+            <div className="mt-5">
+              <Button asChild variant={tool.id === "editor" ? "cta" : "outline"} className="w-full">
                 <Link href={`/shows/${tool.routeSlug}`}>
                   Open workflow
                   <ArrowRight className="ml-2 h-4 w-4" />

@@ -7,7 +7,7 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        "surface-panel transition-shadow duration-200 hover:shadow-md",
+        "surface-panel transition-all duration-200",
         className
       )}
       {...props}
