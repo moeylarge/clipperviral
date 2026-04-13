@@ -514,8 +514,7 @@
         overflow: hidden;
       }
 
-      .editor-canvas video,
-      .phone-preview video {
+      .editor-canvas video {
         width: 100%;
         height: 100%;
         object-fit: cover;
@@ -708,6 +707,228 @@
         position: relative;
         overflow: hidden;
         outline: 3px solid var(--blue);
+      }
+
+      .phone-composition {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        background: #050505;
+      }
+
+      .phone-composition video {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        background: #050505;
+      }
+
+      .phone-layer {
+        inset: 0;
+      }
+
+      .phone-preview[data-layout] .phone-focus {
+        width: auto;
+        height: auto;
+      }
+
+      .phone-bg,
+      .phone-facecam-left,
+      .phone-facecam-right,
+      .phone-map {
+        display: none;
+      }
+
+      .phone-focus {
+        inset: 0;
+        z-index: 2;
+      }
+
+      .phone-bg {
+        inset: -10%;
+        width: 120%;
+        height: 120%;
+        filter: blur(7px) saturate(0.85);
+        opacity: 0.78;
+        transform: scale(1.08);
+        z-index: 1;
+      }
+
+      .phone-facecam-left,
+      .phone-facecam-right,
+      .phone-map {
+        z-index: 4;
+        border: 2px solid rgba(235, 52, 184, 0.95);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      }
+
+      .phone-composition::before,
+      .phone-composition::after {
+        position: absolute;
+        z-index: 5;
+        border-radius: 3px;
+        padding: 2px 4px;
+        font-size: 6px;
+        font-weight: 900;
+        line-height: 1;
+        color: #fff;
+        opacity: 0;
+      }
+
+      .phone-composition::before {
+        content: "Gameplay";
+        left: 50%;
+        top: 8px;
+        transform: translateX(-50%);
+        background: #229cff;
+      }
+
+      .phone-composition::after {
+        content: "Facecam";
+        right: 8px;
+        bottom: 62px;
+        background: #eb34b8;
+      }
+
+      .phone-preview[data-layout="small"] .phone-focus { inset: 33% 0 0; height: 67%; }
+      .phone-preview[data-layout="small"] .phone-facecam-left {
+        display: block;
+        left: 19%;
+        top: 8%;
+        width: 62%;
+        height: 28%;
+        border-radius: 8px;
+      }
+
+      .phone-preview[data-layout="circle"] .phone-focus { inset: 30% 0 0; height: 70%; }
+      .phone-preview[data-layout="circle"] .phone-facecam-left {
+        display: block;
+        left: 24%;
+        top: 8%;
+        width: 52%;
+        height: 29%;
+        border-radius: 999px;
+      }
+
+      .phone-preview[data-layout="game-ui"] .phone-focus { inset: 36% 0 0; height: 64%; }
+      .phone-preview[data-layout="game-ui"] .phone-facecam-right {
+        display: block;
+        left: 15%;
+        top: 8%;
+        width: 70%;
+        height: 26%;
+        border-radius: 7px;
+      }
+
+      .phone-preview[data-layout="split"] .phone-focus { inset: 28% 0 0; height: 72%; }
+      .phone-preview[data-layout="split"] .phone-facecam-right {
+        display: block;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 31%;
+        border-width: 0 0 2px;
+        border-radius: 0;
+      }
+
+      .phone-preview[data-layout="blurred"] .phone-bg { display: block; }
+      .phone-preview[data-layout="blurred"] .phone-focus {
+        inset: 17% 9% 12%;
+        width: 82%;
+        height: 71%;
+        border-radius: 8px;
+        outline: 1px solid rgba(255,255,255,0.25);
+        overflow: hidden;
+      }
+
+      .phone-preview[data-layout="fullscreen"] .phone-focus { inset: 0; }
+
+      .phone-preview[data-layout="basecam"] .phone-focus { inset: 0 0 36%; height: 64%; }
+      .phone-preview[data-layout="basecam"] .phone-facecam-right {
+        display: block;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 36%;
+        border-width: 2px 0 0;
+        border-radius: 0;
+      }
+
+      .phone-preview[data-layout="mosaic"] .phone-focus { inset: 20% 0 0; height: 80%; }
+      .phone-preview[data-layout="mosaic"] .phone-map {
+        display: block;
+        left: 0;
+        top: 0;
+        width: 48%;
+        height: 22%;
+        border-radius: 0 0 6px 0;
+      }
+      .phone-preview[data-layout="mosaic"] .phone-facecam-right {
+        display: block;
+        right: 0;
+        top: 0;
+        width: 52%;
+        height: 22%;
+        border-radius: 0 0 0 6px;
+      }
+
+      .phone-preview[data-layout="dual"] .phone-focus { inset: 18% 0 0; height: 82%; }
+      .phone-preview[data-layout="dual"] .phone-facecam-left,
+      .phone-preview[data-layout="dual"] .phone-facecam-right {
+        display: block;
+        top: 4%;
+        width: 43%;
+        height: 24%;
+        border-radius: 999px;
+      }
+      .phone-preview[data-layout="dual"] .phone-facecam-left { left: 5%; }
+      .phone-preview[data-layout="dual"] .phone-facecam-right { right: 5%; }
+
+      .phone-preview[data-layout="duo"] .phone-focus { inset: 0 0 39%; height: 61%; }
+      .phone-preview[data-layout="duo"] .phone-facecam-left,
+      .phone-preview[data-layout="duo"] .phone-facecam-right {
+        display: block;
+        bottom: 0;
+        width: 50%;
+        height: 39%;
+        border-radius: 0;
+      }
+      .phone-preview[data-layout="duo"] .phone-facecam-left { left: 0; border-width: 2px 1px 0 0; }
+      .phone-preview[data-layout="duo"] .phone-facecam-right { right: 0; border-width: 2px 0 0 1px; }
+
+      .phone-preview[data-layout="half"] .phone-focus { inset: 0; }
+      .phone-preview[data-layout="half"] .phone-facecam-right {
+        display: block;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 46%;
+        border-width: 2px 0 0;
+        border-radius: 0;
+      }
+
+      .phone-preview[data-layout="small"] .phone-composition::before,
+      .phone-preview[data-layout="circle"] .phone-composition::before,
+      .phone-preview[data-layout="game-ui"] .phone-composition::before,
+      .phone-preview[data-layout="split"] .phone-composition::before,
+      .phone-preview[data-layout="mosaic"] .phone-composition::before,
+      .phone-preview[data-layout="dual"] .phone-composition::before,
+      .phone-preview[data-layout="duo"] .phone-composition::before {
+        opacity: 1;
+      }
+
+      .phone-preview[data-layout="small"] .phone-composition::after,
+      .phone-preview[data-layout="circle"] .phone-composition::after,
+      .phone-preview[data-layout="game-ui"] .phone-composition::after,
+      .phone-preview[data-layout="split"] .phone-composition::after,
+      .phone-preview[data-layout="basecam"] .phone-composition::after,
+      .phone-preview[data-layout="mosaic"] .phone-composition::after,
+      .phone-preview[data-layout="dual"] .phone-composition::after,
+      .phone-preview[data-layout="duo"] .phone-composition::after,
+      .phone-preview[data-layout="half"] .phone-composition::after {
+        opacity: 1;
       }
 
       .phone-preview::after {
@@ -1047,7 +1268,15 @@
           </div>
           <div class="preview-column">
             <div class="preview-title">Preview</div>
-            <div class="phone-preview"><video id="phoneVideo" muted playsinline></video></div>
+            <div class="phone-preview" id="phonePreview">
+              <div class="phone-composition">
+                <video id="phoneBgVideo" class="phone-bg" muted playsinline></video>
+                <video id="phoneVideo" class="phone-layer phone-focus" muted playsinline></video>
+                <video id="phoneMapVideo" class="phone-map" muted playsinline></video>
+                <video id="phoneFacecamLeftVideo" class="phone-facecam-left" muted playsinline></video>
+                <video id="phoneFacecamRightVideo" class="phone-facecam-right" muted playsinline></video>
+              </div>
+            </div>
             <button class="platform-pill" type="button">♪ TikTok preview⌄</button>
           </div>
         </section>
@@ -1079,7 +1308,15 @@
       const nextStep = document.getElementById("nextStep");
       const backStep = document.getElementById("backStep");
       const mainVideo = document.getElementById("mainVideo");
+      const phonePreview = document.getElementById("phonePreview");
       const phoneVideo = document.getElementById("phoneVideo");
+      const phoneLayerVideos = [
+        document.getElementById("phoneBgVideo"),
+        phoneVideo,
+        document.getElementById("phoneMapVideo"),
+        document.getElementById("phoneFacecamLeftVideo"),
+        document.getElementById("phoneFacecamRightVideo"),
+      ];
       const canvasPlaceholder = document.getElementById("canvasPlaceholder");
       const layoutTitle = document.getElementById("layoutTitle");
       const youtubeUrlInput = document.getElementById("youtubeUrlInput");
@@ -1118,10 +1355,31 @@
         if (videoUrl && videoUrl.startsWith("blob:")) URL.revokeObjectURL(videoUrl);
         videoUrl = url;
         mainVideo.src = url;
-        phoneVideo.src = url;
+        phoneLayerVideos.forEach((video) => {
+          video.src = url;
+          video.muted = true;
+        });
         canvasPlaceholder.hidden = true;
         mainVideo.load();
-        phoneVideo.load();
+        phoneLayerVideos.forEach((video) => video.load());
+        applyLayout();
+      }
+
+      function syncPhonePreview(options = {}) {
+        if (!mainVideo.src) return;
+        const force = !!options.force;
+        phoneLayerVideos.forEach((video) => {
+          if (!video.src) return;
+          if (force || Math.abs(video.currentTime - mainVideo.currentTime) > 0.25) {
+            try { video.currentTime = mainVideo.currentTime; } catch {}
+          }
+          video.playbackRate = mainVideo.playbackRate;
+          if (mainVideo.paused) {
+            video.pause();
+          } else {
+            video.play().catch(() => {});
+          }
+        });
       }
 
       function formatClock(seconds) {
@@ -1183,6 +1441,7 @@
               setVideoSource(URL.createObjectURL(blob));
               setStep("layouts");
               mainVideo.play().catch(() => {});
+              syncPhonePreview({ force: true });
             } catch (error) {
               youtubeHint.textContent = `Preview failed: ${error instanceof Error ? error.message : "Could not preview clip."}`;
               youtubeHint.classList.add("error");
@@ -1270,8 +1529,10 @@
 
       function applyLayout() {
         editorCanvas.dataset.layout = selectedLayout;
+        phonePreview.dataset.layout = selectedLayout;
         mainVideo.style.filter = "";
         layoutTitle.textContent = layoutLabels[selectedLayout] || "Custom layout";
+        syncPhonePreview({ force: true });
       }
 
       toolButtons.forEach((button) => button.addEventListener("click", () => setStep(button.dataset.step)));
@@ -1312,14 +1573,25 @@
         if (!mainVideo.src) return;
         if (mainVideo.paused) {
           mainVideo.play().catch(() => {});
-          phoneVideo.play().catch(() => {});
+          syncPhonePreview({ force: true });
           playButton.textContent = "⏸";
         } else {
           mainVideo.pause();
-          phoneVideo.pause();
+          syncPhonePreview();
           playButton.textContent = "▶";
         }
       });
+      mainVideo.addEventListener("play", () => {
+        playButton.textContent = "⏸";
+        syncPhonePreview({ force: true });
+      });
+      mainVideo.addEventListener("pause", () => {
+        playButton.textContent = "▶";
+        syncPhonePreview();
+      });
+      mainVideo.addEventListener("seeked", () => syncPhonePreview({ force: true }));
+      mainVideo.addEventListener("timeupdate", () => syncPhonePreview());
+      mainVideo.addEventListener("ratechange", () => syncPhonePreview({ force: true }));
       exportButton.addEventListener("click", () => {
         if (!videoUrl) {
           setStep("source");
