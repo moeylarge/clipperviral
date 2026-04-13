@@ -64,6 +64,16 @@ function hasYtDlpProxy() {
   return getYtDlpProxyUrl().length > 0;
 }
 
+function envFlagEnabled(name: string, defaultValue = false) {
+  const raw = process.env[name];
+  if (raw == null) return defaultValue;
+  const value = `${raw}`.trim().toLowerCase();
+  if (!value.length) return defaultValue;
+  if (["1", "true", "yes", "on"].includes(value)) return true;
+  if (["0", "false", "no", "off"].includes(value)) return false;
+  return defaultValue;
+}
+
 function detectSourceKind(url: string): SourceKind {
   const value = url.toLowerCase();
   if (value.includes("youtube.com") || value.includes("youtu.be")) return "youtube";
@@ -1338,6 +1348,11 @@ export async function POST(req: NextRequest) {
     try {
       let sourcePath: string | null = null;
       let proxyFailure: string | null = null;
+      const allowLocalFallbackWhenProxyFails = envFlagEnabled(
+        "YTDLP_PROXY_ALLOW_LOCAL_FALLBACK",
+        false,
+      );
+      const preferProxyOnlyForYoutube = proxyConfigured && sourceKind === "youtube" && !allowLocalFallbackWhenProxyFails;
 
       if (proxyConfigured) {
         const proxyResult = await downloadSourceViaProxy({
@@ -1353,6 +1368,18 @@ export async function POST(req: NextRequest) {
         } else {
           proxyFailure = proxyResult.error;
         }
+      }
+
+      if (!sourcePath && preferProxyOnlyForYoutube) {
+        return NextResponse.json(
+          {
+            error: "Failed to download source URL.",
+            details:
+              `External downloader failed: ${proxyFailure || "Unknown proxy failure."}\n` +
+              "Tips: verify tunnel is alive and publicly reachable; then retry.",
+          },
+          { status: 502 },
+        );
       }
 
       if (!sourcePath) {
