@@ -145,6 +145,37 @@ function looksLikePythonScript(bytes: Uint8Array) {
   return header.startsWith("#!") && /python/i.test(header);
 }
 
+async function isNativeYtDlpBinary(filePath: string) {
+  try {
+    const handle = await fs.open(filePath, "r");
+    try {
+      const probe = Buffer.alloc(8);
+      const { bytesRead } = await handle.read(probe, 0, 8, 0);
+      if (bytesRead < 4) return false;
+      if (probe[0] === 0x7f && probe[1] === 0x45 && probe[2] === 0x4c && probe[3] === 0x46) return true; // ELF
+      if (
+        probe[0] === 0xcf &&
+        probe[1] === 0xfa &&
+        probe[2] === 0xed &&
+        probe[3] === 0xfe
+      )
+        return true; // Mach-O (arm64)
+      if (
+        probe[0] === 0xfe &&
+        probe[1] === 0xed &&
+        probe[2] === 0xfa &&
+        probe[3] === 0xcf
+      )
+        return true; // Mach-O (x64)
+      return false;
+    } finally {
+      await handle.close();
+    }
+  } catch {
+    return false;
+  }
+}
+
 async function tryDownloadYtDlpBinary(targetPath: string) {
   const urls = getYtDlpReleaseUrls();
   for (const url of urls) {
@@ -205,10 +236,15 @@ function parseConfiguredYtDlpCommand(value: string | undefined): CommandCandidat
 async function getYtDlpCandidates(): Promise<CommandCandidate[]> {
   let runtimeYtDlp: string | null = null;
   const bundledYtDlp = path.join(process.cwd(), "bin", "yt-dlp");
-  try {
-    await fs.access(bundledYtDlp, fsConstants.X_OK);
-    runtimeYtDlp = bundledYtDlp;
-  } catch {
+  const bundledIsNative = await isNativeYtDlpBinary(bundledYtDlp);
+  if (bundledIsNative) {
+    try {
+      await fs.access(bundledYtDlp, fsConstants.X_OK);
+      runtimeYtDlp = bundledYtDlp;
+    } catch {
+      runtimeYtDlp = await ensureYtDlpRuntimeBinary();
+    }
+  } else {
     runtimeYtDlp = await ensureYtDlpRuntimeBinary();
   }
   const configured = parseConfiguredYtDlpCommand(process.env.YTDLP_PATH);
