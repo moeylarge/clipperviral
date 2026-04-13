@@ -42,6 +42,15 @@ const requireInstallerFfmpegPath = () => {
   }
 };
 
+const requireFfmpegStaticPackagePath = () => {
+  try {
+    const packagePath = require.resolve("ffmpeg-static/package.json");
+    return path.join(path.dirname(packagePath), "ffmpeg");
+  } catch {
+    return null;
+  }
+};
+
 type CommandCandidate = {
   command: string;
   args?: string[];
@@ -89,12 +98,24 @@ function getBinaryCandidates() {
   return [
     ffmpegPath,
     requireFfmpegPath(),
+    requireFfmpegStaticPackagePath(),
     requireInstallerFfmpegPath(),
     "ffmpeg",
     "/usr/local/bin/ffmpeg",
     "/opt/homebrew/bin/ffmpeg",
     "/usr/bin/ffmpeg",
   ].filter((entry): entry is string => typeof entry === "string" && entry.length > 0);
+}
+
+async function getWorkingFfmpegCandidates() {
+  const working: string[] = [];
+  for (const command of [...new Set(getBinaryCandidates())]) {
+    const result = await runCommand(command, ["-version"], 10_000);
+    if (result.ok) {
+      working.push(command);
+    }
+  }
+  return working;
 }
 
 function getYtDlpFfmpegLocation() {
@@ -1138,7 +1159,15 @@ async function transcribeAudio(filePath: string, apiKey: string, language: strin
       segmentPattern,
     ];
 
-      const splitResult = await runWithFallback(() => toCommandCandidates(getBinaryCandidates()), splitArgs);
+    const ffmpegCandidates = await getWorkingFfmpegCandidates();
+    if (!ffmpegCandidates.length) {
+      return {
+        ok: false as const,
+        status: 500,
+        error: "FFmpeg is not available for splitting audio into chunks.",
+      };
+    }
+    const splitResult = await runWithFallback(() => toCommandCandidates(ffmpegCandidates), splitArgs);
     if (!splitResult.ok) {
       const typed = splitResult.error as { message?: string; code?: string; stderr?: string };
       const message = typed?.message || "Failed to split clip into chunks.";
@@ -1400,10 +1429,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "A valid YouTube or Kick URL is required." }, { status: 400 });
     }
 
-    const ffmpegCommand = (() => {
-      const candidates = getBinaryCandidates();
-      return candidates[0] || null;
-    })();
+    const ffmpegCommand = (await getWorkingFfmpegCandidates())[0] || null;
     if (!ffmpegCommand && !hasYtDlpProxy()) {
       return NextResponse.json(
         { error: "FFmpeg is not installed. Install ffmpeg or set FFMPEG_PATH." },
@@ -1428,7 +1454,7 @@ export async function POST(req: NextRequest) {
     const workdir = path.join(os.tmpdir(), `spotlight-youtube-${randomUUID()}`);
     await fs.mkdir(workdir, { recursive: true });
     const sourceOutputTemplate = path.join(workdir, "source.%(ext)s");
-    const ytdlpFfmpegLocation = getYtDlpFfmpegLocation();
+    const ytdlpFfmpegLocation = ffmpegCommand || getYtDlpFfmpegLocation();
     const formatPref =
       process.env.YOUTUBE_FORMAT ||
       (sourceKind === "youtube" ? "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" : "bestvideo+bestaudio/best");
