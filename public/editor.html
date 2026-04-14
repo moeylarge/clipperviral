@@ -35,7 +35,7 @@
           var(--soft);
       }
 
-      button, input, select {
+      button, input, select, textarea {
         font: inherit;
       }
 
@@ -47,6 +47,7 @@
       button:focus-visible,
       input:focus-visible,
       select:focus-visible,
+      textarea:focus-visible,
       a:focus-visible {
         outline: 3px solid rgba(34, 156, 255, 0.38);
         outline-offset: 3px;
@@ -252,14 +253,21 @@
       }
 
       .field-stack input,
-      .field-stack select {
+      .field-stack select,
+      .field-stack textarea {
         width: 100%;
         border: 1px solid #cdd3e4;
-        border-radius: 12px;
+        border-radius: 8px;
         min-height: 44px;
         padding: 10px 12px;
         background: #fff;
         box-shadow: inset 0 1px 2px rgba(16, 19, 28, 0.04);
+      }
+
+      .field-stack textarea {
+        min-height: 84px;
+        resize: vertical;
+        line-height: 1.35;
       }
 
       .inline-grid {
@@ -432,6 +440,57 @@
       .caption-card.active {
         outline: 2px solid #70a7ff;
         border-color: #70a7ff;
+      }
+
+      .caption-layer {
+        position: absolute;
+        left: 9%;
+        right: 9%;
+        bottom: 19%;
+        z-index: 11;
+        display: none;
+        justify-content: center;
+        pointer-events: none;
+        text-align: center;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+        font-weight: 1000;
+        line-height: 1.02;
+        text-transform: uppercase;
+      }
+
+      .caption-layer.active {
+        display: flex;
+      }
+
+      .caption-layer span {
+        max-width: 100%;
+        padding: 2px 5px;
+      }
+
+      .caption-layer[data-style="ninja"] span {
+        color: #fff;
+        text-shadow: 2px 2px 0 #151515, -2px 2px 0 #151515, 2px -2px 0 #151515, -2px -2px 0 #151515, 0 4px 10px rgba(0,0,0,0.45);
+      }
+
+      .caption-layer[data-style="quirky"] span,
+      .caption-layer[data-style="quirky-cta"] span {
+        color: #f4f05c;
+        text-shadow: 2px 2px 0 #10131c, -2px 2px 0 #10131c, 2px -2px 0 #10131c, -2px -2px 0 #10131c;
+      }
+
+      .caption-layer[data-style="west"] span {
+        color: #fff1d3;
+        text-shadow: 2px 2px 0 #4f22f2, -2px 2px 0 #4f22f2, 2px -2px 0 #4f22f2, -2px -2px 0 #4f22f2;
+      }
+
+      .caption-layer[data-style="headturning"] span {
+        color: #83ff3f;
+        text-shadow: 2px 2px 0 #04130a, -2px 2px 0 #04130a, 2px -2px 0 #04130a, -2px -2px 0 #04130a;
+      }
+
+      .editor-canvas .caption-layer {
+        font-size: 28px;
       }
 
       .quality-card {
@@ -1173,6 +1232,18 @@
         font-size: 4px;
       }
 
+      .phone-preview .caption-layer {
+        left: 8%;
+        right: 8%;
+        bottom: 18%;
+        font-size: 8px;
+      }
+
+      .phone-preview[data-format="horizontal"] .caption-layer {
+        bottom: 14%;
+        font-size: 9px;
+      }
+
       .platform-pill {
         border: 1px solid #cfd4e4;
         border-radius: 999px;
@@ -1643,6 +1714,9 @@
           <div class="field-stack">
             <label for="captionLanguage">Select the spoken language:</label>
             <select id="captionLanguage"><option>automatically detect</option><option>English</option><option>Spanish</option></select>
+            <label class="toggle-field"><input id="captionLayerToggle" type="checkbox" /> Show caption layer</label>
+            <label for="captionTextInput">Caption text</label>
+            <textarea id="captionTextInput" placeholder="Type captions to preview and export them."></textarea>
           </div>
           <div class="chip-row">
             <button class="chip active" type="button">All</button>
@@ -1652,14 +1726,14 @@
           </div>
           <div class="section-title">Custom styles</div>
           <div class="caption-card-grid">
-            <button class="caption-card active" type="button">NINJA<br />STEALTHY</button>
+            <button class="caption-card active" data-caption-style="ninja" type="button">NINJA<br />STEALTHY</button>
           </div>
           <div class="section-title">Default styles</div>
           <div class="caption-card-grid">
-            <button class="caption-card" type="button">QUIRKY</button>
-            <button class="caption-card" type="button">QUIRKY CTA</button>
-            <button class="caption-card" type="button">WEST</button>
-            <button class="caption-card" type="button">HEADTURNING</button>
+            <button class="caption-card" data-caption-style="quirky" type="button">QUIRKY</button>
+            <button class="caption-card" data-caption-style="quirky-cta" type="button">QUIRKY CTA</button>
+            <button class="caption-card" data-caption-style="west" type="button">WEST</button>
+            <button class="caption-card" data-caption-style="headturning" type="button">HEADTURNING</button>
           </div>
         </section>
 
@@ -1709,6 +1783,7 @@
                 <span class="kick-wordmark">KICK</span><span id="kickCanvasHandle" class="kick-handle">KICK.COM/EDMATTHEWS</span>
                 <span class="resize-handle tl" data-resize="tl"></span><span class="resize-handle tr" data-resize="tr"></span><span class="resize-handle bl" data-resize="bl"></span><span class="resize-handle br" data-resize="br"></span>
               </div>
+              <div id="captionCanvasOverlay" class="caption-layer" data-style="ninja" aria-hidden="true"><span></span></div>
               <div class="selection-box" aria-hidden="true">
                 <div class="focus-panel"><span class="handle tl"></span><span class="handle tr"></span><span class="handle bl"></span><span class="handle br"></span></div>
                 <div class="map-box"><span class="label-chip">Map</span><span class="resize-handle tl" data-resize="tl"></span><span class="resize-handle tr" data-resize="tr"></span><span class="resize-handle bl" data-resize="bl"></span><span class="resize-handle br" data-resize="br"></span></div>
@@ -1733,6 +1808,7 @@
                 <video id="phoneFacecamLeftVideo" class="phone-facecam-left" muted playsinline></video>
                 <video id="phoneFacecamRightVideo" class="phone-facecam-right" muted playsinline></video>
                 <div id="kickPhoneOverlay" class="kick-lower-third" aria-hidden="true"><span class="kick-wordmark">KICK</span><span id="kickPhoneHandle" class="kick-handle">KICK.COM/EDMATTHEWS</span></div>
+                <div id="captionPhoneOverlay" class="caption-layer" data-style="ninja" aria-hidden="true"><span></span></div>
               </div>
             </div>
             <button id="platformPill" class="platform-pill" type="button">♪ TikTok preview⌄</button>
@@ -1802,6 +1878,7 @@
       };
       const trimState = { start: 0, end: 34 };
       const kickState = { enabled: false, apply: "whole", start: 0, end: 34, text: "KICK.COM/EDMATTHEWS", box: { x: 5, y: 78, w: 90, h: 13 } };
+      const captionState = { enabled: false, text: "", style: "ninja" };
       const cropState = layoutState.transformsByPanel;
       const SINGLE_LAYOUT_BY_FORMAT = { horizontal: DEFAULT_LAYOUT_BY_FORMAT.horizontal };
 
@@ -1850,6 +1927,10 @@
       const kickApplyCurrentButton = document.getElementById("kickApplyCurrentButton");
       const kickTimelineClip = document.getElementById("kickTimelineClip");
       const kickTimelineLabel = document.getElementById("kickTimelineLabel");
+      const captionLayerToggle = document.getElementById("captionLayerToggle");
+      const captionTextInput = document.getElementById("captionTextInput");
+      const captionCanvasOverlay = document.getElementById("captionCanvasOverlay");
+      const captionPhoneOverlay = document.getElementById("captionPhoneOverlay");
       const trimStartRange = document.getElementById("trimStartRange");
       const trimEndRange = document.getElementById("trimEndRange");
       const trimStartLabel = document.getElementById("trimStartLabel");
@@ -2051,9 +2132,29 @@
         applyLayout();
       }
 
+      function getCaptionText() {
+        return captionState.text.trim();
+      }
+
+      function updateCaptionOverlay() {
+        captionState.enabled = !!captionLayerToggle.checked;
+        captionState.text = captionTextInput.value || "";
+        const text = getCaptionText();
+        const visible = captionState.enabled && Boolean(text);
+
+        [captionCanvasOverlay, captionPhoneOverlay].forEach((overlay) => {
+          overlay.classList.toggle("active", visible);
+          overlay.dataset.style = captionState.style;
+          overlay.setAttribute("aria-hidden", String(!visible));
+          const textNode = overlay.querySelector("span");
+          if (textNode) textNode.textContent = text;
+        });
+      }
+
       function syncPhonePreview(options = {}) {
         if (!mainVideo.src) return;
         updateKickOverlay();
+        updateCaptionOverlay();
         const force = !!options.force;
         phoneLayerVideos.forEach((video) => {
           if (!video.src) return;
@@ -2557,7 +2658,11 @@
       }));
       document.querySelectorAll(".caption-card").forEach((button) => button.addEventListener("click", () => {
         document.querySelectorAll(".caption-card").forEach((item) => item.classList.toggle("active", item === button));
+        captionState.style = button.dataset.captionStyle || "ninja";
+        updateCaptionOverlay();
       }));
+      captionLayerToggle.addEventListener("change", updateCaptionOverlay);
+      captionTextInput.addEventListener("input", updateCaptionOverlay);
       analyzeYoutubeButton.addEventListener("click", analyzeYoutube);
       localClipInput.addEventListener("change", () => {
         const file = localClipInput.files && localClipInput.files[0];
@@ -2569,7 +2674,7 @@
         }
         setVideoSource(URL.createObjectURL(file));
         setStatus(youtubeHint, `${file.name} loaded. Choose your layout next.`, "success");
-        setStatus(exportStatus, "Preview clip loaded. Final render will include trim, layout and active overlays.", "success");
+        setStatus(exportStatus, "Preview clip loaded. Final render will include trim, layout, active overlays, and caption text when enabled.", "success");
         setStep("layouts");
       });
       playButton.addEventListener("click", () => {
@@ -2884,6 +2989,67 @@
         ctx.restore();
       }
 
+      function getCanvasCaptionStyle(styleKey) {
+        const styles = {
+          ninja: { fill: "#ffffff", stroke: "#151515" },
+          quirky: { fill: "#f4f05c", stroke: "#10131c" },
+          "quirky-cta": { fill: "#f4f05c", stroke: "#10131c" },
+          west: { fill: "#fff1d3", stroke: "#4f22f2" },
+          headturning: { fill: "#83ff3f", stroke: "#04130a" },
+        };
+        return styles[styleKey] || styles.ninja;
+      }
+
+      function wrapCanvasText(ctx, text, maxWidth) {
+        return text.split(/\n+/).flatMap((paragraph) => {
+          const words = paragraph.trim().split(/\s+/).filter(Boolean);
+          const lines = [];
+          let line = "";
+          words.forEach((word) => {
+            const testLine = line ? `${line} ${word}` : word;
+            if (ctx.measureText(testLine).width <= maxWidth || !line) {
+              line = testLine;
+            } else {
+              lines.push(line);
+              line = word;
+            }
+          });
+          if (line) lines.push(line);
+          return lines.length ? lines : [""];
+        });
+      }
+
+      function renderCaptionOverlayToCanvas(ctx, outputWidth, outputHeight) {
+        if (!canDrawElement(captionPhoneOverlay)) return;
+        const text = getCaptionText();
+        if (!text) return;
+
+        const box = getPreviewBox(captionPhoneOverlay, outputWidth, outputHeight);
+        const style = getCanvasCaptionStyle(captionState.style);
+        const fontSize = Math.max(24, Math.min(outputHeight * 0.06, box.h * 0.78 || outputHeight * 0.048));
+        const lineHeight = fontSize * 1.08;
+        const maxWidth = Math.max(40, box.w);
+
+        ctx.save();
+        ctx.font = `1000 ${fontSize}px Arial Black, Impact, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.lineJoin = "round";
+        ctx.miterLimit = 2;
+
+        const lines = wrapCanvasText(ctx, text.toUpperCase(), maxWidth).slice(0, 4);
+        const startY = box.y + box.h / 2 - ((lines.length - 1) * lineHeight) / 2;
+        lines.forEach((line, index) => {
+          const y = startY + index * lineHeight;
+          ctx.lineWidth = Math.max(6, fontSize * 0.18);
+          ctx.strokeStyle = style.stroke;
+          ctx.strokeText(line, box.x + box.w / 2, y, maxWidth);
+          ctx.fillStyle = style.fill;
+          ctx.fillText(line, box.x + box.w / 2, y, maxWidth);
+        });
+        ctx.restore();
+      }
+
       function drawCompositionFrame(ctx, outputWidth, outputHeight) {
         ctx.fillStyle = "#050505";
         ctx.fillRect(0, 0, outputWidth, outputHeight);
@@ -2895,6 +3061,7 @@
           document.getElementById("phoneFacecamRightVideo"),
         ].forEach((layer) => renderVideoLayerToCanvas(ctx, layer, outputWidth, outputHeight));
         renderKickOverlayToCanvas(ctx, outputWidth, outputHeight);
+        renderCaptionOverlayToCanvas(ctx, outputWidth, outputHeight);
       }
 
       async function renderFinalCompositionBlob() {
@@ -2921,6 +3088,7 @@
         const chunks = [];
         isExporting = true;
         updateKickOverlay();
+        updateCaptionOverlay();
         syncPhonePreview({ force: true });
 
         try {
@@ -2996,7 +3164,7 @@
           const startLabel = formatClock(result.start).replace(":", "-");
           const endLabel = formatClock(result.end).replace(":", "-");
           downloadBlob(result.blob, `clipperviral-final-${safeFileName(layoutState.activeLayoutKey)}-${startLabel}-${endLabel}.${result.extension}`);
-          setStatus(exportStatus, `Final render downloaded (${result.extension.toUpperCase()}). Includes selected layout, trim range and active overlays.`, "success");
+          setStatus(exportStatus, `Final render downloaded (${result.extension.toUpperCase()}). Includes selected layout, trim range, active overlays, and caption text when enabled.`, "success");
         } catch (error) {
           setStatus(exportStatus, `Final render failed: ${error instanceof Error ? error.message : "Unknown export error."}`, "error");
         } finally {
@@ -3010,6 +3178,7 @@
       applyLayout();
       applyFormat();
       applyShape();
+      updateCaptionOverlay();
       requestAnimationFrame(applyCropState);
       setDuration(34);
       setStep("source");
