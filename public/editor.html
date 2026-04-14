@@ -56,6 +56,15 @@
         transform: translateY(1px) scale(0.99);
       }
 
+      button:disabled,
+      button[aria-disabled="true"] {
+        cursor: not-allowed;
+        opacity: 0.48;
+        filter: grayscale(0.3);
+        box-shadow: none;
+        transform: none;
+      }
+
       .app-shell {
         min-height: 100vh;
         display: grid;
@@ -521,6 +530,10 @@
         box-shadow: 0 8px 22px rgba(16, 19, 28, 0.06);
       }
 
+      .undo-group[hidden] {
+        display: none;
+      }
+
       .undo-group button, .select-group button, .select-group select {
         border: 0;
         min-height: 34px;
@@ -564,6 +577,10 @@
         position: relative;
         overflow: hidden;
         outline: 1px solid rgba(255,255,255,0.75);
+      }
+
+      .editor-canvas[data-format="horizontal"] .focus-panel {
+        border-color: var(--green);
       }
 
       .editor-canvas video {
@@ -619,6 +636,19 @@
         left: 50%;
         transform: translateX(-50%);
       }
+
+      .editor-canvas[data-shape="fullscreen"] .focus-panel {
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 0;
+      }
+
+      .editor-canvas[data-shape="16:9"] .focus-panel { aspect-ratio: 16 / 9; border-radius: 6px; }
+      .editor-canvas[data-shape="4:3"] .focus-panel { aspect-ratio: 4 / 3; border-radius: 6px; }
+      .editor-canvas[data-shape="square"] .focus-panel { aspect-ratio: 1 / 1; border-radius: 8px; }
+      .editor-canvas[data-shape="circle"] .focus-panel { aspect-ratio: 1 / 1; border-radius: 999px; }
 
       .handle {
         position: absolute;
@@ -844,6 +874,27 @@
         position: relative;
         overflow: hidden;
         outline: 3px solid var(--blue);
+      }
+
+      .phone-preview[data-format="horizontal"] {
+        width: 220px;
+        aspect-ratio: 16 / 9;
+        border-radius: 12px;
+        outline-color: var(--green);
+      }
+
+      .phone-preview[data-format="horizontal"] .phone-focus {
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 0 !important;
+      }
+
+      .phone-preview[data-format="horizontal"] .phone-bg,
+      .phone-preview[data-format="horizontal"] .phone-map,
+      .phone-preview[data-format="horizontal"] .phone-facecam-left,
+      .phone-preview[data-format="horizontal"] .phone-facecam-right {
+        display: none !important;
       }
 
       .phone-composition {
@@ -1137,6 +1188,8 @@
         gap: 26px;
         color: #585b66;
         border-bottom: 1px solid #f0f0f5;
+        font-size: 12px;
+        font-weight: 900;
       }
 
       .timeline-track {
@@ -1380,6 +1433,8 @@
         min-height: 19px;
       }
       .status.error { color: #c83131; }
+      .status.success { color: #247a36; }
+      .status.loading { color: #3158d4; }
 
       .candidate-list {
         margin-top: 12px;
@@ -1434,7 +1489,7 @@
               <h1>Add your clip</h1>
               <p>Upload a video or let AI find clips from a YouTube or Kick URL.</p>
             </div>
-            <button class="collapse-btn" type="button">▱</button>
+            <button class="collapse-btn" type="button" disabled title="Panel collapse is not enabled yet">▱</button>
           </div>
           <div class="source-tabs">
             <button class="source-tab active" data-source="url" type="button">AI generator</button>
@@ -1471,7 +1526,7 @@
               <h1>Choose your layout</h1>
               <p>Pick the canvas direction and layout. Vertical unlocks multi-angle options.</p>
             </div>
-            <button class="collapse-btn" type="button">▱</button>
+            <button class="collapse-btn" type="button" disabled title="Panel collapse is not enabled yet">▱</button>
           </div>
           <div class="section-title">Format</div>
           <div class="chip-row">
@@ -1488,7 +1543,7 @@
               <h1>Elements</h1>
               <p>Add Kick verbiage, lower thirds and brand overlays to part of the clip or the whole clip.</p>
             </div>
-            <button class="collapse-btn" type="button">▱</button>
+            <button class="collapse-btn" type="button" disabled title="Panel collapse is not enabled yet">▱</button>
           </div>
           <div class="element-list">
             <article class="element-card">
@@ -1529,7 +1584,7 @@
               <h1>Effects</h1>
               <p>Optional polish for clips. We will wire effects after layout and captions are stable.</p>
             </div>
-            <button class="collapse-btn" type="button">▱</button>
+            <button class="collapse-btn" type="button" disabled title="Panel collapse is not enabled yet">▱</button>
           </div>
           <div class="chip-row">
             <button class="chip active" type="button">None</button>
@@ -1545,7 +1600,7 @@
               <h1>Audio</h1>
               <p>Balance original audio and future music/voiceover layers.</p>
             </div>
-            <button class="collapse-btn" type="button">▱</button>
+            <button class="collapse-btn" type="button" disabled title="Panel collapse is not enabled yet">▱</button>
           </div>
           <div class="field-stack">
             <label for="originalVolume">Original volume</label>
@@ -1561,7 +1616,7 @@
               <h1>AI-Powered Captions</h1>
               <p>Select a caption style below and customize it to your preferences after adding captions.</p>
             </div>
-            <button class="collapse-btn" type="button">▱</button>
+            <button class="collapse-btn" type="button" disabled title="Panel collapse is not enabled yet">▱</button>
           </div>
           <div class="field-stack">
             <label for="captionLanguage">Select the spoken language:</label>
@@ -1592,13 +1647,14 @@
               <h1>Select your quality</h1>
               <p>Choose the quality of your video from the options below, then click export.</p>
             </div>
-            <button class="collapse-btn" type="button">▱</button>
+            <button class="collapse-btn" type="button" disabled title="Panel collapse is not enabled yet">▱</button>
           </div>
           <button class="quality-card" data-quality="720" type="button"><span class="radio-dot"></span><strong>720p<br /><span>30 fps</span></strong><span><strong>Standard 720p</strong>Content creation starts here</span></button>
           <button class="quality-card" data-quality="720-60" type="button"><span class="radio-dot"></span><strong>720p<br /><span>60 fps</span></strong><span><strong>720p High Frame Rate</strong>Enhanced smoothness</span></button>
           <button class="quality-card active" data-quality="1080" type="button"><span class="radio-dot"></span><strong>1080p<br /><span>60 fps</span></strong><span><strong>Full HD 1080p</strong>Best for creators</span></button>
           <div class="green-strip">The best choice for 23% more engagement 🎉</div>
-          <button id="exportButton" class="export-btn" type="button">Export clip ⇧</button>
+          <button id="exportButton" class="export-btn" type="button">Download preview clip ⇧</button>
+          <div id="exportStatus" class="status">Export is ready after you add or preview a clip.</div>
           <div class="save-template">
             <h1>Save Template</h1>
             <p>Save your current settings, crops and stickers as a reusable template.</p>
@@ -1606,13 +1662,13 @@
         </section>
       </aside>
 
-      <section class="workspace">
+      <section class="workspace" id="workspace" data-format="vertical">
         <header class="topbar">
           <div class="editor-context">
             <strong>Unified Clip Editor</strong>
             <span>Source → Layouts → Captions → Export</span>
           </div>
-          <div class="undo-group"><button type="button">↶ Undo</button><button type="button">↷</button></div>
+          <div class="undo-group" hidden><button type="button" disabled>↶ Undo</button><button type="button" disabled>↷</button></div>
           <div class="select-group"><select id="platformSelect"><option>TikTok preview</option><option>YouTube Shorts preview</option><option>Reels preview</option><option>YouTube horizontal</option></select><select id="fitSelect"><option>Fit (21.6%)</option><option>Fit</option><option>Fill</option></select></div>
           <div class="fallback-links" aria-label="Fallback workspaces">
             <a href="/format-template.html">Format fallback</a>
@@ -1639,9 +1695,9 @@
               </div>
             </div>
             <div class="canvas-toolbar">
-              <button type="button">⊞</button>
+              <button type="button" disabled title="Add crop controls are coming soon">⊞</button>
               <select id="shapeSelect"><option>Freeform</option><option>Fullscreen</option><option>Rectangle 16:9</option><option>Rectangle 4:3</option><option>Square</option><option>Circle</option></select>
-              <button type="button">□</button><button type="button">↔</button><button type="button">▣</button><button type="button">🗑</button>
+              <button type="button" disabled title="Duplicate controls are coming soon">□</button><button type="button" disabled title="Flip controls are coming soon">↔</button><button type="button" disabled title="Layer controls are coming soon">▣</button><button type="button" disabled title="Delete controls are coming soon">🗑</button>
             </div>
             <div class="player-row"><span>↞</span><button id="playButton" type="button" class="chip">▶</button><span>↠</span></div>
           </div>
@@ -1657,16 +1713,16 @@
                 <div id="kickPhoneOverlay" class="kick-lower-third" aria-hidden="true"><span class="kick-wordmark">KICK</span><span id="kickPhoneHandle" class="kick-handle">KICK.COM/EDMATTHEWS</span></div>
               </div>
             </div>
-            <button class="platform-pill" type="button">♪ TikTok preview⌄</button>
+            <button id="platformPill" class="platform-pill" type="button">♪ TikTok preview⌄</button>
           </div>
         </section>
 
         <section class="timeline">
-          <div class="timeline-tools"><span>✂</span><span>→|</span><span>|←</span><span>🔈</span><span style="color:#ff4d4d">🗑</span></div>
+          <div class="timeline-tools" aria-live="polite"><span>Drag green trim handles to set the exported range.</span></div>
           <div class="timeline-track">
             <div class="ticks"><span>00:00</span><span>00:12</span><span>00:24</span><span id="durationLabel">00:34</span></div>
             <div class="thumb-strip"><div id="trimWindow" class="trim-window"><span class="timeline-handle start" data-trim-handle="start"></span><span class="timeline-handle end" data-trim-handle="end"></span></div></div>
-            <div class="overlay-lane" aria-label="Element overlay lane"><div id="kickTimelineClip" class="kick-overlay-clip">KICK<span class="timeline-handle start" data-kick-handle="start"></span><span class="timeline-handle end" data-kick-handle="end"></span></div></div>
+            <div class="overlay-lane" aria-label="Element overlay lane"><div id="kickTimelineClip" class="kick-overlay-clip"><span id="kickTimelineLabel">KICK</span><span class="timeline-handle start" data-kick-handle="start"></span><span class="timeline-handle end" data-kick-handle="end"></span></div></div>
             <div class="playhead"></div>
           </div>
           <div class="trim-editor">
@@ -1708,6 +1764,7 @@
       const views = document.querySelectorAll(".step-view");
       const nextStep = document.getElementById("nextStep");
       const backStep = document.getElementById("backStep");
+      const workspace = document.getElementById("workspace");
       const mainVideo = document.getElementById("mainVideo");
       const phonePreview = document.getElementById("phonePreview");
       const phoneVideo = document.getElementById("phoneVideo");
@@ -1732,6 +1789,7 @@
       const editorCanvas = document.getElementById("editorCanvas");
       const playButton = document.getElementById("playButton");
       const exportButton = document.getElementById("exportButton");
+      const exportStatus = document.getElementById("exportStatus");
       const durationLabel = document.getElementById("durationLabel");
       const kickTemplateToggle = document.getElementById("kickTemplateToggle");
       const kickHandleInput = document.getElementById("kickHandleInput");
@@ -1744,6 +1802,7 @@
       const kickEndInput = document.getElementById("kickEndInput");
       const kickApplyCurrentButton = document.getElementById("kickApplyCurrentButton");
       const kickTimelineClip = document.getElementById("kickTimelineClip");
+      const kickTimelineLabel = document.getElementById("kickTimelineLabel");
       const trimStartRange = document.getElementById("trimStartRange");
       const trimEndRange = document.getElementById("trimEndRange");
       const trimStartLabel = document.getElementById("trimStartLabel");
@@ -1754,6 +1813,9 @@
       const facecamLeft = document.querySelector(".facecam.left");
       const facecamRight = document.querySelector(".facecam.right");
       const trimWindow = document.getElementById("trimWindow");
+      const platformSelect = document.getElementById("platformSelect");
+      const platformPill = document.getElementById("platformPill");
+      const shapeSelect = document.getElementById("shapeSelect");
 
       const layouts = [
         ["small", "Small facecam"], ["circle", "Circle facecam"], ["game-ui", "Game UI"],
@@ -1765,13 +1827,71 @@
       const layoutLabels = Object.fromEntries(layouts);
 
       function setStep(step) {
+        if (!steps.includes(step)) return;
         currentStep = step;
         toolButtons.forEach((button) => button.classList.toggle("active", button.dataset.step === step));
         views.forEach((view) => view.classList.toggle("active", view.dataset.view === step));
         const idx = steps.indexOf(step);
         backStep.textContent = idx > 0 ? `← ${stepLabels[steps[idx - 1]]}` : "← Source";
         backStep.style.visibility = idx > 0 ? "visible" : "hidden";
-        nextStep.textContent = idx < steps.length - 1 ? `${stepLabels[steps[idx + 1]]} →` : "Export clip ⇧";
+        nextStep.textContent = idx < steps.length - 1 ? `${stepLabels[steps[idx + 1]]} →` : "Download preview ⇧";
+      }
+
+      function setStatus(element, message, type = "") {
+        element.textContent = message;
+        element.classList.remove("error", "success", "loading");
+        if (type) element.classList.add(type);
+      }
+
+      function validateSourceUrl(rawUrl) {
+        let parsed;
+        try {
+          parsed = new URL(rawUrl);
+        } catch {
+          throw new Error("Enter a complete URL that starts with https://.");
+        }
+        if (!/^https?:$/.test(parsed.protocol)) {
+          throw new Error("Only http or https links can be analyzed.");
+        }
+        const host = parsed.hostname.replace(/^www\./, "");
+        const supported = host === "youtu.be" || host.endsWith("youtube.com") || host.endsWith("kick.com");
+        if (!supported) {
+          throw new Error("Use a YouTube or Kick URL for AI clip generation.");
+        }
+        return parsed.toString();
+      }
+
+      function updatePlatformPill() {
+        platformPill.textContent = `♪ ${platformSelect.value}⌄`;
+        phonePreview.dataset.format = platformSelect.value === "YouTube horizontal" ? "horizontal" : "vertical";
+      }
+
+      function applyFormat() {
+        workspace.dataset.format = selectedFormat;
+        editorCanvas.dataset.format = selectedFormat;
+        phonePreview.dataset.format = selectedFormat;
+        if (selectedFormat === "horizontal") {
+          platformSelect.value = "YouTube horizontal";
+        } else if (platformSelect.value === "YouTube horizontal") {
+          platformSelect.value = "TikTok preview";
+        }
+        updatePlatformPill();
+        syncPhonePreview({ force: true });
+      }
+
+      function applyShape() {
+        const valueMap = {
+          "Fullscreen": "fullscreen",
+          "Rectangle 16:9": "16:9",
+          "Rectangle 4:3": "4:3",
+          "Square": "square",
+          "Circle": "circle",
+        };
+        editorCanvas.dataset.shape = valueMap[shapeSelect.value] || "freeform";
+        requestAnimationFrame(() => {
+          cropState.focus = getPercentRect(focusPanel);
+          applyCropState();
+        });
       }
 
       function setVideoSource(url) {
@@ -1950,7 +2070,7 @@
         kickTimelineClip.classList.toggle("active", kickState.enabled);
         kickTimelineClip.style.left = `${left}%`;
         kickTimelineClip.style.width = `${width}%`;
-        kickTimelineClip.textContent = kickState.apply === "whole" ? "KICK whole clip" : `KICK ${formatClock(start)}-${formatClock(end)}`;
+        kickTimelineLabel.textContent = kickState.apply === "whole" ? "KICK whole clip" : `KICK ${formatClock(start)}-${formatClock(end)}`;
       }
 
       function updateTrimControls() {
@@ -2110,24 +2230,31 @@
           const preview = document.createElement("button");
           preview.textContent = "Preview";
           preview.addEventListener("click", async () => {
+            const originalText = preview.textContent;
             preview.disabled = true;
+            preview.textContent = "Rendering...";
+            setStatus(youtubeHint, "Rendering preview clip...", "loading");
             try {
               const blob = await fetchClipBlob(index, clip);
               setVideoSource(URL.createObjectURL(blob));
               setStep("layouts");
               mainVideo.play().catch(() => {});
               syncPhonePreview({ force: true });
+              setStatus(youtubeHint, "Preview loaded. Choose a layout, add overlays, then export.", "success");
             } catch (error) {
-              youtubeHint.textContent = `Preview failed: ${error instanceof Error ? error.message : "Could not preview clip."}`;
-              youtubeHint.classList.add("error");
+              setStatus(youtubeHint, `Preview failed: ${error instanceof Error ? error.message : "Could not preview clip."}`, "error");
             } finally {
               preview.disabled = false;
+              preview.textContent = originalText || "Preview";
             }
           });
           const download = document.createElement("button");
           download.textContent = "Download mp4";
           download.addEventListener("click", async () => {
+            const originalText = download.textContent;
             download.disabled = true;
+            download.textContent = "Rendering...";
+            setStatus(youtubeHint, "Rendering download...", "loading");
             try {
               const blob = await fetchClipBlob(index, clip);
               const a = document.createElement("a");
@@ -2136,11 +2263,12 @@
               document.body.appendChild(a);
               a.click();
               setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 10000);
+              setStatus(youtubeHint, "Download started.", "success");
             } catch (error) {
-              youtubeHint.textContent = `Download failed: ${error instanceof Error ? error.message : "Could not download clip."}`;
-              youtubeHint.classList.add("error");
+              setStatus(youtubeHint, `Download failed: ${error instanceof Error ? error.message : "Could not download clip."}`, "error");
             } finally {
               download.disabled = false;
+              download.textContent = originalText || "Download mp4";
             }
           });
           actions.append(preview, download);
@@ -2151,23 +2279,26 @@
 
       async function analyzeYoutube() {
         const rawUrl = youtubeUrlInput.value.trim();
-        if (!rawUrl) {
-          youtubeHint.textContent = "Paste a valid YouTube or Kick URL first.";
-          youtubeHint.classList.add("error");
+        let sourceUrl = "";
+        try {
+          sourceUrl = validateSourceUrl(rawUrl);
+        } catch (error) {
+          setStatus(youtubeHint, error instanceof Error ? error.message : "Paste a valid YouTube or Kick URL first.", "error");
           return;
         }
         analyzeYoutubeButton.disabled = true;
-        youtubeHint.classList.remove("error");
-        youtubeHint.textContent = "Analyzing URL...";
+        const originalText = analyzeYoutubeButton.textContent;
+        analyzeYoutubeButton.textContent = "Analyzing...";
+        setStatus(youtubeHint, "Analyzing URL...", "loading");
         youtubeCandidates.innerHTML = "";
         try {
           const response = await fetch("/api/youtube/highlights", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              url: rawUrl,
-              clipDuration: Number(youtubeDurationInput.value || 30),
-              maxClips: Number(youtubeClipCountInput.value || 5),
+              url: sourceUrl,
+              clipDuration: clamp(youtubeDurationInput.value || 30, 10, 120),
+              maxClips: clamp(youtubeClipCountInput.value || 5, 1, 20),
               useAiScoring: !!youtubeAiInput.checked,
             }),
           });
@@ -2176,12 +2307,12 @@
           youtubeJobId = payload.jobId || "";
           youtubeClips = payload.clips || [];
           renderCandidates(youtubeClips);
-          youtubeHint.textContent = `Found ${youtubeClips.length} candidate clip(s).`;
+          setStatus(youtubeHint, `Found ${youtubeClips.length} candidate clip(s). Preview one to load it into the editor.`, youtubeClips.length ? "success" : "");
         } catch (error) {
-          youtubeHint.textContent = `Analyze failed: ${error instanceof Error ? error.message : "Unknown error."}`;
-          youtubeHint.classList.add("error");
+          setStatus(youtubeHint, `Analyze failed: ${error instanceof Error ? error.message : "Unknown error."}`, "error");
         } finally {
           analyzeYoutubeButton.disabled = false;
+          analyzeYoutubeButton.textContent = originalText || "Analyze URL";
         }
       }
 
@@ -2205,7 +2336,9 @@
       function applyLayout() {
         [focusPanel, mapBox, facecamLeft, facecamRight, phoneVideo, document.getElementById("phoneMapVideo"), document.getElementById("phoneFacecamLeftVideo"), document.getElementById("phoneFacecamRightVideo")].forEach(clearBox);
         editorCanvas.dataset.layout = selectedLayout;
+        editorCanvas.dataset.format = selectedFormat;
         phonePreview.dataset.layout = selectedLayout;
+        phonePreview.dataset.format = selectedFormat;
         mainVideo.style.filter = "";
         layoutTitle.textContent = layoutLabels[selectedLayout] || "Custom layout";
         requestAnimationFrame(() => {
@@ -2238,8 +2371,13 @@
       document.querySelectorAll(".chip[data-format]").forEach((button) => button.addEventListener("click", () => {
         selectedFormat = button.dataset.format;
         document.querySelectorAll(".chip[data-format]").forEach((chip) => chip.classList.toggle("active", chip === button));
-        document.querySelector(".editor-canvas").style.aspectRatio = selectedFormat === "horizontal" ? "16 / 9" : "16 / 9";
+        applyFormat();
       }));
+      document.querySelectorAll('.step-view[data-view="effects"] .chip-row .chip, .step-view[data-view="captions"] .chip-row .chip').forEach((button) => {
+        button.addEventListener("click", () => {
+          button.closest(".chip-row").querySelectorAll(".chip").forEach((item) => item.classList.toggle("active", item === button));
+        });
+      });
       document.querySelectorAll(".quality-card").forEach((button) => button.addEventListener("click", () => {
         document.querySelectorAll(".quality-card").forEach((item) => item.classList.toggle("active", item === button));
       }));
@@ -2250,7 +2388,14 @@
       localClipInput.addEventListener("change", () => {
         const file = localClipInput.files && localClipInput.files[0];
         if (!file) return;
+        if (!file.type.startsWith("video/")) {
+          setStatus(youtubeHint, "Choose a video file before continuing.", "error");
+          localClipInput.value = "";
+          return;
+        }
         setVideoSource(URL.createObjectURL(file));
+        setStatus(youtubeHint, `${file.name} loaded. Choose your layout next.`, "success");
+        setStatus(exportStatus, "Preview clip loaded. Export/download is available.", "success");
         setStep("layouts");
       });
       playButton.addEventListener("click", () => {
@@ -2376,23 +2521,43 @@
         updateKickOverlay();
         syncPhonePreview({ force: true });
       }, { seekOnRelease: true });
+      platformSelect.addEventListener("change", () => {
+        selectedFormat = platformSelect.value === "YouTube horizontal" ? "horizontal" : "vertical";
+        document.querySelectorAll(".chip[data-format]").forEach((chip) => chip.classList.toggle("active", chip.dataset.format === selectedFormat));
+        applyFormat();
+      });
+      platformPill.addEventListener("click", () => {
+        platformSelect.selectedIndex = (platformSelect.selectedIndex + 1) % platformSelect.options.length;
+        platformSelect.dispatchEvent(new Event("change"));
+      });
+      shapeSelect.addEventListener("change", applyShape);
       exportButton.addEventListener("click", () => {
         if (!videoUrl) {
           setStep("source");
-          youtubeHint.textContent = "Add or preview a clip before exporting.";
-          youtubeHint.classList.add("error");
+          setStatus(youtubeHint, "Add or preview a clip before exporting.", "error");
+          setStatus(exportStatus, "Export needs a loaded clip first.", "error");
           return;
         }
+        const originalText = exportButton.textContent;
+        exportButton.disabled = true;
+        exportButton.textContent = "Starting download...";
         const a = document.createElement("a");
         a.href = videoUrl;
         a.download = "clipperviral-export-preview.mp4";
         document.body.appendChild(a);
         a.click();
-        setTimeout(() => a.remove(), 50);
+        setStatus(exportStatus, "Download started. This exports the current preview clip.", "success");
+        setTimeout(() => {
+          a.remove();
+          exportButton.disabled = false;
+          exportButton.textContent = originalText || "Download preview clip ⇧";
+        }, 250);
       });
 
       renderLayoutCards();
       applyLayout();
+      applyFormat();
+      applyShape();
       requestAnimationFrame(applyCropState);
       setDuration(34);
       setStep("source");
