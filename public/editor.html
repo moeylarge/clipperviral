@@ -2810,8 +2810,21 @@
       }
 
       .workspace[data-step="elements"] .player-row {
-        opacity: 0;
-        pointer-events: none;
+        left: auto;
+        right: 14px;
+        top: 14px;
+        bottom: auto;
+        transform: none;
+        opacity: 1;
+        pointer-events: auto;
+        z-index: 24;
+      }
+
+      .workspace[data-step="elements"] .player-row .chip {
+        min-width: 46px;
+        min-height: 46px;
+        font-size: 17px;
+        box-shadow: 0 12px 24px rgba(20,23,31,0.2);
       }
 
       .editor-canvas:not(.has-source) .selection-box {
@@ -3380,6 +3393,8 @@
       const timelineScrubLayer = document.querySelector(".thumb-strip");
       const frameStrip = document.getElementById("frameStrip");
       let timelineFrameRequestId = 0;
+      let previewAnimationFrameId = 0;
+      let previewLoopActive = false;
 
       function setStep(step) {
         if (!steps.includes(step)) return;
@@ -4135,6 +4150,29 @@
         const scene = buildResolvedScene(editorState, { time: Number(mainVideo.currentTime) || editorState.source.currentTime || trimState.start });
         editorState.source.currentTime = scene.source.currentTime;
         renderResolvedSceneToCanvas(scene);
+      }
+
+      function stopPreviewPlaybackLoop() {
+        previewLoopActive = false;
+        if (previewAnimationFrameId) {
+          cancelAnimationFrame(previewAnimationFrameId);
+          previewAnimationFrameId = 0;
+        }
+      }
+
+      function startPreviewPlaybackLoop() {
+        if (previewLoopActive || !mainVideo.src || mainVideo.paused || mainVideo.ended || isExporting) return;
+        previewLoopActive = true;
+        const tick = () => {
+          if (!previewLoopActive) return;
+          if (!mainVideo.src || mainVideo.paused || mainVideo.ended || isExporting) {
+            stopPreviewPlaybackLoop();
+            return;
+          }
+          syncCanvasPreview();
+          previewAnimationFrameId = requestAnimationFrame(tick);
+        };
+        previewAnimationFrameId = requestAnimationFrame(tick);
       }
 
       function seekToSceneTime(seconds) {
@@ -5462,20 +5500,25 @@
         seekToTrimStart();
         if (mainVideo.paused) {
           mainVideo.play().catch(() => {});
-          syncCanvasPreview();
           playButton.textContent = "⏸";
         } else {
           mainVideo.pause();
-          syncCanvasPreview();
           playButton.textContent = "▶";
         }
       });
       mainVideo.addEventListener("play", () => {
         playButton.textContent = "⏸";
         seekToTrimStart();
+        startPreviewPlaybackLoop();
         syncCanvasPreview();
       });
       mainVideo.addEventListener("pause", () => {
+        stopPreviewPlaybackLoop();
+        playButton.textContent = "▶";
+        syncCanvasPreview();
+      });
+      mainVideo.addEventListener("ended", () => {
+        stopPreviewPlaybackLoop();
         playButton.textContent = "▶";
         syncCanvasPreview();
       });
@@ -5487,7 +5530,7 @@
           mainVideo.pause();
           mainVideo.currentTime = trimState.start;
         }
-        syncCanvasPreview();
+        if (!previewLoopActive) syncCanvasPreview();
       });
       mainVideo.addEventListener("ratechange", () => syncCanvasPreview());
       function setKickStyle(style) {
