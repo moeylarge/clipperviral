@@ -2241,7 +2241,7 @@
               <div class="section-title">Custom banner size</div>
               <div class="range-fields">
                 <label>Width<input id="kickWidthInput" type="number" min="25" max="100" step="1" value="90" /></label>
-                <label>Height<input id="kickHeightInput" type="number" min="5" max="24" step="1" value="13" /></label>
+                <label>Height<input id="kickHeightInput" type="number" min="4" max="24" step="1" value="8" /></label>
               </div>
               <div class="section-title">Style</div>
               <div class="segmented kick-style-options" aria-label="Kick overlay color">
@@ -2255,7 +2255,7 @@
               </div>
               <div class="element-slider-grid">
                 <label>Glow <span id="kickGlowValue">0%</span><input id="kickGlowInput" type="range" min="0" max="150" step="5" value="0" /></label>
-                <label>Gap <span id="kickGapValue">0px</span><input id="kickGapInput" type="range" min="0" max="16" step="1" value="0" /></label>
+                <label>Gap <span id="kickGapValue">88px</span><input id="kickGapInput" type="range" min="0" max="88" step="1" value="88" /></label>
                 <label>Safe edge <span id="kickSafeEdgeValue">14px</span><input id="kickSafeEdgeInput" type="range" min="0" max="40" step="1" value="14" /></label>
                 <label>Text offset <span id="kickTextOffsetValue">0px</span><input id="kickTextOffsetInput" type="range" min="-6" max="8" step="1" value="0" /></label>
               </div>
@@ -2270,6 +2270,7 @@
               </div>
               <div id="kickElementStatus" class="element-status" aria-live="polite">Kick lower-third overlay is off.</div>
               <button id="kickApplyCurrentButton" class="primary-btn source-action" type="button">Place at playhead</button>
+              <button id="kickDeleteButton" class="primary-btn source-action secondary-action" type="button">Delete overlay</button>
               <button id="kickDownloadPngButton" class="primary-btn source-action secondary-action" type="button">Download PNG</button>
             </article>
           </div>
@@ -2486,11 +2487,11 @@
         style: "green",
         allCaps: true,
         glow: 0,
-        gap: 0,
+        gap: 88,
         safeEdge: 14,
         textOffset: 0,
         exactKickWidth: true,
-        box: { x: 5, y: 78, w: 90, h: 13 },
+        box: { x: 5, y: 87, w: 90, h: 8 },
       };
       const KICK_LOGO_VIEWBOX = { x: 15, y: 90, w: 220, h: 70.6422 };
       const KICK_LOGO_PATH = "M15 90H38.5714V105.698H46.4286V97.8491H54.2857V90H77.8571V113.547H70V121.397H62.1429V129.246H70V137.095H77.8571V160.642H54.2857V152.793H46.4286V144.944H38.5714V160.642H15V90ZM172.143 90H195.714V105.698H203.571V97.8491H211.429V90H235V113.547H227.143V121.397H219.286V129.246H227.143V137.095H235V160.642H211.429V152.793H203.571V144.944H195.714V160.642H172.143V90ZM85.7143 90H109.286V160.642H85.7143V90ZM125 90V97.8491H117.143V152.793H125V160.642H164.286V137.095H140.714V113.547H164.286V90H125Z";
@@ -2581,6 +2582,7 @@
       const kickTextOffsetInput = document.getElementById("kickTextOffsetInput");
       const kickTextOffsetValue = document.getElementById("kickTextOffsetValue");
       const kickExactWidthToggle = document.getElementById("kickExactWidthToggle");
+      const kickDeleteButton = document.getElementById("kickDeleteButton");
       const kickDownloadPngButton = document.getElementById("kickDownloadPngButton");
       const kickStartInput = document.getElementById("kickStartInput");
       const kickEndInput = document.getElementById("kickEndInput");
@@ -3383,9 +3385,9 @@
 
         const glow = clamp(kickState.glow, 0, 150) / 100;
         const safeEdge = clamp(kickState.safeEdge, 0, 40);
-        const gap = clamp(kickState.gap, 0, 16);
+        const gap = clamp(kickState.gap, 0, 88);
         const textOffset = clamp(kickState.textOffset, -6, 8);
-        const barH = Math.max(height * 0.6, 20);
+        const barH = Math.max(height * 0.58, 14);
         const barY = height - barH;
         const maxLogoW = width * 0.36;
         const naturalLogoW = Math.min(maxLogoW, Math.min(height * 0.9, barH * 1.42) * 3.12);
@@ -3486,7 +3488,7 @@
         kickState.end = end;
         kickState.user = normalizeKickHandle(kickHandleInput.value);
         kickState.text = getKickDisplayText();
-        kickState.box = normalizeBox(kickState.box, 25, 5);
+        kickState.box = normalizeBox(kickState.box, 25, 4);
 
         const previewCanvas = renderKickBannerCanvas(Math.max(260, 720 * kickState.box.w / 100), Math.max(42, 720 * kickState.box.h / 100), { pixelRatio: 1 });
         const previewSrc = previewCanvas.toDataURL("image/png");
@@ -4113,7 +4115,7 @@
 
       function syncKickStyleControls() {
         kickState.glow = clamp(kickGlowInput.value, 0, 150);
-        kickState.gap = clamp(kickGapInput.value, 0, 16);
+        kickState.gap = clamp(kickGapInput.value, 0, 88);
         kickState.safeEdge = clamp(kickSafeEdgeInput.value, 0, 40);
         kickState.textOffset = clamp(kickTextOffsetInput.value, -6, 8);
         kickState.exactKickWidth = !!kickExactWidthToggle.checked;
@@ -4122,8 +4124,8 @@
 
       function syncKickCustomSize() {
         kickState.box.w = clamp(kickWidthInput.value, 25, 100);
-        kickState.box.h = clamp(kickHeightInput.value, 5, 24);
-        kickState.box = normalizeBox(kickState.box, 25, 5);
+        kickState.box.h = clamp(kickHeightInput.value, 4, 24);
+        kickState.box = normalizeBox(kickState.box, 25, 4);
         updateKickOverlay();
       }
 
@@ -4155,6 +4157,10 @@
       kickHandleInput.addEventListener("input", updateKickOverlay);
       kickHandleInput.addEventListener("blur", () => {
         kickHandleInput.value = kickState.user;
+        updateKickOverlay();
+      });
+      kickDeleteButton.addEventListener("click", () => {
+        kickState.enabled = false;
         updateKickOverlay();
       });
       kickDownloadPngButton.addEventListener("click", () => {
@@ -4217,7 +4223,7 @@
       makeBoxInteractive(kickCanvasOverlay, () => kickState.box, (box) => {
         kickState.box = box;
         updateKickOverlay();
-      }, { minW: 25, minH: 5 });
+      }, { minW: 25, minH: 4 });
       makeTimelineRangeInteractive(kickTimelineClip, document.querySelector(".overlay-lane"), () => ({ start: kickState.start, end: kickState.end }), (range) => {
         kickState.enabled = true;
         kickState.apply = "range";
