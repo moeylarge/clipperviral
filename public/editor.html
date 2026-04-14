@@ -655,14 +655,19 @@
       }
 
       .editor-canvas {
-        width: min(560px, 100%);
-        aspect-ratio: 16 / 9;
+        width: min(360px, 100%);
+        aspect-ratio: 9 / 16;
         border-radius: 14px;
         background: #090909;
         box-shadow: 0 28px 70px rgba(16, 19, 28, 0.22);
         position: relative;
         overflow: hidden;
         outline: 1px solid rgba(255,255,255,0.75);
+      }
+
+      .editor-canvas[data-format="horizontal"] {
+        width: min(640px, 100%);
+        aspect-ratio: 16 / 9;
       }
 
       .editor-canvas[data-format="horizontal"] .focus-panel {
@@ -859,71 +864,6 @@
         color: var(--green);
       }
 
-      .editor-canvas[data-layout="small"] .focus-panel { left: 28%; width: 44%; }
-      .editor-canvas[data-layout="small"] .facecam.left { display: block; left: 18px; top: 18px; bottom: auto; }
-      .editor-canvas[data-layout="small"] .facecam.right { display: none; }
-
-      .editor-canvas[data-layout="circle"] .focus-panel { left: 30%; width: 42%; }
-      .editor-canvas[data-layout="circle"] .facecam.left { display: block; left: 18px; bottom: 20px; }
-      .editor-canvas[data-layout="circle"] .facecam.right { display: none; }
-
-      .editor-canvas[data-layout="game-ui"] .focus-panel { left: 31%; width: 36%; }
-      .editor-canvas[data-layout="game-ui"] .facecam.left { display: none; }
-      .editor-canvas[data-layout="game-ui"] .facecam.right { display: block; width: 104px; height: 66px; border-radius: 8px; right: 12px; bottom: 18px; }
-
-      .editor-canvas[data-layout="split"] .focus-panel { left: 25%; width: 46%; }
-      .editor-canvas[data-layout="split"] .facecam.left { display: none; }
-      .editor-canvas[data-layout="split"] .facecam.right { display: block; width: 112px; height: 66px; border-radius: 4px; right: 18px; bottom: 12px; }
-
-      .editor-canvas[data-layout="blurred"] video { filter: blur(2px) saturate(0.9); }
-      .editor-canvas[data-layout="blurred"] .focus-panel { left: 22%; width: 52%; background: rgba(0, 0, 0, 0.18); }
-      .editor-canvas[data-layout="blurred"] .facecam,
-      .editor-canvas[data-layout="blurred"] .map-box { display: none; }
-
-      .editor-canvas[data-layout="fullscreen"] .focus-panel { left: 32%; width: 31%; }
-      .editor-canvas[data-layout="fullscreen"] .facecam,
-      .editor-canvas[data-layout="fullscreen"] .map-box { display: none; }
-
-      .editor-canvas[data-layout="basecam"] .focus-panel { left: 26%; width: 44%; }
-      .editor-canvas[data-layout="basecam"] .facecam.left { display: none; }
-      .editor-canvas[data-layout="basecam"] .facecam.right { display: block; width: 118px; height: 66px; border-radius: 4px; right: 18px; bottom: 12px; }
-
-      .editor-canvas[data-layout="mosaic"] .focus-panel { left: 25%; width: 44%; }
-      .editor-canvas[data-layout="mosaic"] .map-box { display: block; }
-      .editor-canvas[data-layout="mosaic"] .facecam.left { display: none; }
-      .editor-canvas[data-layout="mosaic"] .facecam.right { display: block; width: 96px; height: 70px; border-radius: 5px; right: 22px; bottom: 16px; }
-
-      .editor-canvas[data-layout="dual"] .focus-panel { left: 32%; width: 30%; }
-      .editor-canvas[data-layout="dual"] .facecam.left,
-      .editor-canvas[data-layout="dual"] .facecam.right { display: block; }
-
-      .editor-canvas[data-layout="duo"] .focus-panel { left: 27%; width: 42%; }
-      .editor-canvas[data-layout="duo"] .facecam.left,
-      .editor-canvas[data-layout="duo"] .facecam.right {
-        display: block;
-        width: 104px;
-        height: 82px;
-        border-radius: 4px;
-        bottom: 0;
-      }
-      .editor-canvas[data-layout="duo"] .facecam.left { left: 0; }
-      .editor-canvas[data-layout="duo"] .facecam.right { right: 0; }
-
-      .editor-canvas[data-layout="half"] .focus-panel { left: 18%; width: 58%; }
-      .editor-canvas[data-layout="half"] .facecam.left { display: none; }
-      .editor-canvas[data-layout="half"] .facecam.right {
-        display: block;
-        width: 120px;
-        height: 92px;
-        border-radius: 4px;
-        right: 18px;
-        bottom: 12px;
-      }
-
-      .editor-canvas[data-layout="horizontal-fullscreen"] .focus-panel { left: 0; width: 100%; }
-      .editor-canvas[data-layout="horizontal-fullscreen"] .facecam,
-      .editor-canvas[data-layout="horizontal-fullscreen"] .map-box { display: none; }
-
       .canvas-toolbar {
         min-height: 44px;
         border-radius: 13px;
@@ -973,20 +913,6 @@
         outline-color: var(--green);
       }
 
-      .phone-preview[data-layout="horizontal-fullscreen"] .phone-focus {
-        inset: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        border-radius: 0 !important;
-      }
-
-      .phone-preview[data-layout="horizontal-fullscreen"] .phone-bg,
-      .phone-preview[data-layout="horizontal-fullscreen"] .phone-map,
-      .phone-preview[data-layout="horizontal-fullscreen"] .phone-facecam-left,
-      .phone-preview[data-layout="horizontal-fullscreen"] .phone-facecam-right {
-        display: none !important;
-      }
-
       .phone-composition {
         position: absolute;
         inset: 0;
@@ -1005,11 +931,6 @@
 
       .phone-layer {
         inset: 0;
-      }
-
-      .phone-preview[data-layout] .phone-focus {
-        width: auto;
-        height: auto;
       }
 
       .phone-bg,
@@ -1068,147 +989,6 @@
         right: 8px;
         bottom: 62px;
         background: #eb34b8;
-      }
-
-      .phone-preview[data-layout="small"] .phone-focus { inset: 33% 0 0; height: 67%; }
-      .phone-preview[data-layout="small"] .phone-facecam-left {
-        display: block;
-        left: 19%;
-        top: 8%;
-        width: 62%;
-        height: 28%;
-        border-radius: 8px;
-      }
-
-      .phone-preview[data-layout="circle"] .phone-focus { inset: 30% 0 0; height: 70%; }
-      .phone-preview[data-layout="circle"] .phone-facecam-left {
-        display: block;
-        left: 24%;
-        top: 8%;
-        width: 52%;
-        height: 29%;
-        border-radius: 999px;
-      }
-
-      .phone-preview[data-layout="game-ui"] .phone-focus { inset: 36% 0 0; height: 64%; }
-      .phone-preview[data-layout="game-ui"] .phone-facecam-right {
-        display: block;
-        left: 15%;
-        top: 8%;
-        width: 70%;
-        height: 26%;
-        border-radius: 7px;
-      }
-
-      .phone-preview[data-layout="split"] .phone-focus { inset: 28% 0 0; height: 72%; }
-      .phone-preview[data-layout="split"] .phone-facecam-right {
-        display: block;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 31%;
-        border-width: 0 0 2px;
-        border-radius: 0;
-      }
-
-      .phone-preview[data-layout="blurred"] .phone-bg { display: block; }
-      .phone-preview[data-layout="blurred"] .phone-focus {
-        inset: 17% 9% 12%;
-        width: 82%;
-        height: 71%;
-        border-radius: 8px;
-        outline: 1px solid rgba(255,255,255,0.25);
-        overflow: hidden;
-      }
-
-      .phone-preview[data-layout="fullscreen"] .phone-focus { inset: 0; }
-
-      .phone-preview[data-layout="basecam"] .phone-focus { inset: 0 0 36%; height: 64%; }
-      .phone-preview[data-layout="basecam"] .phone-facecam-right {
-        display: block;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        height: 36%;
-        border-width: 2px 0 0;
-        border-radius: 0;
-      }
-
-      .phone-preview[data-layout="mosaic"] .phone-focus { inset: 20% 0 0; height: 80%; }
-      .phone-preview[data-layout="mosaic"] .phone-map {
-        display: block;
-        left: 0;
-        top: 0;
-        width: 48%;
-        height: 22%;
-        border-radius: 0 0 6px 0;
-      }
-      .phone-preview[data-layout="mosaic"] .phone-facecam-right {
-        display: block;
-        right: 0;
-        top: 0;
-        width: 52%;
-        height: 22%;
-        border-radius: 0 0 0 6px;
-      }
-
-      .phone-preview[data-layout="dual"] .phone-focus { inset: 18% 0 0; height: 82%; }
-      .phone-preview[data-layout="dual"] .phone-facecam-left,
-      .phone-preview[data-layout="dual"] .phone-facecam-right {
-        display: block;
-        top: 4%;
-        width: 43%;
-        height: 24%;
-        border-radius: 999px;
-      }
-      .phone-preview[data-layout="dual"] .phone-facecam-left { left: 5%; }
-      .phone-preview[data-layout="dual"] .phone-facecam-right { right: 5%; }
-
-      .phone-preview[data-layout="duo"] .phone-focus { inset: 0 0 39%; height: 61%; }
-      .phone-preview[data-layout="duo"] .phone-facecam-left,
-      .phone-preview[data-layout="duo"] .phone-facecam-right {
-        display: block;
-        bottom: 0;
-        width: 50%;
-        height: 39%;
-        border-radius: 0;
-      }
-      .phone-preview[data-layout="duo"] .phone-facecam-left { left: 0; border-width: 2px 1px 0 0; }
-      .phone-preview[data-layout="duo"] .phone-facecam-right { right: 0; border-width: 2px 0 0 1px; }
-
-      .phone-preview[data-layout="half"] .phone-focus { inset: 0; }
-      .phone-preview[data-layout="half"] .phone-facecam-right {
-        display: block;
-        right: 0;
-        bottom: 0;
-        width: 100%;
-        height: 46%;
-        border-width: 2px 0 0;
-        border-radius: 0;
-      }
-
-      .phone-preview[data-layout="horizontal-fullscreen"] .phone-focus { inset: 0; }
-
-      .phone-preview[data-layout="small"] .phone-composition::before,
-      .phone-preview[data-layout="circle"] .phone-composition::before,
-      .phone-preview[data-layout="game-ui"] .phone-composition::before,
-      .phone-preview[data-layout="split"] .phone-composition::before,
-      .phone-preview[data-layout="mosaic"] .phone-composition::before,
-      .phone-preview[data-layout="dual"] .phone-composition::before,
-      .phone-preview[data-layout="duo"] .phone-composition::before {
-        opacity: 1;
-      }
-
-      .phone-preview[data-layout="small"] .phone-composition::after,
-      .phone-preview[data-layout="circle"] .phone-composition::after,
-      .phone-preview[data-layout="game-ui"] .phone-composition::after,
-      .phone-preview[data-layout="split"] .phone-composition::after,
-      .phone-preview[data-layout="basecam"] .phone-composition::after,
-      .phone-preview[data-layout="mosaic"] .phone-composition::after,
-      .phone-preview[data-layout="dual"] .phone-composition::after,
-      .phone-preview[data-layout="duo"] .phone-composition::after,
-      .phone-preview[data-layout="half"] .phone-composition::after {
-        opacity: 1;
       }
 
       .phone-preview .kick-lower-third {
@@ -1850,18 +1630,18 @@
       let isExporting = false;
 
       const LAYOUT_REGISTRY = {
-        small: { key: "small", label: "Small facecam", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "small", panels: ["focus", "facecamLeft"] },
-        circle: { key: "circle", label: "Circle facecam", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "circle", panels: ["focus", "facecamLeft"] },
-        "game-ui": { key: "game-ui", label: "Game UI", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "game-ui", panels: ["focus", "facecamRight"] },
-        split: { key: "split", label: "Split", format: "vertical", cameraMode: "split", aspectRatio: "9:16", rendererKey: "split", panels: ["focus", "facecamRight"] },
-        blurred: { key: "blurred", label: "Blurred", format: "vertical", cameraMode: "single", aspectRatio: "9:16", rendererKey: "blurred", panels: ["background", "focus"] },
-        fullscreen: { key: "fullscreen", label: "Fullscreen", format: "vertical", cameraMode: "single", aspectRatio: "9:16", rendererKey: "fullscreen", panels: ["focus"] },
-        basecam: { key: "basecam", label: "Basecam", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "basecam", panels: ["focus", "facecamRight"] },
-        mosaic: { key: "mosaic", label: "Mosaic", format: "vertical", cameraMode: "mosaic", aspectRatio: "9:16", rendererKey: "mosaic", panels: ["focus", "map", "facecamRight"] },
-        dual: { key: "dual", label: "Dual facecam", format: "vertical", cameraMode: "dual", aspectRatio: "9:16", rendererKey: "dual", panels: ["focus", "facecamLeft", "facecamRight"] },
-        duo: { key: "duo", label: "Duo Split", format: "vertical", cameraMode: "dual", aspectRatio: "9:16", rendererKey: "duo", panels: ["focus", "facecamLeft", "facecamRight"] },
-        half: { key: "half", label: "Half", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "half", panels: ["focus", "facecamRight"] },
-        "horizontal-fullscreen": { key: "horizontal-fullscreen", label: "Horizontal Fullscreen", format: "horizontal", cameraMode: "single", aspectRatio: "16:9", rendererKey: "horizontal-fullscreen", panels: ["focus"] },
+        small: { key: "small", label: "Small facecam", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "small", panels: ["focus", "facecamLeft"], panelBoxes: { focus: { x: 0, y: 33, w: 100, h: 67 }, facecamLeft: { x: 19, y: 8, w: 62, h: 28, radius: 8 } } },
+        circle: { key: "circle", label: "Circle facecam", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "circle", panels: ["focus", "facecamLeft"], panelBoxes: { focus: { x: 0, y: 30, w: 100, h: 70 }, facecamLeft: { x: 24, y: 8, w: 52, h: 29, radius: 999 } } },
+        "game-ui": { key: "game-ui", label: "Game UI", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "game-ui", panels: ["focus", "facecamRight"], panelBoxes: { focus: { x: 0, y: 36, w: 100, h: 64 }, facecamRight: { x: 15, y: 8, w: 70, h: 26, radius: 7 } } },
+        split: { key: "split", label: "Split", format: "vertical", cameraMode: "split", aspectRatio: "9:16", rendererKey: "split", panels: ["focus", "facecamRight"], panelBoxes: { focus: { x: 0, y: 28, w: 100, h: 72 }, facecamRight: { x: 0, y: 0, w: 100, h: 31, radius: 0, borderWidth: "0 0 2px" } } },
+        blurred: { key: "blurred", label: "Blurred", format: "vertical", cameraMode: "single", aspectRatio: "9:16", rendererKey: "blurred", panels: ["background", "focus"], editorVideoFilter: "blur(2px) saturate(0.9)", panelBoxes: { background: { x: -10, y: -10, w: 120, h: 120 }, focus: { x: 9, y: 17, w: 82, h: 71, radius: 8, background: "rgba(0, 0, 0, 0.18)", outline: "1px solid rgba(255,255,255,0.25)" } } },
+        fullscreen: { key: "fullscreen", label: "Fullscreen", format: "vertical", cameraMode: "single", aspectRatio: "9:16", rendererKey: "fullscreen", panels: ["focus"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 100 } } },
+        basecam: { key: "basecam", label: "Basecam", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "basecam", panels: ["focus", "facecamRight"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 64 }, facecamRight: { x: 0, y: 64, w: 100, h: 36, radius: 0, borderWidth: "2px 0 0" } } },
+        mosaic: { key: "mosaic", label: "Mosaic", format: "vertical", cameraMode: "mosaic", aspectRatio: "9:16", rendererKey: "mosaic", panels: ["focus", "map", "facecamRight"], panelBoxes: { focus: { x: 0, y: 20, w: 100, h: 80 }, map: { x: 0, y: 0, w: 48, h: 22, radius: "0 0 6px 0" }, facecamRight: { x: 48, y: 0, w: 52, h: 22, radius: "0 0 0 6px" } } },
+        dual: { key: "dual", label: "Dual facecam", format: "vertical", cameraMode: "dual", aspectRatio: "9:16", rendererKey: "dual", panels: ["focus", "facecamLeft", "facecamRight"], panelBoxes: { focus: { x: 0, y: 18, w: 100, h: 82 }, facecamLeft: { x: 5, y: 4, w: 43, h: 24, radius: 999 }, facecamRight: { x: 52, y: 4, w: 43, h: 24, radius: 999 } } },
+        duo: { key: "duo", label: "Duo Split", format: "vertical", cameraMode: "dual", aspectRatio: "9:16", rendererKey: "duo", panels: ["focus", "facecamLeft", "facecamRight"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 61 }, facecamLeft: { x: 0, y: 61, w: 50, h: 39, radius: 0, borderWidth: "2px 1px 0 0" }, facecamRight: { x: 50, y: 61, w: 50, h: 39, radius: 0, borderWidth: "2px 0 0 1px" } } },
+        half: { key: "half", label: "Half", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "half", panels: ["focus", "facecamRight"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 100 }, facecamRight: { x: 0, y: 54, w: 100, h: 46, radius: 0, borderWidth: "2px 0 0" } } },
+        "horizontal-fullscreen": { key: "horizontal-fullscreen", label: "Horizontal Fullscreen", format: "horizontal", cameraMode: "single", aspectRatio: "16:9", rendererKey: "horizontal-fullscreen", panels: ["focus"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 100, radius: 0 } } },
       };
       const DEFAULT_LAYOUT_BY_FORMAT = { vertical: "dual", horizontal: "horizontal-fullscreen" };
       const PANEL_KEYS = new Set(["background", "focus", "map", "facecamLeft", "facecamRight"]);
@@ -1869,6 +1649,7 @@
         format: "vertical",
         activeLayoutKey: DEFAULT_LAYOUT_BY_FORMAT.vertical,
         transformsByPanel: {
+          background: null,
           focus: null,
           map: null,
           facecamLeft: null,
@@ -1997,6 +1778,8 @@
         }
         const badPanel = layout.panels.find((panel) => !PANEL_KEYS.has(panel));
         if (badPanel) throw new Error(`Layout ${layout.key} uses unsupported panel "${badPanel}".`);
+        const missingBox = layout.panels.find((panel) => !layout.panelBoxes?.[panel]);
+        if (missingBox) throw new Error(`Layout ${layout.key} is missing a box for "${missingBox}".`);
         return layout;
       }
 
@@ -2010,6 +1793,14 @@
           if (!Array.isArray(layout.panels) || !layout.panels.length) throw new Error(`Layout ${key} is missing panels.`);
           const badPanel = layout.panels.find((panel) => !PANEL_KEYS.has(panel));
           if (badPanel) throw new Error(`Layout ${key} uses unsupported panel "${badPanel}".`);
+          const missingBox = layout.panels.find((panel) => !layout.panelBoxes?.[panel]);
+          if (missingBox) throw new Error(`Layout ${key} is missing a box for "${missingBox}".`);
+          Object.entries(layout.panelBoxes || {}).forEach(([panel, box]) => {
+            if (!PANEL_KEYS.has(panel)) throw new Error(`Layout ${key} defines unsupported box "${panel}".`);
+            ["x", "y", "w", "h"].forEach((property) => {
+              if (!Number.isFinite(Number(box[property]))) throw new Error(`Layout ${key} has invalid ${panel}.${property}.`);
+            });
+          });
         });
         Object.entries(DEFAULT_LAYOUT_BY_FORMAT).forEach(([format, key]) => {
           const layout = LAYOUT_REGISTRY[key];
@@ -2197,6 +1988,7 @@
         const w = clamp(box.w, minW, 100);
         const h = clamp(box.h, minH, 100);
         return {
+          ...box,
           x: clamp(box.x, 0, 100 - w),
           y: clamp(box.y, 0, 100 - h),
           w,
@@ -2213,6 +2005,21 @@
         element.style.height = `${box.h}%`;
       }
 
+      function applyPanelElement(element, box) {
+        if (!element) return;
+        clearBox(element);
+        if (!box) {
+          element.style.display = "none";
+          return;
+        }
+        element.style.display = "block";
+        applyBox(element, box);
+        element.style.borderRadius = box.radius == null ? "" : typeof box.radius === "number" ? `${box.radius}px` : box.radius;
+        element.style.borderWidth = box.borderWidth || "";
+        element.style.background = box.background || "";
+        element.style.outline = box.outline || "";
+      }
+
       function applyPhoneBox(element, box) {
         if (!element) return;
         element.style.left = `${box.x}%`;
@@ -2224,28 +2031,24 @@
       }
 
       function clearBox(element) {
-        ["left", "top", "right", "bottom", "width", "height"].forEach((property) => {
+        ["left", "top", "right", "bottom", "width", "height", "display", "borderRadius", "borderWidth", "background", "outline"].forEach((property) => {
           element.style[property] = "";
         });
       }
 
-      function ensureCropState() {
-        cropState.focus ??= getPercentRect(focusPanel);
-        cropState.map ??= getPercentRect(mapBox);
-        cropState.facecamLeft ??= getPercentRect(facecamLeft);
-        cropState.facecamRight ??= getPercentRect(facecamRight);
-      }
-
       function applyCropState() {
-        ensureCropState();
-        applyBox(focusPanel, cropState.focus);
-        applyBox(mapBox, cropState.map);
-        applyBox(facecamLeft, cropState.facecamLeft);
-        applyBox(facecamRight, cropState.facecamRight);
-        applyPhoneBox(phoneVideo, cropState.focus);
-        applyPhoneBox(document.getElementById("phoneMapVideo"), cropState.map);
-        applyPhoneBox(document.getElementById("phoneFacecamLeftVideo"), cropState.facecamLeft);
-        applyPhoneBox(document.getElementById("phoneFacecamRightVideo"), cropState.facecamRight);
+        const editorElements = { focus: focusPanel, map: mapBox, facecamLeft, facecamRight };
+        const phoneElements = {
+          background: document.getElementById("phoneBgVideo"),
+          focus: phoneVideo,
+          map: document.getElementById("phoneMapVideo"),
+          facecamLeft: document.getElementById("phoneFacecamLeftVideo"),
+          facecamRight: document.getElementById("phoneFacecamRightVideo"),
+        };
+        PANEL_KEYS.forEach((panelKey) => {
+          applyPanelElement(editorElements[panelKey], cropState[panelKey]);
+          applyPanelElement(phoneElements[panelKey], cropState[panelKey]);
+        });
       }
 
       function getEffectiveDuration() {
@@ -2605,7 +2408,6 @@
           setStatus(exportStatus, error instanceof Error ? error.message : "Invalid layout state.", "error");
           return;
         }
-        [focusPanel, mapBox, facecamLeft, facecamRight, phoneVideo, document.getElementById("phoneMapVideo"), document.getElementById("phoneFacecamLeftVideo"), document.getElementById("phoneFacecamRightVideo")].forEach(clearBox);
         editorCanvas.dataset.layout = activeLayout.rendererKey;
         editorCanvas.dataset.layoutKey = activeLayout.key;
         editorCanvas.dataset.format = layoutState.format;
@@ -2616,15 +2418,12 @@
         phonePreview.dataset.format = layoutState.format;
         phonePreview.dataset.cameraMode = activeLayout.cameraMode;
         phonePreview.dataset.aspectRatio = activeLayout.aspectRatio;
-        mainVideo.style.filter = "";
+        mainVideo.style.filter = activeLayout.editorVideoFilter || "";
         layoutTitle.textContent = activeLayout.label;
-        requestAnimationFrame(() => {
-          cropState.focus = getPercentRect(focusPanel);
-          cropState.map = getPercentRect(mapBox);
-          cropState.facecamLeft = getPercentRect(facecamLeft);
-          cropState.facecamRight = getPercentRect(facecamRight);
-          applyCropState();
+        PANEL_KEYS.forEach((panelKey) => {
+          cropState[panelKey] = activeLayout.panelBoxes[panelKey] ? { ...activeLayout.panelBoxes[panelKey] } : null;
         });
+        applyCropState();
         updateKickOverlay();
         syncPhonePreview({ force: true });
       }
