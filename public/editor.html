@@ -702,13 +702,62 @@
         gap: 10px;
       }
 
+      .captions-panel .panel-head {
+        margin-bottom: 14px;
+      }
+
+      .caption-controls {
+        border: 1px solid #dfe4f1;
+        border-radius: 8px;
+        background: #fbfcff;
+        padding: 12px;
+        box-shadow: 0 12px 28px rgba(16, 19, 28, 0.06);
+      }
+
+      .caption-controls textarea {
+        min-height: 132px;
+        font-weight: 760;
+      }
+
+      .caption-hint,
+      .caption-status {
+        color: #667085;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.4;
+      }
+
+      .caption-hint {
+        margin-top: -2px;
+      }
+
+      .caption-status {
+        border: 1px solid #dfe4f1;
+        border-radius: 8px;
+        background: #fff;
+        padding: 9px 10px;
+      }
+
+      .caption-status.active {
+        border-color: rgba(36, 122, 54, 0.26);
+        background: #f4fff6;
+        color: #247a36;
+      }
+
+      .caption-status.warning {
+        border-color: rgba(178, 97, 0, 0.26);
+        background: #fff9ef;
+        color: #8a4b00;
+      }
+
       .caption-card {
         min-height: 98px;
-        border: 1px solid #dcdde6;
+        border: 1px solid #cfd4e4;
         border-radius: 8px;
         background: radial-gradient(circle at 50% 50%, #fff 0%, #f5f5f7 70%);
         display: grid;
         place-items: center;
+        position: relative;
         padding: 10px;
         font-size: 18px;
         font-weight: 1000;
@@ -719,9 +768,47 @@
         box-shadow: 0 10px 24px rgba(16, 19, 28, 0.06);
       }
 
+      .caption-card span {
+        color: #222631;
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: 0.04em;
+        text-shadow: none;
+        text-transform: uppercase;
+      }
+
+      .caption-card strong {
+        display: block;
+        color: #fff;
+      }
+
+      .caption-card::after {
+        content: attr(data-caption-state);
+        position: absolute;
+        top: 7px;
+        right: 7px;
+        border: 1px solid #d9deeb;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.88);
+        color: #5f6573;
+        padding: 3px 7px;
+        font-size: 10px;
+        font-weight: 950;
+        text-shadow: none;
+        text-transform: uppercase;
+      }
+
       .caption-card.active {
-        outline: 2px solid #70a7ff;
-        border-color: #70a7ff;
+        outline: 2px solid var(--purple);
+        border-color: var(--purple);
+        box-shadow: 0 14px 30px rgba(89, 39, 255, 0.18);
+      }
+
+      .caption-card.active::after {
+        content: "Active";
+        border-color: rgba(89, 39, 255, 0.32);
+        background: #f4f1ff;
+        color: var(--purple);
       }
 
       .caption-layer {
@@ -1851,31 +1938,28 @@
           </div>
         </section>
 
-        <section class="step-view" data-view="captions">
+        <section class="step-view captions-panel" data-view="captions">
           <div class="panel-head">
             <div>
-              <div class="panel-kicker">Text layer</div>
+              <div class="panel-kicker">Timed text</div>
               <h1>Captions</h1>
-              <p>Add caption text, choose a style, and preview it before export.</p>
+              <p>Add timed caption lines that render in preview and final export.</p>
             </div>
           </div>
-          <div class="field-stack">
-            <label for="captionLanguage">Spoken language</label>
-            <select id="captionLanguage"><option>automatically detect</option><option>English</option><option>Spanish</option></select>
-            <label class="toggle-field"><input id="captionLayerToggle" type="checkbox" /> Include caption layer</label>
-            <label for="captionTextInput">Caption copy</label>
-            <textarea id="captionTextInput" placeholder="One caption per line. Optional: [00:00.0-00:02.4] Caption text."></textarea>
+          <div class="field-stack caption-controls">
+            <label class="toggle-field"><input id="captionLayerToggle" type="checkbox" /> Render captions in preview and export</label>
+            <label for="captionTextInput">Caption lines</label>
+            <textarea id="captionTextInput" rows="5" spellcheck="true" aria-describedby="captionCueHint captionStatus" placeholder="[00:00.0-00:01.4] First caption&#10;[00:01.4-00:03.0] Next caption"></textarea>
+            <div id="captionCueHint" class="caption-hint">Use one line per caption. Timing is relative to the trimmed clip.</div>
+            <div id="captionStatus" class="caption-status" aria-live="polite">Caption layer is off.</div>
           </div>
-          <div class="section-title">Selected style</div>
-          <div class="caption-card-grid">
-            <button class="caption-card active" data-caption-style="ninja" type="button">Clean<br />Outline</button>
-          </div>
-          <div class="section-title">More styles</div>
-          <div class="caption-card-grid">
-            <button class="caption-card" data-caption-style="quirky" type="button">Bold<br />Yellow</button>
-            <button class="caption-card" data-caption-style="quirky-cta" type="button">Yellow<br />CTA</button>
-            <button class="caption-card" data-caption-style="west" type="button">Soft<br />Purple</button>
-            <button class="caption-card" data-caption-style="headturning" type="button">Green<br />Pop</button>
+          <div class="section-title">Caption style</div>
+          <div class="caption-card-grid" role="radiogroup" aria-label="Caption style">
+            <button class="caption-card active" data-caption-style="ninja" data-caption-state="Style" type="button" role="radio" aria-checked="true"><strong>Clean<br />Outline</strong><span>default</span></button>
+            <button class="caption-card" data-caption-style="quirky" data-caption-state="Style" type="button" role="radio" aria-checked="false"><strong>Bold<br />Yellow</strong><span>high contrast</span></button>
+            <button class="caption-card" data-caption-style="quirky-cta" data-caption-state="Style" type="button" role="radio" aria-checked="false"><strong>Yellow<br />CTA</strong><span>callout</span></button>
+            <button class="caption-card" data-caption-style="west" data-caption-state="Style" type="button" role="radio" aria-checked="false"><strong>Soft<br />Purple</strong><span>subtle</span></button>
+            <button class="caption-card" data-caption-style="headturning" data-caption-state="Style" type="button" role="radio" aria-checked="false"><strong>Green<br />Pop</strong><span>bright</span></button>
           </div>
         </section>
 
@@ -2013,6 +2097,7 @@
       const trimState = { start: 0, end: 34 };
       const kickState = { enabled: false, apply: "whole", start: 0, end: 34, text: "KICK.COM/EDMATTHEWS", box: { x: 5, y: 78, w: 90, h: 13 } };
       const captionState = { enabled: false, text: "", style: "ninja", cues: [] };
+      const CAPTION_TIMING_PATTERN = /^\[?\s*((?:\d+:)?\d{1,2}:\d{2}(?:[.,]\d+)?|\d+(?:[.,]\d+)?)\s*(?:-->|-|–|to)\s*((?:\d+:)?\d{1,2}:\d{2}(?:[.,]\d+)?|\d+(?:[.,]\d+)?)\s*\]?\s*(.+)$/i;
       const cropState = layoutState.transformsByPanel;
       const SINGLE_LAYOUT_BY_FORMAT = { horizontal: DEFAULT_LAYOUT_BY_FORMAT.horizontal };
       const LAYOUT_UI_COPY = {
@@ -2082,6 +2167,7 @@
       const kickTimelineLabel = document.getElementById("kickTimelineLabel");
       const captionLayerToggle = document.getElementById("captionLayerToggle");
       const captionTextInput = document.getElementById("captionTextInput");
+      const captionStatus = document.getElementById("captionStatus");
       const captionCanvasOverlay = document.getElementById("captionCanvasOverlay");
       const captionPhoneOverlay = document.getElementById("captionPhoneOverlay");
       const trimStartRange = document.getElementById("trimStartRange");
@@ -2437,6 +2523,36 @@
         return chunks;
       }
 
+      function getCaptionLineCount(text) {
+        return `${text || ""}`.split(/\n+/).map((line) => line.trim()).filter(Boolean).length;
+      }
+
+      function getTimedCaptionLineCount(text) {
+        return `${text || ""}`.split(/\n+/).filter((line) => CAPTION_TIMING_PATTERN.test(line.trim())).length;
+      }
+
+      function formatCaptionStatus(time = Number(mainVideo.currentTime) || trimState.start) {
+        const lineCount = getCaptionLineCount(captionState.text);
+        const timedCount = getTimedCaptionLineCount(captionState.text);
+        if (!captionState.enabled && !lineCount) return { text: "Caption layer is off.", tone: "" };
+        if (!captionState.enabled) return { text: `${lineCount} caption ${lineCount === 1 ? "line is" : "lines are"} ready. Turn captions on to render them in preview and export.`, tone: "warning" };
+        if (!lineCount) return { text: "Add caption lines to preview and export timed text.", tone: "warning" };
+        const activeCue = getActiveCaptionCue(time);
+        const timingLabel = timedCount ? `${timedCount} timed` : "Auto-timed";
+        const cueLabel = `${captionState.cues.length} ${captionState.cues.length === 1 ? "cue" : "cues"}`;
+        return {
+          text: activeCue ? `${timingLabel}. ${cueLabel} ready. Current cue: "${activeCue.text}"` : `${timingLabel}. ${cueLabel} ready for preview and export.`,
+          tone: "active",
+        };
+      }
+
+      function updateCaptionStatus(time) {
+        const status = formatCaptionStatus(time);
+        captionStatus.textContent = status.text;
+        captionStatus.classList.toggle("active", status.tone === "active");
+        captionStatus.classList.toggle("warning", status.tone === "warning");
+      }
+
       function buildCaptionCues(text) {
         const rawText = `${text || ""}`.trim();
         if (!rawText) return [];
@@ -2448,7 +2564,7 @@
         const untimedLines = [];
 
         lines.forEach((line) => {
-          const timedMatch = line.match(/^\[?\s*((?:\d+:)?\d{1,2}:\d{2}(?:[.,]\d+)?|\d+(?:[.,]\d+)?)\s*(?:-->|-|–|to)\s*((?:\d+:)?\d{1,2}:\d{2}(?:[.,]\d+)?|\d+(?:[.,]\d+)?)\s*\]?\s*(.+)$/i);
+          const timedMatch = line.match(CAPTION_TIMING_PATTERN);
           if (timedMatch) {
             const start = parseCaptionTimestamp(timedMatch[1]);
             const end = parseCaptionTimestamp(timedMatch[2]);
@@ -2498,6 +2614,7 @@
         captionState.text = captionTextInput.value || "";
         captionState.cues = captionState.enabled ? buildCaptionCues(captionState.text) : [];
         setCaptionOverlayCue(getActiveCaptionCue(time));
+        updateCaptionStatus(time);
       }
 
       function syncPhonePreview(options = {}) {
@@ -3135,19 +3252,35 @@
         cards[nextIndex].focus();
         setActiveLayout(cards[nextIndex].dataset.layoutKey);
       });
-      document.querySelectorAll('.step-view[data-view="captions"] .chip-row .chip').forEach((button) => {
-        button.addEventListener("click", () => {
-          button.closest(".chip-row").querySelectorAll(".chip").forEach((item) => item.classList.toggle("active", item === button));
-        });
-      });
       document.querySelectorAll(".quality-card").forEach((button) => button.addEventListener("click", () => {
         document.querySelectorAll(".quality-card").forEach((item) => item.classList.toggle("active", item === button));
       }));
-      document.querySelectorAll(".caption-card").forEach((button) => button.addEventListener("click", () => {
-        document.querySelectorAll(".caption-card").forEach((item) => item.classList.toggle("active", item === button));
+      const captionStyleButtons = Array.from(document.querySelectorAll(".caption-card"));
+      function setCaptionStyle(button) {
+        captionStyleButtons.forEach((item) => {
+          const active = item === button;
+          item.classList.toggle("active", active);
+          item.setAttribute("aria-checked", String(active));
+          item.tabIndex = active ? 0 : -1;
+        });
         captionState.style = button.dataset.captionStyle || "ninja";
         updateCaptionOverlay();
-      }));
+      }
+      setCaptionStyle(captionStyleButtons.find((button) => button.classList.contains("active")) || captionStyleButtons[0]);
+      captionStyleButtons.forEach((button) => button.addEventListener("click", () => setCaptionStyle(button)));
+      document.querySelector('.caption-card-grid[role="radiogroup"]').addEventListener("keydown", (event) => {
+        const handledKeys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"];
+        if (!handledKeys.includes(event.key)) return;
+        const currentIndex = Math.max(0, captionStyleButtons.findIndex((button) => button.classList.contains("active")));
+        let nextIndex = currentIndex;
+        if (event.key === "ArrowLeft" || event.key === "ArrowUp") nextIndex = Math.max(0, currentIndex - 1);
+        if (event.key === "ArrowRight" || event.key === "ArrowDown") nextIndex = Math.min(captionStyleButtons.length - 1, currentIndex + 1);
+        if (event.key === "Home") nextIndex = 0;
+        if (event.key === "End") nextIndex = captionStyleButtons.length - 1;
+        event.preventDefault();
+        captionStyleButtons[nextIndex].focus();
+        setCaptionStyle(captionStyleButtons[nextIndex]);
+      });
       captionLayerToggle.addEventListener("change", updateCaptionOverlay);
       captionTextInput.addEventListener("input", updateCaptionOverlay);
       analyzeYoutubeButton.addEventListener("click", analyzeYoutube);
