@@ -2241,15 +2241,18 @@
       }
 
       .app-shell {
-        grid-template-columns: 64px 352px minmax(620px, 1fr);
+        grid-template-columns: 92px 332px minmax(620px, 1fr);
         background: transparent;
       }
 
       .rail {
-        padding: 20px 8px 16px;
-        gap: 14px;
+        width: 92px;
+        min-width: 92px;
+        padding: 20px 10px 16px;
+        gap: 12px;
         background: linear-gradient(180deg, #151821 0%, #10121a 54%, #080910 100%);
         box-shadow: inset -1px 0 0 rgba(255,255,255,0.06);
+        z-index: 40;
       }
 
       .logo {
@@ -2272,11 +2275,22 @@
 
       .tool-btn {
         min-height: 56px;
+        width: 100%;
         border-color: rgba(255,255,255,0.10);
         background: rgba(255,255,255,0.045);
         color: rgba(255,255,255,0.70);
         box-shadow: none;
         font-weight: 820;
+        font-size: 11px;
+        line-height: 1.05;
+        padding: 8px 5px;
+      }
+
+      .tool-btn span:not(.icon) {
+        display: block;
+        max-width: 100%;
+        overflow: visible;
+        white-space: normal;
       }
 
       .tool-btn::before {
@@ -2742,8 +2756,8 @@
 
       @media (max-width: 1100px) {
         body { overflow: auto; }
-        .app-shell { height: auto; min-height: 100vh; grid-template-columns: 64px 1fr; }
-        .workspace { grid-column: 1 / -1; height: auto; min-height: 900px; }
+        .app-shell { height: auto; min-height: 100vh; min-width: 1040px; grid-template-columns: 92px 316px minmax(632px, 1fr); }
+        .workspace { height: auto; min-height: 900px; }
         .topbar { flex-wrap: wrap; }
         .stage-row { grid-template-columns: 1fr; padding: 28px 20px 40px; }
         .preview-column { display: none; }
@@ -3142,6 +3156,8 @@
         neon: { fill: "#4de8ff", stroke: "rgba(0,0,0,0.9)" },
       };
       const CAPTION_SETTINGS_STORAGE_KEY = "clipperviral.captionSettings.v1";
+      const CAPTION_DIRECT_UPLOAD_LIMIT_BYTES = 3.5 * 1024 * 1024;
+      const CAPTION_AUDIO_SAMPLE_RATE = 16000;
       const captionState = { enabled: false, language: "en", style: "kick", motion: "fade", strokeWidth: 2, position: "bottom", cues: [] };
       let captionSourceVersion = 0;
       let captionGenerationRequestId = 0;
@@ -3661,6 +3677,80 @@
           .sort((a, b) => a.start - b.start);
       }
 
+      function writeStringToDataView(view, offset, value) {
+        for (let index = 0; index < value.length; index += 1) {
+          view.setUint8(offset + index, value.charCodeAt(index));
+        }
+      }
+
+      function audioBufferToWavBlob(audioBuffer) {
+        const channel = audioBuffer.getChannelData(0);
+        const bytesPerSample = 2;
+        const dataSize = channel.length * bytesPerSample;
+        const buffer = new ArrayBuffer(44 + dataSize);
+        const view = new DataView(buffer);
+
+        writeStringToDataView(view, 0, "RIFF");
+        view.setUint32(4, 36 + dataSize, true);
+        writeStringToDataView(view, 8, "WAVE");
+        writeStringToDataView(view, 12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, audioBuffer.sampleRate, true);
+        view.setUint32(28, audioBuffer.sampleRate * bytesPerSample, true);
+        view.setUint16(32, bytesPerSample, true);
+        view.setUint16(34, 8 * bytesPerSample, true);
+        writeStringToDataView(view, 36, "data");
+        view.setUint32(40, dataSize, true);
+
+        let offset = 44;
+        for (let index = 0; index < channel.length; index += 1) {
+          const sample = Math.max(-1, Math.min(1, channel[index]));
+          view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+          offset += bytesPerSample;
+        }
+
+        return new Blob([buffer], { type: "audio/wav" });
+      }
+
+      async function extractCaptionAudioFile(file) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass || !window.OfflineAudioContext) {
+          throw new Error("This browser cannot prepare large clips for captioning. Try a shorter MP4 or use current Chrome.");
+        }
+
+        setCaptionStatus("Preparing audio for captions...", "warning");
+        const audioContext = new AudioContextClass();
+        try {
+          const sourceBuffer = await file.arrayBuffer();
+          const decoded = await audioContext.decodeAudioData(sourceBuffer.slice(0));
+          const frameCount = Math.max(1, Math.ceil(decoded.duration * CAPTION_AUDIO_SAMPLE_RATE));
+          const offline = new OfflineAudioContext(1, frameCount, CAPTION_AUDIO_SAMPLE_RATE);
+          const source = offline.createBufferSource();
+          source.buffer = decoded;
+          source.connect(offline.destination);
+          source.start(0);
+          const rendered = await offline.startRendering();
+          const wavBlob = audioBufferToWavBlob(rendered);
+          if (wavBlob.size >= file.size) return file;
+          const name = `${safeFileName((file.name || "clip").replace(/\.[^.]+$/, ""))}-caption-audio.wav`;
+          return new File([wavBlob], name, { type: "audio/wav" });
+        } finally {
+          audioContext.close?.();
+        }
+      }
+
+      async function getCaptionUploadFile(file) {
+        if (file.size <= CAPTION_DIRECT_UPLOAD_LIMIT_BYTES && !file.type?.startsWith("video/")) {
+          return file;
+        }
+        if (file.size <= CAPTION_DIRECT_UPLOAD_LIMIT_BYTES && !/video/i.test(file.type || "")) {
+          return file;
+        }
+        return extractCaptionAudioFile(file);
+      }
+
       function renderCaptionSegments() {
         captionSegmentList.innerHTML = "";
         if (!captionState.cues.length) {
@@ -3773,9 +3863,12 @@
         setCaptionGenerationLoading(true);
         setCaptionStatus("Generating captions from the loaded clip...", "warning");
         try {
+          const captionUploadFile = await getCaptionUploadFile(activeCaptionClipFile);
+          if (requestId !== captionGenerationRequestId || sourceVersion !== captionSourceVersion) return;
           const form = new FormData();
-          form.append("clip", activeCaptionClipFile, activeCaptionClipFile.name || "clip.mp4");
+          form.append("clip", captionUploadFile, captionUploadFile.name || activeCaptionClipFile.name || "clip.mp4");
           form.append("language", captionLanguageSelect.value);
+          setCaptionStatus("Sending prepared audio for captions...", "warning");
           const response = await fetch("/api/captions", { method: "POST", body: form, signal: captionGenerationController.signal });
           if (requestId !== captionGenerationRequestId || sourceVersion !== captionSourceVersion) return;
           const isJson = (response.headers.get("content-type") || "").includes("application/json");
@@ -3797,7 +3890,11 @@
         } catch (error) {
           if (error?.name === "AbortError") return;
           if (requestId !== captionGenerationRequestId || sourceVersion !== captionSourceVersion) return;
-          setCaptionError(`Caption generation failed: ${error instanceof Error ? error.message : "Unknown error."}`);
+          const message = error instanceof Error ? error.message : "Unknown error.";
+          const payloadTooLarge = /payload_too_large|request entity too large|function_payload_too_large/i.test(message);
+          setCaptionError(payloadTooLarge
+            ? "Caption generation failed: this clip is too large to send as-is. Try a shorter trim or a smaller MP4 while we finish processing larger uploads."
+            : `Caption generation failed: ${message}`);
         } finally {
           if (requestId === captionGenerationRequestId) {
             captionGenerationController = null;
