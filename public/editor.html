@@ -2458,8 +2458,8 @@
       }
 
       .topbar {
-        min-height: 72px;
-        padding: 16px 34px;
+        min-height: 58px;
+        padding: 12px 26px;
         background: rgba(251,251,253,0.86);
         border-bottom-color: rgba(16,19,28,0.07);
         backdrop-filter: blur(18px);
@@ -2467,6 +2467,10 @@
 
       .editor-context strong {
         font-size: 17px;
+      }
+
+      .editor-context span {
+        display: none;
       }
 
       .stage-row {
@@ -2564,7 +2568,7 @@
         position: relative;
         bottom: auto;
         z-index: 10;
-        grid-template-rows: 44px 1fr 76px 58px;
+        grid-template-rows: 1fr 68px 50px;
         margin: 0 32px 28px;
         border: 1px solid rgba(16,19,28,0.08);
         border-radius: 18px;
@@ -2574,14 +2578,11 @@
       }
 
       .timeline-tools {
-        padding: 0 32px;
-        border-bottom-color: rgba(16,19,28,0.07);
-        color: #5d6470;
-        background: rgba(251,251,253,0.82);
+        display: none;
       }
 
       .timeline-track {
-        padding: 30px 32px 12px;
+        padding: 18px 32px 10px;
       }
 
       .ticks {
@@ -2653,7 +2654,7 @@
       }
 
       .trim-editor {
-        padding: 10px 32px;
+        padding: 8px 24px;
         border-top-color: rgba(16,19,28,0.07);
         background: rgba(251,251,253,0.78);
       }
@@ -2670,7 +2671,7 @@
       }
 
       .footer-nav {
-        padding: 0 32px;
+        padding: 0 24px 8px;
         background: rgba(251,251,253,0.82);
       }
 
@@ -2710,16 +2711,16 @@
         max-height: 100vh;
         min-height: 0;
         overflow: hidden;
-        grid-template-rows: auto minmax(0, 1fr) 218px;
+        grid-template-rows: auto minmax(0, 1fr) 186px;
       }
 
       .stage-row {
         grid-template-columns: minmax(300px, 520px) minmax(132px, 178px);
         justify-content: center;
-        align-items: center;
+        align-items: start;
         gap: clamp(26px, 4vw, 58px);
         min-height: 0;
-        padding: 20px 48px 16px;
+        padding: 12px 48px 8px;
       }
 
       .workspace[data-format="horizontal"] .stage-row {
@@ -2727,21 +2728,22 @@
       }
 
       .editor-canvas {
-        width: min(360px, calc((100vh - 392px) * 0.5625));
+        width: min(320px, calc((100vh - 350px) * 0.5625));
         min-width: 190px;
-        max-width: 360px;
+        max-width: 320px;
       }
 
       .editor-canvas[data-format="horizontal"] {
-        width: min(760px, 100%);
-        max-width: 760px;
+        width: min(700px, 100%);
+        max-width: 700px;
       }
 
       .preview-column {
-        align-self: center;
+        align-self: start;
         display: grid;
         justify-items: center;
         gap: 10px;
+        padding-top: 40px;
       }
 
       .preview-title {
@@ -2752,7 +2754,7 @@
       }
 
       .side-preview {
-        width: 148px;
+        width: 132px;
         aspect-ratio: 9 / 16;
         border-radius: 16px;
         position: relative;
@@ -2763,7 +2765,7 @@
       }
 
       .side-preview[data-format="horizontal"] {
-        width: 238px;
+        width: 212px;
         aspect-ratio: 16 / 9;
         border-radius: 14px;
       }
@@ -2775,7 +2777,41 @@
       }
 
       .timeline {
-        margin: 0 28px 18px;
+        margin: 0 28px 12px;
+      }
+
+      .canvas-column {
+        position: relative;
+      }
+
+      .player-row {
+        position: absolute;
+        left: 50%;
+        bottom: 88px;
+        transform: translateX(-50%);
+        z-index: 21;
+        margin: 0;
+        gap: 0;
+      }
+
+      .player-row span {
+        display: none;
+      }
+
+      .player-row .chip {
+        min-width: 54px;
+        min-height: 54px;
+        border-radius: 999px;
+        background: rgba(20,23,31,0.92);
+        color: #fff;
+        box-shadow: 0 16px 30px rgba(20,23,31,0.24);
+        border: 1px solid rgba(255,255,255,0.18);
+        font-size: 20px;
+      }
+
+      .workspace[data-step="elements"] .player-row {
+        opacity: 0;
+        pointer-events: none;
       }
 
       .editor-canvas:not(.has-source) .selection-box {
@@ -3348,6 +3384,7 @@
       function setStep(step) {
         if (!steps.includes(step)) return;
         currentStep = step;
+        workspace.dataset.step = step;
         toolButtons.forEach((button) => {
           const active = button.dataset.step === step;
           button.classList.toggle("active", active);
@@ -4663,6 +4700,26 @@
         return canvas;
       }
 
+      function renderKickOverlayPngCanvas(sceneKick, format = layoutState.format, pixelRatio = 2) {
+        const baseWidth = format === "horizontal" ? 1280 : 720;
+        const baseHeight = format === "horizontal" ? 720 : 1280;
+        const overlayCanvas = document.createElement("canvas");
+        overlayCanvas.width = Math.max(1, Math.round(baseWidth * pixelRatio));
+        overlayCanvas.height = Math.max(1, Math.round(baseHeight * pixelRatio));
+        const ctx = overlayCanvas.getContext("2d");
+        ctx.scale(pixelRatio, pixelRatio);
+
+        const box = normalizeBox(sceneKick?.box || { x: 5, y: 87, w: 90, h: 8 }, 25, 4);
+        const width = Math.max(260, Math.round(baseWidth * box.w / 100));
+        const height = Math.max(42, Math.round(baseHeight * box.h / 100));
+        const banner = renderKickBannerCanvas(width, height, { pixelRatio: 2, scene: sceneKick });
+        const drawX = Math.round((baseWidth * box.x) / 100);
+        const drawY = Math.round((baseHeight * box.y) / 100);
+        ctx.clearRect(0, 0, baseWidth, baseHeight);
+        ctx.drawImage(banner, drawX, drawY, width, height);
+        return overlayCanvas;
+      }
+
       function updateKickStyleLabels() {
         kickGlowValue.textContent = `${Math.round(kickState.glow)}%`;
         kickGapValue.textContent = `${Math.round(kickState.gap)}px`;
@@ -5504,12 +5561,8 @@
         updateKickOverlay();
       });
       kickDownloadPngButton.addEventListener("click", () => {
-        const baseWidth = layoutState.format === "horizontal" ? 1280 : 720;
-        const baseHeight = layoutState.format === "horizontal" ? 720 : 1280;
-        const width = Math.max(260, Math.round(baseWidth * kickState.box.w / 100));
-        const height = Math.max(42, Math.round(baseHeight * kickState.box.h / 100));
         const sceneKickForRender = buildResolvedScene(editorState, { time: getActiveTime() }).overlays.kick;
-        const canvas = renderKickBannerCanvas(width, height, { pixelRatio: 2, scene: sceneKickForRender });
+        const canvas = renderKickOverlayPngCanvas(sceneKickForRender, layoutState.format, 2);
         downloadBlob(dataUrlToBlob(canvas.toDataURL("image/png")), `kick-${safeFileName(kickState.user)}.png`);
         setStatus(exportStatus, "Kick overlay PNG downloaded.", "success");
       });
