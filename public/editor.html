@@ -41,6 +41,7 @@
 
       button {
         cursor: pointer;
+        touch-action: manipulation;
         transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background 150ms ease, color 150ms ease, opacity 150ms ease;
       }
 
@@ -124,18 +125,36 @@
       }
 
       .tool-btn {
-        border: 1px solid rgba(255,255,255,0.12);
-        color: rgba(255,255,255,0.86);
-        background: rgba(255,255,255,0.055);
-        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.18);
+        color: rgba(255,255,255,0.9);
+        background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.045));
+        border-radius: 8px;
         min-height: 58px;
         display: grid;
         place-items: center;
         gap: 4px;
         padding: 7px 4px;
+        position: relative;
         font-size: 12px;
         font-weight: 850;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.07);
+        box-shadow: 0 12px 26px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.10);
+      }
+
+      .tool-btn::before {
+        content: attr(data-step-number);
+        position: absolute;
+        top: 6px;
+        left: 7px;
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255,255,255,0.18);
+        background: rgba(0,0,0,0.18);
+        color: rgba(255,255,255,0.72);
+        font-size: 10px;
+        font-weight: 950;
       }
 
       .tool-btn .icon {
@@ -146,9 +165,27 @@
       .tool-btn.active,
       .tool-btn:hover {
         color: #fff;
-        border-color: rgba(255,255,255,0.25);
-        background: rgba(255,255,255,0.16);
-        box-shadow: 0 14px 34px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.12);
+        border-color: rgba(131,255,63,0.52);
+        background: linear-gradient(180deg, rgba(131,255,63,0.20), rgba(255,255,255,0.14));
+        box-shadow: 0 16px 34px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.16);
+      }
+
+      .tool-btn.active::before {
+        background: var(--green);
+        border-color: rgba(131,255,63,0.80);
+        color: #071204;
+      }
+
+      .tool-btn.active::after {
+        content: "";
+        position: absolute;
+        left: -8px;
+        top: 12px;
+        bottom: 12px;
+        width: 3px;
+        border-radius: 999px;
+        background: var(--green);
+        box-shadow: 0 0 16px rgba(131,255,63,0.72);
       }
 
       .rail-spacer { flex: 1; }
@@ -180,8 +217,8 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 12px;
-        border-bottom: 1px solid var(--line);
-        padding-bottom: 14px;
+        border-bottom: 1px solid #e6e9f3;
+        padding: 0 0 14px;
         margin-bottom: 14px;
       }
 
@@ -196,6 +233,7 @@
         margin: 8px 0 0;
         color: var(--muted);
         line-height: 1.35;
+        font-size: 13px;
       }
 
       .panel-kicker {
@@ -212,8 +250,11 @@
 
       .section-title {
         margin: 12px 0 10px;
-        font-weight: 850;
-        font-size: 14px;
+        color: #323644;
+        font-weight: 950;
+        font-size: 12px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
       }
 
       .source-tabs, .chip-row {
@@ -225,19 +266,19 @@
 
       .chip, .source-tab {
         border: 1px solid #cfd4e4;
-        background: #fff;
+        background: linear-gradient(180deg, #fff, #f8faff);
         color: #21232b;
         border-radius: 8px;
         padding: 9px 14px;
         font-weight: 900;
-        box-shadow: 0 6px 16px rgba(16, 19, 28, 0.06);
+        box-shadow: 0 10px 22px rgba(16, 19, 28, 0.08), inset 0 1px 0 rgba(255,255,255,0.85);
       }
 
       .chip.active, .source-tab.active {
         border-color: var(--purple);
         color: #fff;
         background: linear-gradient(135deg, var(--purple), var(--purple-2));
-        box-shadow: 0 12px 26px rgba(89, 39, 255, 0.22);
+        box-shadow: 0 16px 32px rgba(89, 39, 255, 0.26);
       }
 
       .field-stack {
@@ -261,6 +302,13 @@
         padding: 10px 12px;
         background: #fff;
         box-shadow: inset 0 1px 2px rgba(16, 19, 28, 0.04);
+      }
+
+      .field-stack input:hover,
+      .field-stack select:hover,
+      .field-stack textarea:hover {
+        border-color: #aeb7d0;
+        box-shadow: 0 8px 18px rgba(16, 19, 28, 0.05), inset 0 1px 2px rgba(16, 19, 28, 0.04);
       }
 
       .field-stack textarea {
@@ -315,21 +363,21 @@
         justify-content: center;
         min-height: 40px;
         margin: 0;
-        border-color: transparent;
-        box-shadow: none;
+        border-color: rgba(207, 212, 228, 0.72);
+        box-shadow: 0 6px 14px rgba(16, 19, 28, 0.06);
       }
 
       .source-panel .source-tab:not(.active) {
-        background: transparent;
+        background: #fff;
         color: #4f5564;
       }
 
       .source-panel .source-mode {
         border: 1px solid #dfe4f1;
         border-radius: 8px;
-        background: #fff;
+        background: linear-gradient(180deg, #fff, #fbfcff);
         padding: 12px;
-        box-shadow: 0 10px 26px rgba(16, 19, 28, 0.06);
+        box-shadow: 0 14px 30px rgba(16, 19, 28, 0.08);
       }
 
       .source-panel .source-mode[hidden] {
@@ -377,7 +425,8 @@
 
       .source-panel .toggle-field {
         justify-content: space-between;
-        background: #f9fbff;
+        background: linear-gradient(180deg, #fff, #f7faff);
+        cursor: pointer;
       }
 
       .source-panel .toggle-field input {
@@ -404,7 +453,7 @@
 
       .source-action {
         width: 100%;
-        background: var(--green);
+        background: linear-gradient(135deg, #9cff67, var(--green));
         color: #071204;
         border-color: rgba(7, 18, 4, 0.15);
         box-shadow: 0 18px 36px rgba(61, 204, 39, 0.24);
@@ -426,6 +475,13 @@
         text-align: center;
         color: #646775;
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 16px 32px rgba(16, 19, 28, 0.06);
+      }
+
+      .upload-zone:hover,
+      .source-panel .upload-zone:focus-within {
+        border-color: var(--purple);
+        background: linear-gradient(180deg, #fff, #f5f2ff);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 18px 38px rgba(79, 34, 242, 0.14);
       }
 
       .upload-zone input {
@@ -495,15 +551,19 @@
         align-items: center;
         gap: 9px;
         border: 1px solid #cfd4e4;
-        background: #fff;
+        background: linear-gradient(180deg, #fff, #f8faff);
         border-radius: 8px;
         padding: 11px 12px;
         font-size: 13px;
         font-weight: 850;
-        box-shadow: 0 8px 18px rgba(16, 19, 28, 0.05);
+        cursor: pointer;
+        box-shadow: 0 10px 22px rgba(16, 19, 28, 0.07);
       }
 
-      .toggle-field input { accent-color: var(--green); }
+      .toggle-field input {
+        accent-color: var(--green);
+        cursor: pointer;
+      }
 
       .layout-grid {
         display: grid;
@@ -528,6 +588,7 @@
         gap: 2px;
         align-content: center;
         text-align: left;
+        border-color: #c5ccdf;
       }
 
       .layout-panel .chip span {
@@ -551,17 +612,22 @@
 
       .layout-card,
       .layout-fixed-card {
-        border: 1px solid #d5d9e8;
+        border: 1px solid #cfd5e6;
         border-radius: 8px;
-        background: #fff;
+        background: linear-gradient(180deg, #fff, #fafbff);
         padding: 9px;
         min-height: 176px;
         display: grid;
         gap: 8px;
         font-weight: 900;
         text-align: left;
-        box-shadow: 0 12px 26px rgba(16, 19, 28, 0.07);
+        box-shadow: 0 14px 30px rgba(16, 19, 28, 0.09);
         cursor: pointer;
+      }
+
+      .layout-card:hover {
+        border-color: var(--purple);
+        box-shadow: 0 18px 38px rgba(79, 34, 242, 0.16);
       }
 
       .layout-card {
@@ -572,7 +638,8 @@
       .layout-fixed-card.active {
         outline: 3px solid rgba(79, 34, 242, 0.24);
         border-color: var(--purple);
-        box-shadow: 0 18px 40px rgba(79, 34, 242, 0.18);
+        background: linear-gradient(180deg, #fff, #f6f2ff);
+        box-shadow: 0 20px 42px rgba(79, 34, 242, 0.20);
       }
 
       .layout-card.active::after,
@@ -709,9 +776,9 @@
       .caption-controls {
         border: 1px solid #dfe4f1;
         border-radius: 8px;
-        background: #fbfcff;
+        background: linear-gradient(180deg, #fff, #fbfcff);
         padding: 12px;
-        box-shadow: 0 12px 28px rgba(16, 19, 28, 0.06);
+        box-shadow: 0 14px 30px rgba(16, 19, 28, 0.08);
       }
 
       .caption-controls textarea {
@@ -765,7 +832,12 @@
         color: #fff;
         text-shadow: 2px 2px 0 #262626, -2px 2px 0 #262626, 2px -2px 0 #262626, -2px -2px 0 #262626;
         cursor: pointer;
-        box-shadow: 0 10px 24px rgba(16, 19, 28, 0.06);
+        box-shadow: 0 14px 30px rgba(16, 19, 28, 0.09);
+      }
+
+      .caption-card:hover {
+        border-color: var(--purple);
+        box-shadow: 0 18px 38px rgba(79, 34, 242, 0.16);
       }
 
       .caption-card span {
@@ -801,7 +873,7 @@
       .caption-card.active {
         outline: 2px solid var(--purple);
         border-color: var(--purple);
-        box-shadow: 0 14px 30px rgba(89, 39, 255, 0.18);
+        box-shadow: 0 20px 42px rgba(89, 39, 255, 0.20);
       }
 
       .caption-card.active::after {
@@ -867,19 +939,25 @@
         grid-template-columns: 28px 58px 1fr;
         gap: 10px;
         align-items: center;
-        border: 1px solid #d4d9e8;
-        background: #fff;
+        border: 1px solid #cfd5e6;
+        background: linear-gradient(180deg, #fff, #fafbff);
         border-radius: 8px;
         padding: 14px 12px;
         margin-bottom: 8px;
-        box-shadow: 0 10px 24px rgba(16, 19, 28, 0.06);
+        box-shadow: 0 14px 30px rgba(16, 19, 28, 0.09);
         cursor: pointer;
       }
 
+      .quality-card:hover {
+        border-color: var(--purple);
+        box-shadow: 0 18px 38px rgba(79, 34, 242, 0.16);
+      }
+
       .quality-card.active {
-        background: #f4f6ff;
+        background: linear-gradient(180deg, #fff, #f4f1ff);
         border-color: var(--purple);
         outline: 2px solid rgba(79, 34, 242, 0.20);
+        box-shadow: 0 20px 42px rgba(79, 34, 242, 0.20);
       }
 
       .radio-dot {
@@ -1549,13 +1627,13 @@
       }
 
       .element-card {
-        border: 1px solid #d6dbe9;
+        border: 1px solid #d0d6e7;
         border-radius: 8px;
-        background: #fff;
+        background: linear-gradient(180deg, #fff, #fbfcff);
         padding: 12px;
         display: grid;
         gap: 11px;
-        box-shadow: 0 12px 28px rgba(16, 19, 28, 0.07);
+        box-shadow: 0 16px 34px rgba(16, 19, 28, 0.09);
       }
 
       .element-card-head {
@@ -1595,7 +1673,13 @@
         align-items: center;
         overflow: hidden;
         border: 2px solid #247a54;
-        box-shadow: 0 14px 30px rgba(31, 127, 85, 0.20);
+        cursor: pointer;
+        box-shadow: 0 16px 34px rgba(31, 127, 85, 0.24);
+      }
+
+      .mini-preview:hover {
+        border-color: var(--green);
+        box-shadow: 0 0 0 3px rgba(131, 255, 63, 0.14), 0 18px 38px rgba(31, 127, 85, 0.28);
       }
 
       .mini-preview[aria-pressed="true"] {
@@ -1626,12 +1710,13 @@
         border: 1px solid #cfd4e4;
         border-radius: 8px;
         overflow: hidden;
+        box-shadow: 0 10px 22px rgba(16, 19, 28, 0.07);
       }
 
       .segmented button {
         border: 0;
-        background: #fff;
-        padding: 9px 10px;
+        background: linear-gradient(180deg, #fff, #f8faff);
+        padding: 10px 10px;
         font-weight: 900;
         color: #4b4e5b;
       }
@@ -1654,6 +1739,7 @@
         border-radius: 8px;
         background: #f8faff;
         padding: 9px 10px;
+        box-shadow: 0 8px 18px rgba(16, 19, 28, 0.05);
       }
 
       .element-status.active {
@@ -1678,6 +1764,7 @@
         border-radius: 8px;
         min-height: 38px;
         padding: 8px 10px;
+        box-shadow: inset 0 1px 2px rgba(16, 19, 28, 0.04);
       }
 
       .range-fields input:disabled {
@@ -1714,6 +1801,41 @@
 
       .next-btn, .export-btn {
         min-width: 138px;
+      }
+
+      .export-panel .export-btn {
+        width: 100%;
+        margin: 4px 0 0;
+      }
+
+      .export-panel .panel-head {
+        margin-bottom: 12px;
+      }
+
+      .export-panel .status {
+        min-height: 0;
+        border: 1px solid #dfe4f1;
+        border-radius: 8px;
+        background: #f8faff;
+        padding: 9px 10px;
+        font-weight: 820;
+        line-height: 1.35;
+        box-shadow: 0 8px 18px rgba(16, 19, 28, 0.05);
+      }
+
+      .export-panel .status.error {
+        border-color: rgba(200, 49, 49, 0.28);
+        background: #fff7f7;
+      }
+
+      .export-panel .status.success {
+        border-color: rgba(36, 122, 54, 0.26);
+        background: #f4fff6;
+      }
+
+      .export-panel .status.loading {
+        border-color: rgba(49, 88, 212, 0.25);
+        background: #f6f8ff;
       }
 
       .status {
@@ -1820,11 +1942,11 @@
       <aside class="rail" aria-label="Editor tools">
         <div class="logo">CV</div>
         <nav class="tool-nav">
-          <button class="tool-btn active" data-step="source"><span class="icon">+</span><span>Source</span></button>
-          <button class="tool-btn" data-step="layouts"><span class="icon">▣</span><span>Layouts</span></button>
-          <button class="tool-btn" data-step="elements"><span class="icon">◇</span><span>Elements</span></button>
-          <button class="tool-btn" data-step="captions"><span class="icon">▤</span><span>Captions</span></button>
-          <button class="tool-btn" data-step="export"><span class="icon">⇧</span><span>Export</span></button>
+          <button class="tool-btn active" data-step="source" data-step-number="1" aria-current="step"><span class="icon">+</span><span>Source</span></button>
+          <button class="tool-btn" data-step="layouts" data-step-number="2"><span class="icon">▣</span><span>Layouts</span></button>
+          <button class="tool-btn" data-step="elements" data-step-number="3"><span class="icon">◇</span><span>Elements</span></button>
+          <button class="tool-btn" data-step="captions" data-step-number="4"><span class="icon">▤</span><span>Captions</span></button>
+          <button class="tool-btn" data-step="export" data-step-number="5"><span class="icon">⇧</span><span>Export</span></button>
         </nav>
         <div class="rail-spacer"></div>
         <button class="avatar" type="button">m</button>
@@ -1836,23 +1958,23 @@
             <div>
               <div class="panel-kicker">Start here</div>
               <h1>Add your clip</h1>
-              <p>Upload a video or scan a YouTube or Kick link.</p>
+              <p>Upload a video or scan a YouTube or Kick link, then move straight into editing.</p>
             </div>
           </div>
           <div class="source-tabs" role="tablist" aria-label="Source method">
-            <button id="sourceTabUrl" class="source-tab active" data-source="url" type="button" role="tab" aria-selected="true" aria-controls="sourceModeUrl">Link</button>
-            <button id="sourceTabUpload" class="source-tab" data-source="upload" type="button" role="tab" aria-selected="false" aria-controls="sourceModeUpload" tabindex="-1">Upload</button>
+            <button id="sourceTabUrl" class="source-tab active" data-source="url" type="button" role="tab" aria-selected="true" aria-controls="sourceModeUrl">Paste link</button>
+            <button id="sourceTabUpload" class="source-tab" data-source="upload" type="button" role="tab" aria-selected="false" aria-controls="sourceModeUpload" tabindex="-1">Upload file</button>
           </div>
           <div id="sourceSummary" class="source-summary" aria-live="polite" hidden></div>
           <div id="sourceModeUrl" class="source-mode active" data-source-view="url" role="tabpanel" aria-labelledby="sourceTabUrl">
             <div class="field-stack">
               <div class="inline-grid">
                 <label class="source-url-field" for="youtubeUrlInput">
-                  <span>URL</span>
+                  <span>Video URL</span>
                   <input id="youtubeUrlInput" type="url" placeholder="https://www.youtube.com/watch?v=..." aria-describedby="sourceUrlHint youtubeHint" autocomplete="url" />
                 </label>
                 <label class="source-number-field" for="youtubeDurationInput">
-                  <span class="source-number-label">Length</span>
+                  <span class="source-number-label">Seconds</span>
                   <input id="youtubeDurationInput" type="number" min="10" max="120" value="30" aria-label="Seconds per clip" inputmode="numeric" />
                 </label>
                 <label class="source-number-field" for="youtubeClipCountInput">
@@ -1862,7 +1984,7 @@
               </div>
               <p id="sourceUrlHint" class="field-hint">Supports YouTube and Kick. We’ll return ranked moments.</p>
               <label class="toggle-field">Rank strongest moments <input id="youtubeAiInput" type="checkbox" checked /></label>
-              <button id="analyzeYoutubeButton" class="primary-btn source-action" type="button">Find clips</button>
+              <button id="analyzeYoutubeButton" class="primary-btn source-action" type="button">Find clip candidates</button>
             </div>
             <div id="youtubeHint" class="status" role="status" aria-live="polite">Paste a link to find clip candidates.</div>
             <div id="youtubeCandidates" class="candidate-list" aria-live="polite"></div>
@@ -1884,7 +2006,7 @@
             <div>
               <div class="panel-kicker">Composition</div>
               <h1>Choose your layout</h1>
-              <p>Choose the format, then pick the camera view.</p>
+              <p>Set the output format and camera arrangement the preview and export should use.</p>
             </div>
           </div>
           <div class="section-title">Format</div>
@@ -1903,19 +2025,19 @@
             <div>
               <div class="panel-kicker">Template</div>
               <h1>Elements</h1>
-              <p>Add the Kick lower third to the clip or a timed range.</p>
+              <p>Add the Kick lower-third overlay to the full clip or a precise timed range.</p>
             </div>
           </div>
           <div class="element-list">
             <article class="element-card">
               <div class="element-card-head">
                 <div>
-                  <strong>Kick lower third</strong>
-                  <p>Enable the strip, edit the handle, then choose when it appears.</p>
+                  <strong>Kick lower-third overlay</strong>
+                  <p>Turn it on, edit the handle, then choose exactly when it appears.</p>
                 </div>
                 <span class="element-badge">Template</span>
               </div>
-              <button id="kickTemplateToggle" class="mini-preview" type="button" aria-pressed="false" data-state-label="Off">
+              <button id="kickTemplateToggle" class="mini-preview" type="button" aria-pressed="false" data-state-label="Off" aria-label="Toggle Kick lower-third overlay">
                 <span class="kick-wordmark">KICK</span>
                 <span id="kickMiniHandle" class="kick-handle">KICK.COM/EDMATTHEWS</span>
               </button>
@@ -1929,10 +2051,10 @@
                 <button data-kick-apply="range" type="button" aria-pressed="false">Range</button>
               </div>
               <div id="kickRangeFields" class="range-fields is-disabled">
-                <label>Start time<input id="kickStartInput" type="number" min="0" step="0.1" value="0" /></label>
-                <label>End time<input id="kickEndInput" type="number" min="0" step="0.1" value="20" /></label>
+                <label>Start second<input id="kickStartInput" type="number" min="0" step="0.1" value="0" /></label>
+                <label>End second<input id="kickEndInput" type="number" min="0" step="0.1" value="20" /></label>
               </div>
-              <div id="kickElementStatus" class="element-status" aria-live="polite">Kick lower third is off.</div>
+              <div id="kickElementStatus" class="element-status" aria-live="polite">Kick lower-third overlay is off.</div>
               <button id="kickApplyCurrentButton" class="primary-btn source-action" type="button">Place at playhead</button>
             </article>
           </div>
@@ -1963,19 +2085,21 @@
           </div>
         </section>
 
-        <section class="step-view" data-view="export">
+        <section class="step-view export-panel" data-view="export">
           <div class="panel-head">
             <div>
               <div class="panel-kicker">Final render</div>
               <h1>Export</h1>
-              <p>Choose the render size and download the final composed clip.</p>
+              <p>Choose the render size and download the composed clip with layout, trim, overlays, and captions.</p>
             </div>
           </div>
-          <button class="quality-card" data-quality="720" type="button"><span class="radio-dot"></span><strong>720p<br /><span>30 fps</span></strong><span><strong>Standard</strong>Smaller file, faster render</span></button>
-          <button class="quality-card" data-quality="720-60" type="button"><span class="radio-dot"></span><strong>720p<br /><span>60 fps</span></strong><span><strong>Smooth</strong>Higher frame rate at 720p</span></button>
-          <button class="quality-card active" data-quality="1080" type="button"><span class="radio-dot"></span><strong>1080p<br /><span>60 fps</span></strong><span><strong>Full HD</strong>Sharpest editor export</span></button>
-          <button id="exportButton" class="export-btn" type="button">Render final clip ⇧</button>
-          <div id="exportStatus" class="status">Final render is ready after you add or preview a clip.</div>
+          <div role="radiogroup" aria-label="Export quality">
+            <button class="quality-card" data-quality="720" type="button" role="radio" aria-checked="false"><span class="radio-dot"></span><strong>720p<br /><span>30 fps</span></strong><span><strong>Standard</strong>Smaller file, faster render</span></button>
+            <button class="quality-card" data-quality="720-60" type="button" role="radio" aria-checked="false"><span class="radio-dot"></span><strong>720p<br /><span>60 fps</span></strong><span><strong>Smooth</strong>Higher frame rate at 720p</span></button>
+            <button class="quality-card active" data-quality="1080" type="button" role="radio" aria-checked="true"><span class="radio-dot"></span><strong>1080p<br /><span>60 fps</span></strong><span><strong>Full HD</strong>Sharpest editor export</span></button>
+          </div>
+          <button id="exportButton" class="export-btn" type="button">Render and download clip ⇧</button>
+          <div id="exportStatus" class="status">Load a source to render the final composed clip.</div>
         </section>
       </aside>
 
@@ -2187,7 +2311,12 @@
       function setStep(step) {
         if (!steps.includes(step)) return;
         currentStep = step;
-        toolButtons.forEach((button) => button.classList.toggle("active", button.dataset.step === step));
+        toolButtons.forEach((button) => {
+          const active = button.dataset.step === step;
+          button.classList.toggle("active", active);
+          if (active) button.setAttribute("aria-current", "step");
+          else button.removeAttribute("aria-current");
+        });
         views.forEach((view) => view.classList.toggle("active", view.dataset.view === step));
         const idx = steps.indexOf(step);
         backStep.textContent = idx > 0 ? `← ${stepLabels[steps[idx - 1]]}` : "← Source";
@@ -2797,7 +2926,7 @@
         kickTemplateToggle.dataset.stateLabel = enabled ? "On" : "Off";
         kickElementStatus.classList.toggle("active", enabled);
         if (!enabled) {
-          kickElementStatus.textContent = "Kick lower third is off.";
+          kickElementStatus.textContent = "Kick lower-third overlay is off.";
           return;
         }
         kickElementStatus.textContent = kickState.apply === "whole"
@@ -3103,7 +3232,7 @@
         } finally {
           if (requestId === sourceScanRequestId) {
             analyzeYoutubeButton.disabled = false;
-            analyzeYoutubeButton.textContent = originalText || "Find clips";
+            analyzeYoutubeButton.textContent = originalText || "Find clip candidates";
           }
         }
       }
@@ -3252,9 +3381,29 @@
         cards[nextIndex].focus();
         setActiveLayout(cards[nextIndex].dataset.layoutKey);
       });
-      document.querySelectorAll(".quality-card").forEach((button) => button.addEventListener("click", () => {
-        document.querySelectorAll(".quality-card").forEach((item) => item.classList.toggle("active", item === button));
-      }));
+      const qualityButtons = Array.from(document.querySelectorAll(".quality-card"));
+      function setExportQuality(button) {
+        qualityButtons.forEach((item) => {
+          const active = item === button;
+          item.classList.toggle("active", active);
+          item.setAttribute("aria-checked", String(active));
+          item.tabIndex = active ? 0 : -1;
+        });
+      }
+      setExportQuality(qualityButtons.find((button) => button.classList.contains("active")) || qualityButtons[0]);
+      qualityButtons.forEach((button) => button.addEventListener("click", () => setExportQuality(button)));
+      document.querySelector('[aria-label="Export quality"]').addEventListener("keydown", (event) => {
+        if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
+        const currentIndex = Math.max(0, qualityButtons.findIndex((button) => button.classList.contains("active")));
+        let nextIndex = currentIndex;
+        if (event.key === "ArrowLeft" || event.key === "ArrowUp") nextIndex = Math.max(0, currentIndex - 1);
+        if (event.key === "ArrowRight" || event.key === "ArrowDown") nextIndex = Math.min(qualityButtons.length - 1, currentIndex + 1);
+        if (event.key === "Home") nextIndex = 0;
+        if (event.key === "End") nextIndex = qualityButtons.length - 1;
+        event.preventDefault();
+        qualityButtons[nextIndex].focus();
+        setExportQuality(qualityButtons[nextIndex]);
+      });
       const captionStyleButtons = Array.from(document.querySelectorAll(".caption-card"));
       function setCaptionStyle(button) {
         captionStyleButtons.forEach((item) => {
