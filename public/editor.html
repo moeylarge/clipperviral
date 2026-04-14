@@ -23,6 +23,8 @@
 
       * { box-sizing: border-box; }
 
+      [hidden] { display: none !important; }
+
       body {
         margin: 0;
         min-height: 100vh;
@@ -1073,6 +1075,7 @@
         color: var(--caption-fill);
         -webkit-text-stroke: var(--caption-stroke-width) var(--caption-stroke-color);
         text-shadow: 2px 2px 3px rgba(0,0,0,.95), 0 0 9px rgba(0,0,0,0.45);
+        opacity: 0;
       }
 
       .caption-layer.show[data-motion="fade"] span {
@@ -1104,6 +1107,11 @@
 
       .editor-canvas .caption-layer {
         font-size: 28px;
+      }
+
+      .editor-canvas .caption-layer span {
+        opacity: 0 !important;
+        animation: none !important;
       }
 
       .quality-card {
@@ -1259,10 +1267,26 @@
       }
 
       .editor-canvas video {
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
         object-fit: cover;
         display: block;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .composition-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        background: #050505;
+        z-index: 1;
+        pointer-events: none;
       }
 
       .canvas-placeholder {
@@ -1274,12 +1298,14 @@
         font-weight: 900;
         text-align: center;
         padding: 20px;
+        z-index: 6;
       }
 
       .selection-box {
         position: absolute;
         inset: 0;
         pointer-events: auto;
+        z-index: 14;
       }
 
       .focus-panel {
@@ -1388,7 +1414,7 @@
         overflow: hidden;
         background: #06140c;
         box-shadow: 0 12px 26px rgba(0,0,0,0.35);
-        z-index: 10;
+        z-index: 13;
         cursor: move;
         touch-action: none;
       }
@@ -1404,6 +1430,15 @@
         height: 100%;
         object-fit: fill;
         pointer-events: none;
+      }
+
+      .editor-canvas .kick-lower-third {
+        background: transparent;
+        box-shadow: none;
+      }
+
+      .editor-canvas .kick-lower-third img {
+        opacity: 0;
       }
 
       .resize-handle {
@@ -1459,146 +1494,6 @@
         border-left: 1px solid #eeeef4;
         color: #1f2430;
         cursor: pointer;
-      }
-
-      .preview-column {
-        align-self: center;
-        display: grid;
-        justify-items: center;
-        gap: 10px;
-      }
-
-      .preview-title {
-        font-size: 17px;
-        font-weight: 760;
-      }
-
-      .phone-preview {
-        width: 132px;
-        aspect-ratio: 9 / 16;
-        background: #050505;
-        border-radius: 14px;
-        box-shadow: 0 24px 58px rgba(16, 19, 28, 0.22);
-        position: relative;
-        overflow: hidden;
-        outline: 3px solid var(--blue);
-      }
-
-      .phone-preview[data-format="horizontal"] {
-        width: 232px;
-        aspect-ratio: 16 / 9;
-        border-radius: 12px;
-        outline-color: var(--green);
-      }
-
-      .phone-composition {
-        position: absolute;
-        inset: 0;
-        overflow: hidden;
-        background: #050505;
-      }
-
-      .phone-composition video {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        background: #050505;
-      }
-
-      .phone-layer {
-        inset: 0;
-      }
-
-      .phone-bg,
-      .phone-facecam-left,
-      .phone-facecam-right,
-      .phone-map {
-        display: none;
-      }
-
-      .phone-focus {
-        inset: 0;
-        z-index: 2;
-      }
-
-      .phone-bg {
-        inset: -10%;
-        width: 120%;
-        height: 120%;
-        filter: blur(7px) saturate(0.85);
-        opacity: 0.78;
-        z-index: 1;
-      }
-
-      .phone-facecam-left,
-      .phone-facecam-right,
-      .phone-map {
-        z-index: 4;
-        border: 2px solid rgba(235, 52, 184, 0.95);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-      }
-
-      .phone-composition::before,
-      .phone-composition::after {
-        position: absolute;
-        z-index: 5;
-        border-radius: 3px;
-        padding: 2px 4px;
-        font-size: 6px;
-        font-weight: 900;
-        line-height: 1;
-        color: #fff;
-        opacity: 0;
-      }
-
-      .phone-composition::before {
-        content: "Gameplay";
-        left: 50%;
-        top: 8px;
-        transform: translateX(-50%);
-        background: #229cff;
-      }
-
-      .phone-composition::after {
-        content: "Facecam";
-        right: 8px;
-        bottom: 62px;
-        background: #eb34b8;
-      }
-
-      .phone-preview .kick-lower-third {
-        left: 6%;
-        right: 6%;
-        bottom: 9%;
-        min-height: 17px;
-        border-width: 1px;
-        border-radius: 4px;
-      }
-
-      .phone-preview .kick-lower-third img {
-        image-rendering: auto;
-      }
-
-      .phone-preview .caption-layer {
-        left: 8%;
-        right: 8%;
-        bottom: 18%;
-        font-size: 8px;
-      }
-
-      .phone-preview .caption-layer[data-position="middle"] {
-        bottom: 44%;
-      }
-
-      .phone-preview[data-format="horizontal"] .caption-layer {
-        bottom: 14%;
-        font-size: 9px;
-      }
-
-      .phone-preview[data-format="horizontal"] .caption-layer[data-position="middle"] {
-        bottom: 44%;
       }
 
       .platform-pill {
@@ -2543,18 +2438,12 @@
         padding: 46px 48px 58px;
       }
 
-      .canvas-column,
-      .preview-column {
+      .canvas-column {
         align-self: start;
         gap: 13px;
       }
 
-      .preview-column {
-        transform: none;
-      }
-
-      .canvas-title,
-      .preview-title {
+      .canvas-title {
         min-height: 22px;
         color: #191c23;
         font-size: 16px;
@@ -2592,19 +2481,6 @@
 
       .editor-canvas[data-format="horizontal"] .focus-panel {
         border-color: rgba(183,255,90,0.72);
-      }
-
-      .phone-preview {
-        width: 148px;
-        border-radius: 18px;
-        outline: 1px solid rgba(16,19,28,0.14);
-        box-shadow: 0 24px 62px rgba(20, 23, 31, 0.18), 0 0 0 6px rgba(255,255,255,0.55);
-      }
-
-      .phone-preview[data-format="horizontal"] {
-        width: 250px;
-        border-radius: 14px;
-        outline-color: rgba(16,19,28,0.14);
       }
 
       .platform-pill,
@@ -2760,8 +2636,52 @@
         .workspace { height: auto; min-height: 900px; }
         .topbar { flex-wrap: wrap; }
         .stage-row { grid-template-columns: 1fr; padding: 28px 20px 40px; }
-        .preview-column { display: none; }
         .timeline { margin: 0 16px 20px; }
+      }
+
+      /* Phase 1 canvas-driven preview: one visible real-video canvas, no competing right preview. */
+      body {
+        overflow: hidden;
+      }
+
+      .app-shell {
+        height: 100vh;
+        min-height: 100vh;
+        overflow: hidden;
+        grid-template-columns: 92px 332px minmax(620px, 1fr);
+      }
+
+      .workspace {
+        height: 100vh;
+        max-height: 100vh;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .stage-row {
+        grid-template-columns: minmax(420px, 760px);
+        justify-content: center;
+        align-items: center;
+        padding-right: 48px;
+      }
+
+      .workspace[data-format="horizontal"] .stage-row {
+        grid-template-columns: minmax(560px, 860px);
+      }
+
+      .editor-canvas {
+        width: min(360px, calc((100vh - 392px) * 0.5625));
+        min-width: 190px;
+        max-width: 360px;
+      }
+
+      .editor-canvas[data-format="horizontal"] {
+        width: min(760px, 100%);
+        max-width: 760px;
+      }
+
+      .editor-canvas:not(.has-source) .selection-box {
+        display: none;
       }
     </style>
   </head>
@@ -3021,6 +2941,7 @@
             <div class="canvas-title" id="layoutTitle">Dual facecam</div>
             <div class="editor-canvas" id="editorCanvas">
               <video id="mainVideo" playsinline controls></video>
+              <canvas id="compositionCanvas" class="composition-canvas" aria-hidden="true"></canvas>
               <div id="canvasPlaceholder" class="canvas-placeholder">Add a clip from Source to begin</div>
               <div id="kickCanvasOverlay" class="kick-lower-third" aria-hidden="true">
                 <img id="kickCanvasImage" alt="" />
@@ -3039,21 +2960,6 @@
               <select id="shapeSelect"><option>Freeform</option><option>Fullscreen</option><option>Rectangle 16:9</option><option>Rectangle 4:3</option><option>Square</option><option>Circle</option></select>
             </div>
             <div class="player-row"><span>↞</span><button id="playButton" type="button" class="chip">▶</button><span>↠</span></div>
-          </div>
-          <div class="preview-column">
-            <div class="preview-title">Preview</div>
-            <div class="phone-preview" id="phonePreview">
-              <div class="phone-composition">
-                <video id="phoneBgVideo" class="phone-bg" muted playsinline></video>
-                <video id="phoneVideo" class="phone-layer phone-focus" muted playsinline></video>
-                <video id="phoneMapVideo" class="phone-map" muted playsinline></video>
-                <video id="phoneFacecamLeftVideo" class="phone-facecam-left" muted playsinline></video>
-                <video id="phoneFacecamRightVideo" class="phone-facecam-right" muted playsinline></video>
-                <div id="kickPhoneOverlay" class="kick-lower-third" aria-hidden="true"><img id="kickPhoneImage" alt="" /></div>
-                <div id="captionPhoneOverlay" class="caption-layer" data-style="kick" data-motion="fade" data-position="bottom" aria-hidden="true"><span></span></div>
-              </div>
-            </div>
-            <button id="platformPill" class="platform-pill" type="button">♪ TikTok preview⌄</button>
           </div>
         </section>
 
@@ -3088,10 +2994,8 @@
       const CLIP_LIBRARY_DB = "clipperviral-clip-library-v1";
       const CLIP_LIBRARY_STORE = "clips";
       let currentStep = "source";
-      let videoUrl = "";
       let youtubeJobId = "";
       let youtubeClips = [];
-      let clipDuration = 34;
       let isExporting = false;
       let sourceScanRequestId = 0;
       let activeSourceLabel = "";
@@ -3115,35 +3019,93 @@
       };
       const DEFAULT_LAYOUT_BY_FORMAT = { vertical: "dual", horizontal: "horizontal-fullscreen" };
       const PANEL_KEYS = new Set(["background", "focus", "map", "facecamLeft", "facecamRight"]);
-      const layoutState = {
-        format: "vertical",
-        activeLayoutKey: DEFAULT_LAYOUT_BY_FORMAT.vertical,
-        transformsByPanel: {
-          background: null,
-          focus: null,
-          map: null,
-          facecamLeft: null,
-          facecamRight: null,
+      const editorState = {
+        source: {
+          file: null,
+          url: "",
+          duration: 34,
+          currentTime: 0,
+          trimStart: 0,
+          trimEnd: 34,
         },
-        overrides: {},
+        viewport: {
+          mode: "vertical",
+        },
+        scene: {
+          layout: {
+            format: "vertical",
+            activeLayoutKey: DEFAULT_LAYOUT_BY_FORMAT.vertical,
+            crops: {
+              background: null,
+              focus: null,
+              map: null,
+              facecamLeft: null,
+              facecamRight: null,
+            },
+            overrides: {},
+          },
+          overlays: {
+            kick: {
+              enabled: false,
+              apply: "whole",
+              start: 0,
+              end: 34,
+              user: "edmatthews",
+              text: "KICK.COM/EDMATTHEWS",
+              style: "green",
+              allCaps: true,
+              glow: 0,
+              gap: 1000,
+              safeEdge: 14,
+              textOffset: 0,
+              exactKickWidth: true,
+              box: { x: 0.05, y: 0.87, w: 0.9, h: 0.08 },
+            },
+          },
+          captions: {
+            enabled: false,
+            language: "en",
+            style: "kick",
+            motion: "fade",
+            strokeWidth: 2,
+            position: "bottom",
+            cues: [],
+          },
+        },
+        ui: {
+          activeTool: "source",
+          selectedLayer: null,
+        },
       };
-      const trimState = { start: 0, end: 34 };
-      const kickState = {
-        enabled: false,
-        apply: "whole",
-        start: 0,
-        end: 34,
-        user: "edmatthews",
-        text: "KICK.COM/EDMATTHEWS",
-        style: "green",
-        allCaps: true,
-        glow: 0,
-        gap: 1000,
-        safeEdge: 14,
-        textOffset: 0,
-        exactKickWidth: true,
-        box: { x: 5, y: 87, w: 90, h: 8 },
+      Object.defineProperty(window, "editorState", { value: editorState });
+      const layoutState = editorState.scene.layout;
+      Object.defineProperty(layoutState, "transformsByPanel", {
+        get: () => layoutState.crops,
+        set: (next) => {
+          layoutState.crops = next;
+        },
+      });
+      const trimState = {
+        get start() {
+          return editorState.source.trimStart;
+        },
+        set start(value) {
+          editorState.source.trimStart = clamp(value, 0, Math.max(0.1, editorState.source.duration - 0.1));
+        },
+        get end() {
+          return editorState.source.trimEnd;
+        },
+        set end(value) {
+          const maxEnd = Math.max(editorState.source.trimStart + 0.1, editorState.source.duration);
+          editorState.source.trimEnd = clamp(value, editorState.source.trimStart + 0.1, maxEnd);
+        },
       };
+      Object.defineProperty(window, "trimState", { value: trimState, enumerable: true });
+      const kickState = editorState.scene.overlays.kick;
+      const captionState = editorState.scene.captions;
+      Object.defineProperty(window, "layoutState", { value: layoutState, enumerable: true });
+      Object.defineProperty(window, "kickState", { value: kickState, enumerable: true });
+      Object.defineProperty(window, "captionState", { value: captionState, enumerable: true });
       const KICK_LOGO_VIEWBOX = { x: 15, y: 90, w: 220, h: 70.6422 };
       const KICK_LOGO_PATH = "M15 90H38.5714V105.698H46.4286V97.8491H54.2857V90H77.8571V113.547H70V121.397H62.1429V129.246H70V137.095H77.8571V160.642H54.2857V152.793H46.4286V144.944H38.5714V160.642H15V90ZM172.143 90H195.714V105.698H203.571V97.8491H211.429V90H235V113.547H227.143V121.397H219.286V129.246H227.143V137.095H235V160.642H211.429V152.793H203.571V144.944H195.714V160.642H172.143V90ZM85.7143 90H109.286V160.642H85.7143V90ZM125 90V97.8491H117.143V152.793H125V160.642H164.286V137.095H140.714V113.547H164.286V90H125Z";
       const kickLogoImage = new Image();
@@ -3158,13 +3120,25 @@
       const CAPTION_SETTINGS_STORAGE_KEY = "clipperviral.captionSettings.v1";
       const CAPTION_DIRECT_UPLOAD_LIMIT_BYTES = 3.5 * 1024 * 1024;
       const CAPTION_AUDIO_SAMPLE_RATE = 16000;
-      const captionState = { enabled: false, language: "en", style: "kick", motion: "fade", strokeWidth: 2, position: "bottom", cues: [] };
+      const KICK_DEFAULTS = {
+        minGap: 0,
+        maxGap: 1000,
+        maxGlow: 150,
+        minSafeEdge: 0,
+        maxSafeEdge: 40,
+        minTextOffset: -6,
+        maxTextOffset: 8,
+        minBoxW: 0.06,
+        minBoxH: 0.04,
+        minCropW: 0.06,
+        minCropH: 0.08,
+      };
       let captionSourceVersion = 0;
       let captionGenerationRequestId = 0;
       let captionGenerationController = null;
       let isCaptionGenerating = false;
       let captionGenerationError = "";
-      const cropState = layoutState.transformsByPanel;
+      const cropState = layoutState.crops;
       const SINGLE_LAYOUT_BY_FORMAT = { horizontal: DEFAULT_LAYOUT_BY_FORMAT.horizontal };
       const LAYOUT_UI_COPY = {
         small: { category: "Facecam", description: "Compact creator window over gameplay." },
@@ -3187,15 +3161,6 @@
       const backStep = document.getElementById("backStep");
       const workspace = document.getElementById("workspace");
       const mainVideo = document.getElementById("mainVideo");
-      const phonePreview = document.getElementById("phonePreview");
-      const phoneVideo = document.getElementById("phoneVideo");
-      const phoneLayerVideos = [
-        document.getElementById("phoneBgVideo"),
-        phoneVideo,
-        document.getElementById("phoneMapVideo"),
-        document.getElementById("phoneFacecamLeftVideo"),
-        document.getElementById("phoneFacecamRightVideo"),
-      ];
       const canvasPlaceholder = document.getElementById("canvasPlaceholder");
       const layoutTitle = document.getElementById("layoutTitle");
       const youtubeUrlInput = document.getElementById("youtubeUrlInput");
@@ -3213,6 +3178,8 @@
       const layoutModeNote = document.getElementById("layoutModeNote");
       const layoutStatus = document.getElementById("layoutStatus");
       const editorCanvas = document.getElementById("editorCanvas");
+      const compositionCanvas = document.getElementById("compositionCanvas");
+      const compositionCtx = compositionCanvas?.getContext("2d", { alpha: false });
       const playButton = document.getElementById("playButton");
       const exportButton = document.getElementById("exportButton");
       const exportStatus = document.getElementById("exportStatus");
@@ -3223,9 +3190,7 @@
       const kickHandleInput = document.getElementById("kickHandleInput");
       const kickMiniPreviewImage = document.getElementById("kickMiniPreviewImage");
       const kickCanvasOverlay = document.getElementById("kickCanvasOverlay");
-      const kickPhoneOverlay = document.getElementById("kickPhoneOverlay");
       const kickCanvasImage = document.getElementById("kickCanvasImage");
-      const kickPhoneImage = document.getElementById("kickPhoneImage");
       const kickWidthInput = document.getElementById("kickWidthInput");
       const kickHeightInput = document.getElementById("kickHeightInput");
       const kickGlowInput = document.getElementById("kickGlowInput");
@@ -3255,7 +3220,6 @@
       const captionProgress = document.getElementById("captionProgress");
       const captionRetryButton = document.getElementById("captionRetryButton");
       const captionCanvasOverlay = document.getElementById("captionCanvasOverlay");
-      const captionPhoneOverlay = document.getElementById("captionPhoneOverlay");
       const trimStartRange = document.getElementById("trimStartRange");
       const trimEndRange = document.getElementById("trimEndRange");
       const trimStartLabel = document.getElementById("trimStartLabel");
@@ -3267,8 +3231,10 @@
       const facecamRight = document.querySelector(".facecam.right");
       const trimWindow = document.getElementById("trimWindow");
       const platformSelect = document.getElementById("platformSelect");
-      const platformPill = document.getElementById("platformPill");
       const shapeSelect = document.getElementById("shapeSelect");
+      const timelineTrack = document.querySelector(".timeline-track");
+      const playhead = document.querySelector(".playhead");
+      const timelineScrubLayer = document.querySelector(".thumb-strip");
 
       function setStep(step) {
         if (!steps.includes(step)) return;
@@ -3403,16 +3369,20 @@
       }
 
       function updatePlatformPill() {
-        platformPill.textContent = `♪ ${platformSelect.value}⌄`;
-        phonePreview.dataset.format = layoutState.format;
+        // Keeping the platform switcher in sync with layout format.
+        editorState.viewport.mode = layoutState.format;
+        if (platformSelect.value === "YouTube horizontal" && layoutState.format !== "horizontal") {
+          platformSelect.value = "TikTok preview";
+        }
       }
 
-      function validateLayoutDefinition(layout) {
-        if (!layout || layout.key !== layoutState.activeLayoutKey) {
-          throw new Error(`Unknown layout key: ${layoutState.activeLayoutKey}`);
+      function validateLayoutDefinition(layout, stateLayout = layoutState) {
+        const expectedLayoutState = stateLayout || layoutState;
+        if (!layout || layout.key !== expectedLayoutState.activeLayoutKey) {
+          throw new Error(`Unknown layout key: ${expectedLayoutState.activeLayoutKey}`);
         }
-        if (layout.format !== layoutState.format) {
-          throw new Error(`Layout ${layout.key} does not match ${layoutState.format} format.`);
+        if (layout.format !== expectedLayoutState.format) {
+          throw new Error(`Layout ${layout.key} does not match ${expectedLayoutState.format} format.`);
         }
         if (!Array.isArray(layout.panels) || layout.panels.length === 0) {
           throw new Error(`Layout ${layout.key} is missing panel definitions.`);
@@ -3456,7 +3426,7 @@
       }
 
       function getActiveLayout() {
-        return validateLayoutDefinition(LAYOUT_REGISTRY[layoutState.activeLayoutKey]);
+        return validateLayoutDefinition(LAYOUT_REGISTRY[layoutState.activeLayoutKey], layoutState);
       }
 
       function getLayoutsForFormat(format) {
@@ -3480,6 +3450,115 @@
         const categoryOrder = ["Facecam", "Split", "Single", "Multi-camera"];
         const categoryIndex = categoryOrder.indexOf(getLayoutCategory(layout));
         return categoryIndex === -1 ? categoryOrder.length : categoryIndex;
+      }
+
+      function buildNormalizedPanelState(layout, crops) {
+        const panels = {};
+        layout.panels.forEach((panelKey) => {
+          const configured = crops?.[panelKey];
+          const base = layout.panelBoxes?.[panelKey];
+          if (configured && Number.isFinite(Number(configured.x)) && Number.isFinite(Number(configured.y)) && Number.isFinite(Number(configured.w)) && Number.isFinite(Number(configured.h))) {
+            panels[panelKey] = normalizeBox({ ...configured });
+          } else if (base && Number.isFinite(Number(base.x)) && Number.isFinite(Number(base.y)) && Number.isFinite(Number(base.w)) && Number.isFinite(Number(base.h))) {
+            panels[panelKey] = { ...base };
+          } else {
+            panels[panelKey] = null;
+          }
+        });
+        return panels;
+      }
+
+      function getActiveCueForTime(cues, time = 0) {
+        return (cues || []).find((cue) => time >= cue.start && time < cue.end) || null;
+      }
+
+      function buildResolvedScene(state, options = {}) {
+        const sourceState = state?.source || editorState.source;
+        const layoutStateValue = state?.scene?.layout || {};
+        const activeLayoutKey = layoutStateValue.activeLayoutKey || editorState.scene.layout.activeLayoutKey;
+        const layoutStateForScene = {
+          activeLayoutKey,
+          format: layoutStateValue.format || layoutState.format,
+        };
+        const activeLayout = validateLayoutDefinition(LAYOUT_REGISTRY[activeLayoutKey], layoutStateForScene);
+        if (!activeLayout) throw new Error("No active layout is selected.");
+
+        const sourceDuration = Math.max(1, Number(sourceState.duration) || Number(mainVideo.duration) || 34);
+        const requestTime = Number.isFinite(Number(options.time)) ? Number(options.time) : (Number(mainVideo.currentTime) || 0);
+        const currentTime = clamp(requestTime, 0, sourceDuration);
+        const trimStart = clamp(sourceState.trimStart, 0, Math.max(0.1, sourceDuration - 0.1));
+        const trimEnd = clamp(sourceState.trimEnd, trimStart + 0.1, sourceDuration);
+        const kickSource = state?.scene?.overlays?.kick || editorState.scene.overlays.kick || {};
+        const kickUser = normalizeKickHandle(kickSource.user || "edmatthews");
+        const kickStart = kickSource.apply === "range" ? clamp(kickSource.start, 0, sourceDuration) : 0;
+        const kickEnd = kickSource.apply === "range" ? clamp(kickSource.end, kickStart + 0.1, sourceDuration) : sourceDuration;
+        const isWholeClip = kickSource.apply !== "range";
+        const kickState = {
+          enabled: !!kickSource.enabled,
+          apply: isWholeClip ? "whole" : "range",
+          start: isWholeClip ? 0 : kickStart,
+          end: isWholeClip ? sourceDuration : kickEnd,
+          user: kickUser,
+          text: kickSource.allCaps ? `KICK.COM/${kickUser.toUpperCase()}` : `kick.com/${kickUser.toLowerCase()}`,
+          style: ["green", "lime-gradient", "green-white"].includes(kickSource.style) ? kickSource.style : "green",
+          allCaps: !!kickSource.allCaps,
+          glow: clamp(kickSource.glow ?? 0, 0, 150),
+          gap: clamp(kickSource.gap ?? 0, 0, 1000),
+          safeEdge: clamp(kickSource.safeEdge ?? 0, 0, 40),
+          textOffset: clamp(kickSource.textOffset ?? 0, -6, 8),
+          exactKickWidth: kickSource.exactKickWidth !== false,
+          box: normalizeBox({ ...kickSource.box || { x: 5, y: 87, w: 90, h: 8 } }, 25, 4),
+          visible: !!kickSource.enabled && (isWholeClip || (currentTime >= kickStart && currentTime <= kickEnd)),
+        };
+        const captionSource = state?.scene?.captions || editorState.scene.captions || {};
+        const captionTime = Number.isFinite(currentTime) ? currentTime : 0;
+        const activeCaptionCue = captionSource.enabled
+          ? getActiveCueForTime(captionSource.cues || [], captionTime)
+          : null;
+        const normalizedCaptions = {
+          enabled: !!captionSource.enabled && Array.isArray(captionSource.cues) && captionSource.cues.length > 0,
+          language: captionSource.language || "en",
+          style: captionSource.style || "kick",
+          motion: captionSource.motion || "fade",
+          strokeWidth: clamp(captionSource.strokeWidth ?? 2, 0, 5),
+          position: captionSource.position || "bottom",
+          cues: Array.isArray(captionSource.cues) ? [...captionSource.cues] : [],
+          activeCue: activeCaptionCue,
+          box: getPercentRect(captionCanvasOverlay, editorCanvas),
+        };
+
+        return {
+          source: {
+            duration: sourceDuration,
+            trimStart,
+            trimEnd,
+            currentTime,
+          },
+          viewport: {
+            mode: state?.viewport?.mode || activeLayout.format || editorState.viewport.mode,
+          },
+          layout: {
+            key: activeLayout.key,
+            format: activeLayout.format,
+            label: activeLayout.label,
+            rendererKey: activeLayout.rendererKey,
+            cameraMode: activeLayout.cameraMode,
+            aspectRatio: activeLayout.aspectRatio,
+            panels: [...activeLayout.panels],
+            crops: buildNormalizedPanelState(activeLayout, layoutStateValue.crops),
+          },
+          overlays: {
+            kick: kickState,
+          },
+          captions: {
+            ...normalizedCaptions,
+            cues: [...(normalizedCaptions.cues || [])],
+          },
+          timeline: {
+            time: currentTime,
+            trim: { start: trimStart, end: trimEnd },
+          },
+        };
       }
 
       function setLayoutStatus(message = "") {
@@ -3511,9 +3590,7 @@
       function applyFormat() {
         workspace.dataset.format = layoutState.format;
         editorCanvas.dataset.format = layoutState.format;
-        phonePreview.dataset.format = layoutState.format;
         syncFormatControls();
-        syncPhonePreview({ force: true });
       }
 
       function setFormat(format) {
@@ -3582,27 +3659,28 @@
       }
 
       function setVideoSource(url) {
-        if (videoUrl && videoUrl.startsWith("blob:")) URL.revokeObjectURL(videoUrl);
-        videoUrl = url;
+        if (editorState.source.url && editorState.source.url.startsWith("blob:")) {
+          URL.revokeObjectURL(editorState.source.url);
+        }
+        editorState.scene.captions = editorState.scene.captions || {};
+        editorState.source.url = url || "";
+        editorCanvas.classList.toggle("has-source", Boolean(url));
         mainVideo.src = url;
-        phoneLayerVideos.forEach((video) => {
-          video.src = url;
-          video.muted = true;
-        });
         canvasPlaceholder.hidden = true;
         mainVideo.load();
-        phoneLayerVideos.forEach((video) => video.load());
         applyLayout();
       }
 
       function formatCaptionStatus(time = Number(mainVideo.currentTime) || trimState.start) {
+        const resolved = buildResolvedScene(editorState, { time });
         if (captionGenerationError) return { text: captionGenerationError, tone: "error" };
         if (isCaptionGenerating) return { text: "Generating captions from the loaded clip...", tone: "warning" };
-        if (!activeCaptionClipFile && !captionState.cues.length) return { text: "Load a clip, then generate captions.", tone: "" };
-        if (!captionState.cues.length) return { text: "Generate captions from the loaded clip.", tone: "warning" };
-        if (!captionState.enabled) return { text: `${captionState.cues.length} caption ${captionState.cues.length === 1 ? "line is" : "lines are"} ready. Turn captions on to render them.`, tone: "warning" };
-        const activeCue = getActiveCaptionCue(time);
-        const cueLabel = `${captionState.cues.length} ${captionState.cues.length === 1 ? "cue" : "cues"}`;
+        const resolvedCues = resolved.captions.cues || [];
+        if (!activeCaptionClipFile && !resolvedCues.length) return { text: "Load a clip, then generate captions.", tone: "" };
+        if (!resolvedCues.length) return { text: "Generate captions from the loaded clip.", tone: "warning" };
+        if (!resolved.captions.enabled) return { text: `${resolvedCues.length} caption ${resolvedCues.length === 1 ? "line is" : "lines are"} ready. Turn captions on to render them.`, tone: "warning" };
+        const activeCue = resolved.captions.activeCue;
+        const cueLabel = `${resolvedCues.length} ${resolvedCues.length === 1 ? "cue" : "cues"}`;
         return {
           text: activeCue ? `${cueLabel} synced. Current: "${activeCue.text}"` : `${cueLabel} synced for preview and export.`,
           tone: "active",
@@ -3808,22 +3886,20 @@
         return cue ? `${cue.id}:${cue.start}:${cue.end}:${cue.text}` : "";
       }
 
-      function getActiveCaptionCue(time = Number(mainVideo.currentTime) || 0) {
-        return captionState.cues.find((cue) => time >= cue.start && time < cue.end) || null;
-      }
-
-      function setCaptionOverlayCue(activeCue) {
-        const overlayReady = captionState.enabled && captionState.cues.length > 0;
+      function setCaptionOverlayCue(activeCue, sceneCaption) {
+        if (!sceneCaption) return;
+        const isEnabled = !!sceneCaption.enabled;
+        const overlayReady = isEnabled && (sceneCaption.cues || []).length > 0;
         const activeText = activeCue?.text || "";
-
-        [captionCanvasOverlay, captionPhoneOverlay].forEach((overlay) => {
+        const overlays = [captionCanvasOverlay];
+        overlays.forEach((overlay) => {
           overlay.classList.toggle("active", overlayReady);
-          overlay.dataset.style = captionState.style;
-          overlay.dataset.motion = captionState.motion;
-          overlay.dataset.position = captionState.position;
-          overlay.style.setProperty("--caption-fill", (CAPTION_STYLE_REGISTRY[captionState.style] || CAPTION_STYLE_REGISTRY.kick).fill);
-          overlay.style.setProperty("--caption-stroke-color", (CAPTION_STYLE_REGISTRY[captionState.style] || CAPTION_STYLE_REGISTRY.kick).stroke);
-          overlay.style.setProperty("--caption-stroke-width", `${captionState.strokeWidth}px`);
+          overlay.dataset.style = sceneCaption.style;
+          overlay.dataset.motion = sceneCaption.motion;
+          overlay.dataset.position = sceneCaption.position;
+          overlay.style.setProperty("--caption-fill", (CAPTION_STYLE_REGISTRY[sceneCaption.style] || CAPTION_STYLE_REGISTRY.kick).fill);
+          overlay.style.setProperty("--caption-stroke-color", (CAPTION_STYLE_REGISTRY[sceneCaption.style] || CAPTION_STYLE_REGISTRY.kick).stroke);
+          overlay.style.setProperty("--caption-stroke-width", `${sceneCaption.strokeWidth}px`);
           overlay.setAttribute("aria-hidden", String(!activeCue));
           const textNode = overlay.querySelector("span");
           if (textNode) textNode.textContent = activeText;
@@ -3841,8 +3917,10 @@
       }
 
       function updateCaptionOverlay(time = Number(mainVideo.currentTime) || trimState.start) {
+        const resolved = buildResolvedScene(editorState, { time });
         captionState.enabled = !!captionLayerToggle.checked;
-        setCaptionOverlayCue(getActiveCaptionCue(time));
+        const activeCue = getActiveCueForTime(resolved.captions.cues, resolved.source.currentTime);
+        setCaptionOverlayCue(activeCue, resolved.captions);
         updateCaptionStatus(time);
       }
 
@@ -3903,23 +3981,96 @@
         }
       }
 
-      function syncPhonePreview(options = {}) {
+      function syncCanvasPreview() {
         if (!mainVideo.src) return;
-        updateKickOverlay();
-        updateCaptionOverlay();
-        const force = !!options.force;
-        phoneLayerVideos.forEach((video) => {
-          if (!video.src) return;
-          if (force || Math.abs(video.currentTime - mainVideo.currentTime) > 0.25) {
-            try { video.currentTime = mainVideo.currentTime; } catch {}
-          }
-          video.playbackRate = mainVideo.playbackRate;
-          if (mainVideo.paused) {
-            video.pause();
-          } else {
-            video.play().catch(() => {});
-          }
-        });
+        const scene = buildResolvedScene(editorState, { time: mainVideo.currentTime });
+        editorState.source.currentTime = scene.source.currentTime;
+        renderResolvedSceneToCanvas(scene);
+      }
+
+      function getActiveTime() {
+        const time = Number(mainVideo.currentTime);
+        return Number.isFinite(time) ? time : 0;
+      }
+
+      function updatePlayheadFromTime(time = getActiveTime(), duration = getEffectiveDuration()) {
+        const percent = duration > 0 ? clamp(time, 0, duration) / duration * 100 : 0;
+        playhead.style.left = `${percent}%`;
+      }
+
+      function updatePlayheadFromVideo() {
+        const scene = buildResolvedScene(editorState, { time: Number(mainVideo.currentTime) || 0 });
+        updatePlayheadFromTime(scene.source.currentTime, scene.source.duration);
+      }
+
+      function getVisiblePreviewRenderSize(scene) {
+        const quality = typeof getExportQualitySettings === "function" ? getExportQualitySettings() : null;
+        if (quality?.width && quality?.height) return { width: quality.width, height: quality.height };
+        const horizontal = scene?.layout?.format === "horizontal";
+        return { width: horizontal ? 1280 : 720, height: horizontal ? 720 : 1280 };
+      }
+
+      function renderResolvedSceneToVisibleCanvas(scene) {
+        if (!compositionCanvas || !compositionCtx || !scene) return;
+        const { width, height } = getVisiblePreviewRenderSize(scene);
+        if (compositionCanvas.width !== width) compositionCanvas.width = width;
+        if (compositionCanvas.height !== height) compositionCanvas.height = height;
+        drawCompositionFrame(compositionCtx, width, height, scene);
+      }
+
+      function renderResolvedSceneToCanvas(scene) {
+        const activeLayout = scene.layout;
+        layoutTitle.textContent = activeLayout.label;
+        editorCanvas.dataset.layout = activeLayout.rendererKey;
+        editorCanvas.dataset.layoutKey = activeLayout.key;
+        editorCanvas.dataset.format = activeLayout.format;
+        editorCanvas.dataset.cameraMode = activeLayout.cameraMode;
+        editorCanvas.dataset.aspectRatio = activeLayout.aspectRatio;
+        applyCropState(activeLayout.crops);
+        applyKickSceneToPreview(scene.overlays.kick, scene.source.duration);
+        setCaptionOverlayCue(scene.captions.activeCue, scene.captions);
+        renderResolvedSceneToVisibleCanvas(scene);
+        updatePlayheadFromTime(scene.source.currentTime, scene.source.duration);
+      }
+
+      function applyKickSceneToPreview(kickScene, sourceDuration = 1) {
+        const scene = kickScene || {};
+        const duration = Number.isFinite(sourceDuration) ? sourceDuration : getEffectiveDuration();
+        const start = scene.apply === "range" ? clamp(scene.start, 0, duration - 0.1) : 0;
+        const end = scene.apply === "range" ? clamp(scene.end, start + 0.1, duration) : duration;
+        const visible = !!scene.enabled && scene.apply !== "range" ? true : !!scene.enabled && scene.visible !== false;
+
+        kickCanvasOverlay.classList.toggle("active", visible);
+        kickCanvasOverlay.setAttribute("aria-hidden", String(!visible));
+        applyBox(kickCanvasOverlay, scene.box || { x: 5, y: 87, w: 90, h: 8 });
+        kickCanvasOverlay.dataset.style = scene.style || "green";
+        kickCanvasOverlay.dataset.caps = scene.allCaps ? "all" : "none";
+        kickCanvasOverlay.dataset.stateLabel = visible ? "On" : "Off";
+        const userLabel = `${scene.user || "edmatthews"}`.trim().toLowerCase();
+        const activeText = scene.text || (scene.allCaps ? `KICK.COM/${userLabel.toUpperCase()}` : `kick.com/${userLabel}`);
+        kickCanvasOverlay.title = visible ? activeText : "Kick overlay off";
+
+        kickState.text = activeText;
+        kickTemplateToggle.setAttribute("aria-pressed", String(!!scene.enabled));
+        kickTemplateToggle.dataset.stateLabel = visible ? "On" : "Off";
+        if (!visible) {
+          kickElementStatus.classList.remove("active");
+          kickElementStatus.textContent = "Kick lower-third overlay is off.";
+        } else if (scene.apply === "whole") {
+          kickElementStatus.classList.add("active");
+          kickElementStatus.textContent = `Visible for the whole clip as ${activeText}.`;
+        } else {
+          kickElementStatus.classList.add("active");
+          kickElementStatus.textContent = `Visible from ${formatClock(start)} to ${formatClock(end)} as ${activeText}.`;
+        }
+
+        kickTimelineClip.classList.toggle("active", !!scene.enabled);
+        const left = (start / duration) * 100;
+        const width = Math.max(2, ((end - start) / duration) * 100);
+        kickTimelineClip.style.left = `${left}%`;
+        kickTimelineClip.style.width = `${width}%`;
+        kickTimelineLabel.textContent = scene.apply === "whole" ? "KICK whole clip" : `KICK ${formatClock(start)}-${formatClock(end)}`;
+        setKickApplyMode(scene.apply === "range" ? "range" : "whole");
       }
 
       function formatClock(seconds) {
@@ -3981,59 +4132,41 @@
         element.style.outline = box.outline || "";
       }
 
-      function applyPhoneBox(element, box) {
-        if (!element) return;
-        element.style.left = `${box.x}%`;
-        element.style.top = `${box.y}%`;
-        element.style.right = "auto";
-        element.style.bottom = "auto";
-        element.style.width = `${box.w}%`;
-        element.style.height = `${box.h}%`;
-      }
-
       function clearBox(element) {
         ["left", "top", "right", "bottom", "width", "height", "display", "borderRadius", "borderWidth", "background", "outline"].forEach((property) => {
           element.style[property] = "";
         });
       }
 
-      function applyCropState() {
+      function applyCropState(layoutCrops = cropState) {
         const editorElements = { focus: focusPanel, map: mapBox, facecamLeft, facecamRight };
-        const phoneElements = {
-          background: document.getElementById("phoneBgVideo"),
-          focus: phoneVideo,
-          map: document.getElementById("phoneMapVideo"),
-          facecamLeft: document.getElementById("phoneFacecamLeftVideo"),
-          facecamRight: document.getElementById("phoneFacecamRightVideo"),
-        };
         PANEL_KEYS.forEach((panelKey) => {
-          applyPanelElement(editorElements[panelKey], cropState[panelKey]);
-          applyPanelElement(phoneElements[panelKey], cropState[panelKey]);
+          applyPanelElement(editorElements[panelKey], layoutCrops?.[panelKey] || cropState[panelKey]);
         });
       }
 
       function getEffectiveDuration() {
-        return Math.max(1, Number(mainVideo.duration) || clipDuration || 34);
+        return Math.max(1, Number(editorState.source.duration) || Number(mainVideo.duration) || 34);
       }
 
       function setDuration(duration) {
-        clipDuration = Math.max(1, Number(duration) || 34);
-        durationLabel.textContent = formatClock(clipDuration);
-        trimStartRange.max = String(clipDuration);
-        trimEndRange.max = String(clipDuration);
-        if (!Number.isFinite(Number(trimEndRange.value)) || Number(trimEndRange.value) > clipDuration) {
-          trimEndRange.value = String(clipDuration);
+        editorState.source.duration = Math.max(1, Number(duration) || 34);
+        durationLabel.textContent = formatClock(editorState.source.duration);
+        trimStartRange.max = String(editorState.source.duration);
+        trimEndRange.max = String(editorState.source.duration);
+        if (!Number.isFinite(Number(trimEndRange.value)) || Number(trimEndRange.value) > editorState.source.duration) {
+          trimEndRange.value = String(editorState.source.duration);
         }
-        trimState.start = clamp(trimState.start, 0, clipDuration - 0.1);
-        trimState.end = clamp(trimState.end || clipDuration, trimState.start + 0.1, clipDuration);
+        trimState.start = clamp(trimState.start, 0, editorState.source.duration - 0.1);
+        trimState.end = clamp(trimState.end || editorState.source.duration, trimState.start + 0.1, editorState.source.duration);
         trimStartRange.value = String(trimState.start);
         trimEndRange.value = String(trimState.end);
         if (kickState.apply === "whole") {
           kickState.start = 0;
-          kickState.end = clipDuration;
+          kickState.end = editorState.source.duration;
         } else {
-          kickState.start = clamp(kickState.start, 0, clipDuration - 0.1);
-          kickState.end = clamp(kickState.end, kickState.start + 0.1, clipDuration);
+          kickState.start = clamp(kickState.start, 0, editorState.source.duration - 0.1);
+          kickState.end = clamp(kickState.end, kickState.start + 0.1, editorState.source.duration);
         }
         updateTrimControls();
         updateKickOverlay();
@@ -4206,7 +4339,7 @@
           setStep("layouts");
           await waitForVideoReady(mainVideo);
           setSourceSummary(`${activeSourceLabel} loaded (${formatClock(getEffectiveDuration())}). Ready to edit.`);
-          syncPhonePreview({ force: true });
+          syncCanvasPreview();
         } catch (error) {
           clipLibrarySummary.textContent = error instanceof Error ? error.message : "Could not edit this clip.";
         }
@@ -4274,9 +4407,10 @@
         return kickState.allCaps ? `KICK.COM/${user}` : `kick.com/${user}`;
       }
 
-      function getKickTextColors() {
-        if (kickState.style === "lime-gradient") return { start: "#d9ff79", end: "#52f51b" };
-        if (kickState.style === "green-white") return { start: "#52f51b", end: "#ffffff" };
+      function getKickTextColors(style = "green") {
+        const normalizedStyle = ["green", "lime-gradient", "green-white"].includes(style) ? style : "green";
+        if (normalizedStyle === "lime-gradient") return { start: "#d9ff79", end: "#52f51b" };
+        if (normalizedStyle === "green-white") return { start: "#52f51b", end: "#ffffff" };
         return { start: "#52f51b", end: "#52f51b" };
       }
 
@@ -4319,31 +4453,47 @@
         return next;
       }
 
+      function normalizeKickDisplayText(sceneKick) {
+        const user = `${sceneKick?.user || "edmatthews"}`.trim().toLowerCase();
+        return sceneKick?.allCaps ? `KICK.COM/${user.toUpperCase()}` : `kick.com/${user}`;
+      }
+
       function renderKickBannerCanvas(width, height, options = {}) {
         const pixelRatio = options.pixelRatio || 2;
+        const sceneKick = {
+          user: `${options?.scene?.user || "edmatthews"}`.trim() || "edmatthews",
+          allCaps: !!options?.scene?.allCaps,
+          style: options?.scene?.style || "green",
+          glow: options?.scene?.glow ?? 0,
+          safeEdge: options?.scene?.safeEdge ?? 0,
+          gap: options?.scene?.gap ?? 0,
+          textOffset: options?.scene?.textOffset ?? 0,
+          exactKickWidth: options?.scene?.exactKickWidth !== false,
+        };
         const canvas = document.createElement("canvas");
         canvas.width = Math.max(1, Math.round(width * pixelRatio));
         canvas.height = Math.max(1, Math.round(height * pixelRatio));
         const ctx = canvas.getContext("2d");
         ctx.scale(pixelRatio, pixelRatio);
 
-        const glow = clamp(kickState.glow, 0, 150) / 100;
-        const safeEdge = clamp(kickState.safeEdge, 0, 40);
-        const gap = clamp(kickState.gap, 0, 1000);
-        const textOffset = clamp(kickState.textOffset, -6, 8);
+        const glow = clamp(sceneKick.glow, 0, 150) / 100;
+        const safeEdge = clamp(sceneKick.safeEdge, 0, 40);
+        const gap = clamp(sceneKick.gap, 0, 1000);
+        const textOffset = clamp(sceneKick.textOffset, -6, 8);
         const barH = Math.max(height * 0.58, 14);
         const barY = height - barH;
         const maxLogoW = width * 0.36;
         const naturalLogoW = Math.min(maxLogoW, Math.min(height * 0.9, barH * 1.42) * 3.12);
-        const logoW = kickState.exactKickWidth ? naturalLogoW : Math.min(width * 0.4, naturalLogoW + gap * 0.4);
+        const exactKickWidth = sceneKick.exactKickWidth !== false;
+        const logoW = exactKickWidth ? naturalLogoW : Math.min(width * 0.4, naturalLogoW + gap * 0.4);
         const logoH = logoW / 3.12;
         const logoX = Math.max(6, safeEdge * 0.55);
         const logoY = height - logoH - Math.max(1, height * 0.1);
         const rightPad = Math.max(8, safeEdge);
         const minTextX = logoX + logoW + 4;
         const textMaxW = Math.max(20, width - minTextX - rightPad);
-        const text = getKickDisplayText();
-        const colors = getKickTextColors();
+        const text = normalizeKickDisplayText(sceneKick);
+        const colors = getKickTextColors(sceneKick.style);
 
         ctx.save();
         ctx.shadowBlur = Math.round(12 * glow);
@@ -4438,11 +4588,15 @@
         kickState.text = getKickDisplayText();
         kickState.box = normalizeBox(kickState.box, 25, 4);
 
-        const previewCanvas = renderKickBannerCanvas(Math.max(260, 720 * kickState.box.w / 100), Math.max(42, 720 * kickState.box.h / 100), { pixelRatio: 1 });
+        const sceneKickForRender = buildResolvedScene(editorState, { time: getActiveTime() }).overlays.kick;
+        const previewCanvas = renderKickBannerCanvas(
+          Math.max(260, 720 * kickState.box.w / 100),
+          Math.max(42, 720 * kickState.box.h / 100),
+          { pixelRatio: 1, scene: sceneKickForRender },
+        );
         const previewSrc = previewCanvas.toDataURL("image/png");
         kickMiniPreviewImage.src = previewSrc;
         kickCanvasImage.src = previewSrc;
-        kickPhoneImage.src = previewSrc;
         kickHandleInput.value = kickState.user;
         syncKickSizeInputs();
         updateKickStyleLabels();
@@ -4451,11 +4605,8 @@
 
         const visible = overlayShouldShow();
         kickCanvasOverlay.classList.toggle("active", visible);
-        kickPhoneOverlay.classList.toggle("active", visible);
         kickCanvasOverlay.setAttribute("aria-hidden", String(!visible));
-        kickPhoneOverlay.setAttribute("aria-hidden", String(!visible));
         applyBox(kickCanvasOverlay, kickState.box);
-        applyPhoneBox(kickPhoneOverlay, kickState.box);
         kickTemplateToggle.setAttribute("aria-pressed", String(kickState.enabled));
         setKickApplyMode(kickState.apply);
         updateKickElementStatus(start, end);
@@ -4648,7 +4799,7 @@
               setSourceSummary(`${activeSourceLabel} loaded: ${formatClock(start)} to ${formatClock(end)}. Ready to edit.`);
               setStep("layouts");
               mainVideo.play().catch(() => {});
-              syncPhonePreview({ force: true });
+              syncCanvasPreview();
               setStatus(youtubeHint, "Ready to edit. Choose a layout next.", "success");
             } catch (error) {
               setStatus(youtubeHint, `Load failed: ${error instanceof Error ? error.message : "Could not load clip."}`, "error");
@@ -4805,11 +4956,6 @@
         editorCanvas.dataset.format = layoutState.format;
         editorCanvas.dataset.cameraMode = activeLayout.cameraMode;
         editorCanvas.dataset.aspectRatio = activeLayout.aspectRatio;
-        phonePreview.dataset.layout = activeLayout.rendererKey;
-        phonePreview.dataset.layoutKey = activeLayout.key;
-        phonePreview.dataset.format = layoutState.format;
-        phonePreview.dataset.cameraMode = activeLayout.cameraMode;
-        phonePreview.dataset.aspectRatio = activeLayout.aspectRatio;
         mainVideo.style.filter = activeLayout.editorVideoFilter || "";
         layoutTitle.textContent = activeLayout.label;
         PANEL_KEYS.forEach((panelKey) => {
@@ -4817,7 +4963,7 @@
         });
         applyCropState();
         updateKickOverlay();
-        syncPhonePreview({ force: true });
+        syncCanvasPreview();
       }
 
       toolButtons.forEach((button) => button.addEventListener("click", () => setStep(button.dataset.step)));
@@ -5016,33 +5162,33 @@
         seekToTrimStart();
         if (mainVideo.paused) {
           mainVideo.play().catch(() => {});
-          syncPhonePreview({ force: true });
+          syncCanvasPreview();
           playButton.textContent = "⏸";
         } else {
           mainVideo.pause();
-          syncPhonePreview();
+          syncCanvasPreview();
           playButton.textContent = "▶";
         }
       });
       mainVideo.addEventListener("play", () => {
         playButton.textContent = "⏸";
         seekToTrimStart();
-        syncPhonePreview({ force: true });
+        syncCanvasPreview();
       });
       mainVideo.addEventListener("pause", () => {
         playButton.textContent = "▶";
-        syncPhonePreview();
+        syncCanvasPreview();
       });
       mainVideo.addEventListener("loadedmetadata", () => setDuration(mainVideo.duration));
-      mainVideo.addEventListener("seeked", () => syncPhonePreview({ force: true }));
+      mainVideo.addEventListener("seeked", () => syncCanvasPreview());
       mainVideo.addEventListener("timeupdate", () => {
         if (!isExporting && mainVideo.src && !mainVideo.paused && mainVideo.currentTime > trimState.end) {
           mainVideo.pause();
           mainVideo.currentTime = trimState.start;
         }
-        syncPhonePreview();
+        syncCanvasPreview();
       });
-      mainVideo.addEventListener("ratechange", () => syncPhonePreview({ force: true }));
+      mainVideo.addEventListener("ratechange", () => syncCanvasPreview());
       function setKickStyle(style) {
         kickState.style = ["green", "lime-gradient", "green-white"].includes(style) ? style : "green";
         document.querySelectorAll("[data-kick-style]").forEach((item) => {
@@ -5118,7 +5264,8 @@
         const baseHeight = layoutState.format === "horizontal" ? 720 : 1280;
         const width = Math.max(260, Math.round(baseWidth * kickState.box.w / 100));
         const height = Math.max(42, Math.round(baseHeight * kickState.box.h / 100));
-        const canvas = renderKickBannerCanvas(width, height, { pixelRatio: 2 });
+        const sceneKickForRender = buildResolvedScene(editorState, { time: getActiveTime() }).overlays.kick;
+        const canvas = renderKickBannerCanvas(width, height, { pixelRatio: 2, scene: sceneKickForRender });
         downloadBlob(dataUrlToBlob(canvas.toDataURL("image/png")), `kick-${safeFileName(kickState.user)}.png`);
         setStatus(exportStatus, "Kick overlay PNG downloaded.", "success");
       });
@@ -5155,7 +5302,7 @@
             kickState.end = getEffectiveDuration();
           }
           updateKickOverlay();
-          syncPhonePreview({ force: true });
+          syncCanvasPreview();
         });
       });
       makeBoxInteractive(focusPanel, () => cropState.focus || getPercentRect(focusPanel), (box) => {
@@ -5190,14 +5337,10 @@
         updateTrimControls();
         if (mainVideo.src) mainVideo.currentTime = trimState.start;
         updateKickOverlay();
-        syncPhonePreview({ force: true });
+        syncCanvasPreview();
       }, { seekOnRelease: true });
       platformSelect.addEventListener("change", () => {
         setFormat(platformSelect.value === "YouTube horizontal" ? "horizontal" : "vertical");
-      });
-      platformPill.addEventListener("click", () => {
-        platformSelect.selectedIndex = (platformSelect.selectedIndex + 1) % platformSelect.options.length;
-        platformSelect.dispatchEvent(new Event("change"));
       });
       shapeSelect.addEventListener("change", applyShape);
 
@@ -5321,8 +5464,11 @@
       }
 
       function getPreviewBox(element, outputWidth, outputHeight) {
-        const previewRect = phonePreview.getBoundingClientRect();
+        const previewRect = editorCanvas.getBoundingClientRect();
         const rect = element.getBoundingClientRect();
+        if (!previewRect.width || !previewRect.height) {
+          return { x: 0, y: 0, w: 0, h: 0, scale: 1 };
+        }
         const scaleX = outputWidth / previewRect.width;
         const scaleY = outputHeight / previewRect.height;
         return {
@@ -5367,25 +5513,52 @@
         ctx.restore();
       }
 
-      function renderVideoLayerToCanvas(ctx, element, outputWidth, outputHeight) {
-        if (!canDrawElement(element)) return;
-        const style = window.getComputedStyle(element);
-        const box = getPreviewBox(element, outputWidth, outputHeight);
-        const radius = parseFloat(style.borderRadius || "0") * box.scale;
-        drawVideoCover(ctx, element, box, {
-          filter: style.filter && style.filter !== "none" ? style.filter : "",
-          opacity: parseFloat(style.opacity || "1"),
-          radius,
-        });
-        const borderWidth = parseFloat(style.borderTopWidth || "0") * box.scale;
-        drawLayerBorder(ctx, box, style.borderTopColor || "transparent", borderWidth, radius);
+      function getPercentPanelRect(panelBox, outputWidth, outputHeight) {
+        return {
+          x: (Number(panelBox?.x) || 0) / 100 * outputWidth,
+          y: (Number(panelBox?.y) || 0) / 100 * outputHeight,
+          w: (Number(panelBox?.w) || 0) / 100 * outputWidth,
+          h: (Number(panelBox?.h) || 0) / 100 * outputHeight,
+        };
       }
 
-      function renderKickOverlayToCanvas(ctx, outputWidth, outputHeight) {
-        if (!canDrawElement(kickPhoneOverlay)) return;
-        const box = getPreviewBox(kickPhoneOverlay, outputWidth, outputHeight);
-        const bannerCanvas = renderKickBannerCanvas(box.w, box.h, { pixelRatio: 2 });
-        ctx.drawImage(bannerCanvas, box.x, box.y, box.w, box.h);
+      function renderPanelLayerToCanvas(ctx, panelKey, panelBox, outputWidth, outputHeight) {
+        if (!panelBox) return;
+        const panelElements = {
+          focus: focusPanel,
+          map: mapBox,
+          facecamLeft,
+          facecamRight,
+        };
+        const panelElement = panelElements[panelKey];
+        const style = panelElement ? window.getComputedStyle(panelElement) : null;
+        const rect = getPercentPanelRect(panelBox, outputWidth, outputHeight);
+        if (!rect.w || !rect.h) return;
+        const scaleX = outputWidth / editorCanvas.clientWidth;
+        const scaleY = outputHeight / editorCanvas.clientHeight;
+        const scale = Math.max(scaleX, scaleY);
+        const radius = panelBox.radius ? parseFloat(panelBox.radius) || 0 : parseFloat(style?.borderRadius || 0);
+        const borderWidth = parseFloat(style?.borderTopWidth || 0);
+        drawVideoCover(ctx, mainVideo, rect, {
+          opacity: parseFloat(style?.opacity || "1"),
+          filter: style?.filter && style.filter !== "none" ? style.filter : "",
+          radius: (Number.isFinite(radius) ? radius : 0) * scale,
+        });
+        drawLayerBorder(ctx, rect, (style ? style.borderTopColor : "") || "transparent", borderWidth * scale, (Number.isFinite(radius) ? radius : 0) * scale);
+      }
+
+      function renderKickOverlayToCanvas(ctx, outputWidth, outputHeight, sceneKick, sourceTime = 0) {
+        if (!sceneKick?.enabled || sceneKick.visible === false) return;
+        const percentBox = sceneKick.box || { x: 5, y: 87, w: 90, h: 8 };
+        const rect = {
+          x: (percentBox.x / 100) * outputWidth,
+          y: (percentBox.y / 100) * outputHeight,
+          w: (percentBox.w / 100) * outputWidth,
+          h: (percentBox.h / 100) * outputHeight,
+        };
+        if (rect.w <= 0 || rect.h <= 0) return;
+        const bannerCanvas = renderKickBannerCanvas(rect.w, rect.h, { pixelRatio: 2, scene: sceneKick });
+        ctx.drawImage(bannerCanvas, rect.x, rect.y, rect.w, rect.h);
       }
 
       function getCanvasCaptionStyle(styleKey) {
@@ -5411,14 +5584,18 @@
         });
       }
 
-      function renderCaptionOverlayToCanvas(ctx, outputWidth, outputHeight) {
-        const activeCue = getActiveCaptionCue(Number(mainVideo.currentTime) || trimState.start);
+      function renderCaptionOverlayToCanvas(ctx, outputWidth, outputHeight, sceneCaptions, sceneTime) {
+        if (!sceneCaptions) return;
+        const activeCue = sceneCaptions.activeCue || null;
         const text = activeCue?.text || "";
         if (!text) return;
-        if (!canDrawElement(captionPhoneOverlay)) return;
 
-        const box = getPreviewBox(captionPhoneOverlay, outputWidth, outputHeight);
-        const style = getCanvasCaptionStyle(captionState.style);
+        const isEnabled = !!sceneCaptions.enabled;
+        if (!isEnabled) return;
+        if (!canDrawElement(captionCanvasOverlay)) return;
+
+        const box = getPreviewBox(captionCanvasOverlay, outputWidth, outputHeight);
+        const style = getCanvasCaptionStyle(sceneCaptions.style);
         const fontSize = Math.max(24, Math.min(outputHeight * 0.06, box.h * 0.78 || outputHeight * 0.048));
         const lineHeight = fontSize * 1.08;
         const maxWidth = Math.max(40, box.w);
@@ -5432,21 +5609,24 @@
 
         const lines = wrapCanvasText(ctx, text.toUpperCase(), maxWidth).slice(0, 4);
         const startY = box.y + box.h / 2 - ((lines.length - 1) * lineHeight) / 2;
-        const cueProgress = activeCue ? clamp(((Number(mainVideo.currentTime) || activeCue.start) - activeCue.start) / 0.18, 0, 1) : 1;
+        const timeNow = Number.isFinite(Number(sceneTime)) ? Number(sceneTime) : (activeCue ? activeCue.start : 0);
+        const cueProgress = activeCue ? clamp((timeNow - activeCue.start) / 0.18, 0, 1) : 1;
         const easeProgress = 1 - Math.pow(1 - cueProgress, 3);
-        if (captionState.motion === "fade") {
+        const motion = sceneCaptions.motion || "fade";
+        if (motion === "fade") {
           ctx.globalAlpha = easeProgress;
-        } else if (captionState.motion === "sideways") {
+        } else if (motion === "sideways") {
           ctx.translate(-24 * box.scale * (1 - easeProgress), 0);
           ctx.globalAlpha = Math.max(0.25, easeProgress);
-        } else if (captionState.motion === "skewed") {
+        } else if (motion === "skewed") {
           ctx.translate(-16 * box.scale * (1 - easeProgress), 4 * box.scale * (1 - easeProgress));
           ctx.transform(1, 0, Math.tan((-10 * (1 - easeProgress) * Math.PI) / 180), 1, 0, 0);
           ctx.globalAlpha = Math.max(0.25, easeProgress);
         }
         lines.forEach((line, index) => {
           const y = startY + index * lineHeight;
-          ctx.lineWidth = captionState.strokeWidth > 0 ? Math.max(1, captionState.strokeWidth * (fontSize / 14)) : 0;
+          const strokeWidth = Number.isFinite(Number(sceneCaptions.strokeWidth)) ? Number(sceneCaptions.strokeWidth) : 2;
+          ctx.lineWidth = strokeWidth > 0 ? Math.max(1, strokeWidth * (fontSize / 14)) : 0;
           if (ctx.lineWidth > 0) {
             ctx.strokeStyle = style.stroke;
             ctx.strokeText(line, box.x + box.w / 2, y, maxWidth);
@@ -5457,18 +5637,15 @@
         ctx.restore();
       }
 
-      function drawCompositionFrame(ctx, outputWidth, outputHeight) {
+      function drawCompositionFrame(ctx, outputWidth, outputHeight, scene) {
+        if (!scene) throw new Error("Missing resolved scene for export rendering.");
         ctx.fillStyle = "#050505";
         ctx.fillRect(0, 0, outputWidth, outputHeight);
-        [
-          document.getElementById("phoneBgVideo"),
-          phoneVideo,
-          document.getElementById("phoneMapVideo"),
-          document.getElementById("phoneFacecamLeftVideo"),
-          document.getElementById("phoneFacecamRightVideo"),
-        ].forEach((layer) => renderVideoLayerToCanvas(ctx, layer, outputWidth, outputHeight));
-        renderKickOverlayToCanvas(ctx, outputWidth, outputHeight);
-        renderCaptionOverlayToCanvas(ctx, outputWidth, outputHeight);
+        (scene.layout.panels || []).forEach((panelKey) => {
+          renderPanelLayerToCanvas(ctx, panelKey, scene.layout.crops?.[panelKey] || null, outputWidth, outputHeight);
+        });
+        renderKickOverlayToCanvas(ctx, outputWidth, outputHeight, scene.overlays?.kick || null, scene.source.currentTime || 0);
+        renderCaptionOverlayToCanvas(ctx, outputWidth, outputHeight, scene.captions, scene.source.currentTime || 0);
       }
 
       async function renderFinalCompositionBlob() {
@@ -5496,7 +5673,7 @@
         isExporting = true;
         updateKickOverlay();
         updateCaptionOverlay(exportStart);
-        syncPhonePreview({ force: true });
+        syncCanvasPreview();
         let audioBridge = null;
 
         try {
@@ -5520,8 +5697,9 @@
           await mainVideo.play();
           await new Promise((resolve) => {
             function drawFrame() {
-              setCaptionOverlayCue(getActiveCaptionCue(Number(mainVideo.currentTime) || exportStart));
-              drawCompositionFrame(ctx, width, height);
+              const scene = buildResolvedScene(editorState, { time: Number(mainVideo.currentTime) || exportStart });
+              editorState.source.currentTime = scene.source.currentTime;
+              drawCompositionFrame(ctx, width, height, scene);
               if ((Number(mainVideo.currentTime) || 0) >= exportEnd || mainVideo.ended) {
                 resolve();
                 return;
@@ -5540,7 +5718,7 @@
           await seekVideo(mainVideo, Math.min(previousTime, getEffectiveDuration())).catch(() => {});
           if (!wasPaused) mainVideo.play().catch(() => {});
           isExporting = false;
-          syncPhonePreview({ force: true });
+          syncCanvasPreview();
         }
 
         if (!chunks.length) throw new Error("Final render completed with no video data.");
@@ -5567,7 +5745,7 @@
       }
 
       exportButton.addEventListener("click", async () => {
-        if (!videoUrl) {
+        if (!editorState.source.url) {
           setStep("source");
           setStatus(youtubeHint, "Add or preview a clip before exporting.", "error");
           setStatus(exportStatus, "Load a source first. Then export MP4.", "error");
