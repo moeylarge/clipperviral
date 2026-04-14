@@ -2255,7 +2255,7 @@
               </div>
               <div class="element-slider-grid">
                 <label>Glow <span id="kickGlowValue">0%</span><input id="kickGlowInput" type="range" min="0" max="150" step="5" value="0" /></label>
-                <label>Gap <span id="kickGapValue">88px</span><input id="kickGapInput" type="range" min="0" max="88" step="1" value="88" /></label>
+                <label>Gap <span id="kickGapValue">1000px</span><input id="kickGapInput" type="range" min="0" max="1000" step="10" value="1000" /></label>
                 <label>Safe edge <span id="kickSafeEdgeValue">14px</span><input id="kickSafeEdgeInput" type="range" min="0" max="40" step="1" value="14" /></label>
                 <label>Text offset <span id="kickTextOffsetValue">0px</span><input id="kickTextOffsetInput" type="range" min="-6" max="8" step="1" value="0" /></label>
               </div>
@@ -2487,7 +2487,7 @@
         style: "green",
         allCaps: true,
         glow: 0,
-        gap: 88,
+        gap: 1000,
         safeEdge: 14,
         textOffset: 0,
         exactKickWidth: true,
@@ -3385,7 +3385,7 @@
 
         const glow = clamp(kickState.glow, 0, 150) / 100;
         const safeEdge = clamp(kickState.safeEdge, 0, 40);
-        const gap = clamp(kickState.gap, 0, 88);
+        const gap = clamp(kickState.gap, 0, 1000);
         const textOffset = clamp(kickState.textOffset, -6, 8);
         const barH = Math.max(height * 0.58, 14);
         const barY = height - barH;
@@ -3395,9 +3395,9 @@
         const logoH = logoW / 3.12;
         const logoX = Math.max(6, safeEdge * 0.55);
         const logoY = height - logoH - Math.max(1, height * 0.1);
-        const textX = logoX + logoW + Math.max(4, gap);
         const rightPad = Math.max(8, safeEdge);
-        const textMaxW = Math.max(20, width - textX - rightPad);
+        const minTextX = logoX + logoW + 4;
+        const textMaxW = Math.max(20, width - minTextX - rightPad);
         const text = getKickDisplayText();
         const colors = getKickTextColors();
 
@@ -3412,6 +3412,10 @@
 
         const baseFont = Math.max(11, Math.min(barH * 0.62, height * 0.44));
         const fontSize = fitKickText(ctx, text, textMaxW, baseFont);
+        ctx.font = `700 ${fontSize}px Oswald, Arial Black, Impact, sans-serif`;
+        const textWidth = Math.min(textMaxW, ctx.measureText(text).width);
+        const requestedTextX = minTextX + Math.max(0, gap);
+        const textX = Math.min(requestedTextX, width - rightPad - textWidth);
         const gradient = ctx.createLinearGradient(textX, 0, Math.min(width, textX + textMaxW), 0);
         gradient.addColorStop(0, colors.start);
         gradient.addColorStop(1, colors.end);
@@ -4115,7 +4119,7 @@
 
       function syncKickStyleControls() {
         kickState.glow = clamp(kickGlowInput.value, 0, 150);
-        kickState.gap = clamp(kickGapInput.value, 0, 88);
+        kickState.gap = clamp(kickGapInput.value, 0, 1000);
         kickState.safeEdge = clamp(kickSafeEdgeInput.value, 0, 40);
         kickState.textOffset = clamp(kickTextOffsetInput.value, -6, 8);
         kickState.exactKickWidth = !!kickExactWidthToggle.checked;
