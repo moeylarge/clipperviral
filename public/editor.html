@@ -331,7 +331,12 @@
         gap: 8px;
       }
 
-      .layout-card {
+      .layout-grid.fixed-mode {
+        display: block;
+      }
+
+      .layout-card,
+      .layout-fixed-card {
         border: 1px solid #d5d9e8;
         border-radius: 14px;
         background: #fff;
@@ -344,10 +349,31 @@
         box-shadow: 0 12px 26px rgba(16, 19, 28, 0.07);
       }
 
-      .layout-card.active {
+      .layout-card.active,
+      .layout-fixed-card.active {
         outline: 3px solid rgba(112, 167, 255, 0.55);
         border-color: #70a7ff;
         box-shadow: 0 18px 40px rgba(34, 156, 255, 0.18);
+      }
+
+      .layout-fixed-card {
+        min-height: 0;
+        text-align: left;
+        grid-template-columns: auto;
+        gap: 8px;
+        cursor: default;
+      }
+
+      .layout-fixed-card small,
+      .layout-mode-note {
+        color: #667085;
+        font-size: 13px;
+        font-weight: 760;
+        line-height: 1.45;
+      }
+
+      .layout-mode-note {
+        margin: -2px 0 12px;
       }
 
       .thumb {
@@ -377,6 +403,7 @@
       .layout-card[data-layout="basecam"] .thumb::before { top: auto; bottom: 8px; left: 22px; }
       .layout-card[data-layout="mosaic"] .thumb { background: conic-gradient(from 90deg, #70d9ec, #415837, #e7f5f4, #384737, #70d9ec); }
       .layout-card[data-layout="dual"] .thumb::after { display: block; }
+      .layout-card[data-layout="horizontal-fullscreen"] .thumb::before { display: none; }
       .layout-card[data-layout="duo"] .thumb::before,
       .layout-card[data-layout="duo"] .thumb::after { display: block; width: 44px; height: 60px; top: 12px; border-radius: 7px; }
       .layout-card[data-layout="half"] .thumb::before { width: 86px; height: 78px; left: 28px; top: 8px; border-radius: 8px; }
@@ -834,6 +861,10 @@
         bottom: 12px;
       }
 
+      .editor-canvas[data-layout="horizontal-fullscreen"] .focus-panel { left: 0; width: 100%; }
+      .editor-canvas[data-layout="horizontal-fullscreen"] .facecam,
+      .editor-canvas[data-layout="horizontal-fullscreen"] .map-box { display: none; }
+
       .canvas-toolbar {
         min-height: 44px;
         border-radius: 13px;
@@ -883,17 +914,17 @@
         outline-color: var(--green);
       }
 
-      .phone-preview[data-format="horizontal"] .phone-focus {
+      .phone-preview[data-layout="horizontal-fullscreen"] .phone-focus {
         inset: 0 !important;
         width: 100% !important;
         height: 100% !important;
         border-radius: 0 !important;
       }
 
-      .phone-preview[data-format="horizontal"] .phone-bg,
-      .phone-preview[data-format="horizontal"] .phone-map,
-      .phone-preview[data-format="horizontal"] .phone-facecam-left,
-      .phone-preview[data-format="horizontal"] .phone-facecam-right {
+      .phone-preview[data-layout="horizontal-fullscreen"] .phone-bg,
+      .phone-preview[data-layout="horizontal-fullscreen"] .phone-map,
+      .phone-preview[data-layout="horizontal-fullscreen"] .phone-facecam-left,
+      .phone-preview[data-layout="horizontal-fullscreen"] .phone-facecam-right {
         display: none !important;
       }
 
@@ -1096,6 +1127,8 @@
         border-width: 2px 0 0;
         border-radius: 0;
       }
+
+      .phone-preview[data-layout="horizontal-fullscreen"] .phone-focus { inset: 0; }
 
       .phone-preview[data-layout="small"] .phone-composition::before,
       .phone-preview[data-layout="circle"] .phone-composition::before,
@@ -1521,7 +1554,8 @@
             <button class="chip active" data-format="vertical" type="button">Vertical</button>
             <button class="chip" data-format="horizontal" type="button">Horizontal</button>
           </div>
-          <div class="section-title">Layouts</div>
+          <div class="section-title" id="layoutSectionTitle">Layouts</div>
+          <div class="layout-mode-note" id="layoutModeNote">Vertical clips support multiple camera layouts.</div>
           <div class="layout-grid" id="layoutGrid"></div>
         </section>
 
@@ -1736,18 +1770,40 @@
       let videoUrl = "";
       let youtubeJobId = "";
       let youtubeClips = [];
-      let selectedLayout = "dual";
-      let selectedFormat = "vertical";
       let clipDuration = 34;
       let isExporting = false;
+
+      const LAYOUT_REGISTRY = {
+        small: { key: "small", label: "Small facecam", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "small", panels: ["focus", "facecamLeft"] },
+        circle: { key: "circle", label: "Circle facecam", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "circle", panels: ["focus", "facecamLeft"] },
+        "game-ui": { key: "game-ui", label: "Game UI", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "game-ui", panels: ["focus", "facecamRight"] },
+        split: { key: "split", label: "Split", format: "vertical", cameraMode: "split", aspectRatio: "9:16", rendererKey: "split", panels: ["focus", "facecamRight"] },
+        blurred: { key: "blurred", label: "Blurred", format: "vertical", cameraMode: "single", aspectRatio: "9:16", rendererKey: "blurred", panels: ["background", "focus"] },
+        fullscreen: { key: "fullscreen", label: "Fullscreen", format: "vertical", cameraMode: "single", aspectRatio: "9:16", rendererKey: "fullscreen", panels: ["focus"] },
+        basecam: { key: "basecam", label: "Basecam", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "basecam", panels: ["focus", "facecamRight"] },
+        mosaic: { key: "mosaic", label: "Mosaic", format: "vertical", cameraMode: "mosaic", aspectRatio: "9:16", rendererKey: "mosaic", panels: ["focus", "map", "facecamRight"] },
+        dual: { key: "dual", label: "Dual facecam", format: "vertical", cameraMode: "dual", aspectRatio: "9:16", rendererKey: "dual", panels: ["focus", "facecamLeft", "facecamRight"] },
+        duo: { key: "duo", label: "Duo Split", format: "vertical", cameraMode: "dual", aspectRatio: "9:16", rendererKey: "duo", panels: ["focus", "facecamLeft", "facecamRight"] },
+        half: { key: "half", label: "Half", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "half", panels: ["focus", "facecamRight"] },
+        "horizontal-fullscreen": { key: "horizontal-fullscreen", label: "Horizontal Fullscreen", format: "horizontal", cameraMode: "single", aspectRatio: "16:9", rendererKey: "horizontal-fullscreen", panels: ["focus"] },
+      };
+      const DEFAULT_LAYOUT_BY_FORMAT = { vertical: "dual", horizontal: "horizontal-fullscreen" };
+      const PANEL_KEYS = new Set(["background", "focus", "map", "facecamLeft", "facecamRight"]);
+      const layoutState = {
+        format: "vertical",
+        activeLayoutKey: DEFAULT_LAYOUT_BY_FORMAT.vertical,
+        transformsByPanel: {
+          focus: null,
+          map: null,
+          facecamLeft: null,
+          facecamRight: null,
+        },
+        overrides: {},
+      };
       const trimState = { start: 0, end: 34 };
       const kickState = { enabled: false, apply: "whole", start: 0, end: 34, text: "KICK.COM/EDMATTHEWS", box: { x: 5, y: 78, w: 90, h: 13 } };
-      const cropState = {
-        focus: null,
-        map: null,
-        facecamLeft: null,
-        facecamRight: null,
-      };
+      const cropState = layoutState.transformsByPanel;
+      const SINGLE_LAYOUT_BY_FORMAT = { horizontal: DEFAULT_LAYOUT_BY_FORMAT.horizontal };
 
       const toolButtons = document.querySelectorAll(".tool-btn");
       const views = document.querySelectorAll(".step-view");
@@ -1775,6 +1831,8 @@
       const youtubeCandidates = document.getElementById("youtubeCandidates");
       const localClipInput = document.getElementById("localClipInput");
       const layoutGrid = document.getElementById("layoutGrid");
+      const layoutSectionTitle = document.getElementById("layoutSectionTitle");
+      const layoutModeNote = document.getElementById("layoutModeNote");
       const editorCanvas = document.getElementById("editorCanvas");
       const playButton = document.getElementById("playButton");
       const exportButton = document.getElementById("exportButton");
@@ -1805,15 +1863,6 @@
       const platformSelect = document.getElementById("platformSelect");
       const platformPill = document.getElementById("platformPill");
       const shapeSelect = document.getElementById("shapeSelect");
-
-      const layouts = [
-        ["small", "Small facecam"], ["circle", "Circle facecam"], ["game-ui", "Game UI"],
-        ["split", "Split"], ["blurred", "Blurred"], ["fullscreen", "Fullscreen"],
-        ["basecam", "Basecam"], ["mosaic", "Mosaic"], ["dual", "Dual facecam"],
-        ["duo", "Duo Split"], ["half", "Half"]
-      ];
-
-      const layoutLabels = Object.fromEntries(layouts);
 
       function setStep(step) {
         if (!steps.includes(step)) return;
@@ -1852,20 +1901,126 @@
 
       function updatePlatformPill() {
         platformPill.textContent = `♪ ${platformSelect.value}⌄`;
-        phonePreview.dataset.format = platformSelect.value === "YouTube horizontal" ? "horizontal" : "vertical";
+        phonePreview.dataset.format = layoutState.format;
       }
 
-      function applyFormat() {
-        workspace.dataset.format = selectedFormat;
-        editorCanvas.dataset.format = selectedFormat;
-        phonePreview.dataset.format = selectedFormat;
-        if (selectedFormat === "horizontal") {
+      function validateLayoutDefinition(layout) {
+        if (!layout || layout.key !== layoutState.activeLayoutKey) {
+          throw new Error(`Unknown layout key: ${layoutState.activeLayoutKey}`);
+        }
+        if (layout.format !== layoutState.format) {
+          throw new Error(`Layout ${layout.key} does not match ${layoutState.format} format.`);
+        }
+        if (!Array.isArray(layout.panels) || layout.panels.length === 0) {
+          throw new Error(`Layout ${layout.key} is missing panel definitions.`);
+        }
+        const badPanel = layout.panels.find((panel) => !PANEL_KEYS.has(panel));
+        if (badPanel) throw new Error(`Layout ${layout.key} uses unsupported panel "${badPanel}".`);
+        return layout;
+      }
+
+      function validateLayoutRegistry() {
+        const keys = Object.keys(LAYOUT_REGISTRY);
+        keys.forEach((key) => {
+          const layout = LAYOUT_REGISTRY[key];
+          if (layout.key !== key) throw new Error(`Layout registry key mismatch: ${key}`);
+          if (!["vertical", "horizontal"].includes(layout.format)) throw new Error(`Layout ${key} has unsupported format.`);
+          if (!DEFAULT_LAYOUT_BY_FORMAT[layout.format]) throw new Error(`Layout ${key} has no default format family.`);
+          if (!Array.isArray(layout.panels) || !layout.panels.length) throw new Error(`Layout ${key} is missing panels.`);
+          const badPanel = layout.panels.find((panel) => !PANEL_KEYS.has(panel));
+          if (badPanel) throw new Error(`Layout ${key} uses unsupported panel "${badPanel}".`);
+        });
+        Object.entries(DEFAULT_LAYOUT_BY_FORMAT).forEach(([format, key]) => {
+          const layout = LAYOUT_REGISTRY[key];
+          if (!layout || layout.format !== format) throw new Error(`Default layout ${key} does not match ${format}.`);
+        });
+        Object.entries(SINGLE_LAYOUT_BY_FORMAT).forEach(([format, requiredKey]) => {
+          const singleFormatEntries = keys.map((key) => LAYOUT_REGISTRY[key]).filter((layout) => layout.format === format);
+          if (singleFormatEntries.length !== 1 || singleFormatEntries[0].key !== requiredKey) {
+            throw new Error(`${format} must resolve to exactly one canonical layout: ${requiredKey}.`);
+          }
+        });
+      }
+
+      function getActiveLayout() {
+        return validateLayoutDefinition(LAYOUT_REGISTRY[layoutState.activeLayoutKey]);
+      }
+
+      function getLayoutsForFormat(format) {
+        return Object.values(LAYOUT_REGISTRY).filter((layout) => layout.format === format);
+      }
+
+      function resolveLayoutForFormat(format, preferredKey = layoutState.activeLayoutKey) {
+        if (SINGLE_LAYOUT_BY_FORMAT[format]) return SINGLE_LAYOUT_BY_FORMAT[format];
+        const preferred = LAYOUT_REGISTRY[preferredKey];
+        if (preferred?.format === format) return preferred.key;
+        return DEFAULT_LAYOUT_BY_FORMAT[format];
+      }
+
+      function syncFormatControls() {
+        document.querySelectorAll(".chip[data-format]").forEach((chip) => chip.classList.toggle("active", chip.dataset.format === layoutState.format));
+        if (layoutState.format === "horizontal") {
           platformSelect.value = "YouTube horizontal";
         } else if (platformSelect.value === "YouTube horizontal") {
           platformSelect.value = "TikTok preview";
         }
         updatePlatformPill();
+      }
+
+      function applyFormat() {
+        workspace.dataset.format = layoutState.format;
+        editorCanvas.dataset.format = layoutState.format;
+        phonePreview.dataset.format = layoutState.format;
+        syncFormatControls();
         syncPhonePreview({ force: true });
+      }
+
+      function setFormat(format) {
+        if (!["vertical", "horizontal"].includes(format)) {
+          setStatus(exportStatus, `Unsupported format: ${format}`, "error");
+          return false;
+        }
+        layoutState.format = format;
+        layoutState.activeLayoutKey = resolveLayoutForFormat(format);
+        applyFormat();
+        applyLayout();
+        renderLayoutCards();
+        return true;
+      }
+
+      function setActiveLayout(layoutKey) {
+        const layout = LAYOUT_REGISTRY[layoutKey];
+        if (!layout) {
+          setStatus(exportStatus, `Unknown layout: ${layoutKey}`, "error");
+          return false;
+        }
+        if (SINGLE_LAYOUT_BY_FORMAT[layoutState.format] && layout.key !== SINGLE_LAYOUT_BY_FORMAT[layoutState.format]) {
+          setStatus(exportStatus, `${layoutState.format} uses a fixed ${LAYOUT_REGISTRY[SINGLE_LAYOUT_BY_FORMAT[layoutState.format]].label} output.`, "error");
+          return false;
+        }
+        if (layout.format !== layoutState.format) {
+          setStatus(exportStatus, `${layout.label} is not available for ${layoutState.format} clips.`, "error");
+          return false;
+        }
+        layoutState.activeLayoutKey = layout.key;
+        applyLayout();
+        renderLayoutCards();
+        return true;
+      }
+
+      function updatePanelTransform(panelKey, transform) {
+        if (!PANEL_KEYS.has(panelKey)) {
+          setStatus(exportStatus, `Unsupported panel transform: ${panelKey}`, "error");
+          return false;
+        }
+        const validTransform = transform == null || ["x", "y", "w", "h"].every((key) => Number.isFinite(Number(transform[key])));
+        if (!validTransform) {
+          setStatus(exportStatus, `Malformed transform for panel: ${panelKey}`, "error");
+          return false;
+        }
+        layoutState.transformsByPanel[panelKey] = transform;
+        applyCropState();
+        return true;
       }
 
       function applyShape() {
@@ -1878,8 +2033,7 @@
         };
         editorCanvas.dataset.shape = valueMap[shapeSelect.value] || "freeform";
         requestAnimationFrame(() => {
-          cropState.focus = getPercentRect(focusPanel);
-          applyCropState();
+          updatePanelTransform("focus", getPercentRect(focusPanel));
         });
       }
 
@@ -2307,29 +2461,62 @@
 
       function renderLayoutCards() {
         layoutGrid.innerHTML = "";
-        layouts.forEach(([key, label]) => {
+        const availableLayouts = getLayoutsForFormat(layoutState.format);
+        const fixedLayoutKey = SINGLE_LAYOUT_BY_FORMAT[layoutState.format];
+        layoutGrid.classList.toggle("fixed-mode", Boolean(fixedLayoutKey));
+        if (fixedLayoutKey) {
+          const layout = LAYOUT_REGISTRY[fixedLayoutKey];
+          layoutSectionTitle.textContent = "Horizontal output";
+          layoutModeNote.textContent = "Horizontal is intentionally a single 16:9 fullscreen output. Choose Vertical for multi-angle camera layouts.";
+          const fixed = document.createElement("div");
+          fixed.className = "layout-fixed-card active";
+          fixed.dataset.layout = layout.rendererKey;
+          fixed.dataset.layoutKey = layout.key;
+          fixed.dataset.format = layout.format;
+          fixed.dataset.fixedLayout = "true";
+          fixed.setAttribute("aria-current", "true");
+          fixed.innerHTML = `<span>${layout.label}</span><small>Locked 16:9 renderer · no alternate horizontal camera layouts</small>`;
+          layoutGrid.appendChild(fixed);
+          return;
+        }
+
+        layoutSectionTitle.textContent = "Layouts";
+        layoutModeNote.textContent = "Vertical clips support multiple camera layouts.";
+        availableLayouts.forEach((layout) => {
           const button = document.createElement("button");
           button.type = "button";
-          button.className = `layout-card${key === selectedLayout ? " active" : ""}`;
-          button.dataset.layout = key;
-          button.innerHTML = `<span>${label}</span><span class="thumb"></span>`;
-          button.addEventListener("click", () => {
-            selectedLayout = key;
-            applyLayout();
-            renderLayoutCards();
-          });
+          button.className = `layout-card${layout.key === layoutState.activeLayoutKey ? " active" : ""}`;
+          button.dataset.layout = layout.rendererKey;
+          button.dataset.layoutKey = layout.key;
+          button.dataset.format = layout.format;
+          button.setAttribute("aria-pressed", String(layout.key === layoutState.activeLayoutKey));
+          button.innerHTML = `<span>${layout.label}</span><span class="thumb"></span>`;
+          button.addEventListener("click", () => setActiveLayout(layout.key));
           layoutGrid.appendChild(button);
         });
       }
 
       function applyLayout() {
+        let activeLayout;
+        try {
+          activeLayout = getActiveLayout();
+        } catch (error) {
+          setStatus(exportStatus, error instanceof Error ? error.message : "Invalid layout state.", "error");
+          return;
+        }
         [focusPanel, mapBox, facecamLeft, facecamRight, phoneVideo, document.getElementById("phoneMapVideo"), document.getElementById("phoneFacecamLeftVideo"), document.getElementById("phoneFacecamRightVideo")].forEach(clearBox);
-        editorCanvas.dataset.layout = selectedLayout;
-        editorCanvas.dataset.format = selectedFormat;
-        phonePreview.dataset.layout = selectedLayout;
-        phonePreview.dataset.format = selectedFormat;
+        editorCanvas.dataset.layout = activeLayout.rendererKey;
+        editorCanvas.dataset.layoutKey = activeLayout.key;
+        editorCanvas.dataset.format = layoutState.format;
+        editorCanvas.dataset.cameraMode = activeLayout.cameraMode;
+        editorCanvas.dataset.aspectRatio = activeLayout.aspectRatio;
+        phonePreview.dataset.layout = activeLayout.rendererKey;
+        phonePreview.dataset.layoutKey = activeLayout.key;
+        phonePreview.dataset.format = layoutState.format;
+        phonePreview.dataset.cameraMode = activeLayout.cameraMode;
+        phonePreview.dataset.aspectRatio = activeLayout.aspectRatio;
         mainVideo.style.filter = "";
-        layoutTitle.textContent = layoutLabels[selectedLayout] || "Custom layout";
+        layoutTitle.textContent = activeLayout.label;
         requestAnimationFrame(() => {
           cropState.focus = getPercentRect(focusPanel);
           cropState.map = getPercentRect(mapBox);
@@ -2358,9 +2545,7 @@
         });
       });
       document.querySelectorAll(".chip[data-format]").forEach((button) => button.addEventListener("click", () => {
-        selectedFormat = button.dataset.format;
-        document.querySelectorAll(".chip[data-format]").forEach((chip) => chip.classList.toggle("active", chip === button));
-        applyFormat();
+        setFormat(button.dataset.format);
       }));
       document.querySelectorAll('.step-view[data-view="effects"] .chip-row .chip, .step-view[data-view="captions"] .chip-row .chip').forEach((button) => {
         button.addEventListener("click", () => {
@@ -2473,20 +2658,16 @@
         });
       });
       makeBoxInteractive(focusPanel, () => cropState.focus || getPercentRect(focusPanel), (box) => {
-        cropState.focus = box;
-        applyCropState();
+        updatePanelTransform("focus", box);
       }, { minW: 10, minH: 20 });
       makeBoxInteractive(mapBox, () => cropState.map || getPercentRect(mapBox), (box) => {
-        cropState.map = box;
-        applyCropState();
+        updatePanelTransform("map", box);
       }, { minW: 8, minH: 8 });
       makeBoxInteractive(facecamLeft, () => cropState.facecamLeft || getPercentRect(facecamLeft), (box) => {
-        cropState.facecamLeft = box;
-        applyCropState();
+        updatePanelTransform("facecamLeft", box);
       }, { minW: 8, minH: 8 });
       makeBoxInteractive(facecamRight, () => cropState.facecamRight || getPercentRect(facecamRight), (box) => {
-        cropState.facecamRight = box;
-        applyCropState();
+        updatePanelTransform("facecamRight", box);
       }, { minW: 8, minH: 8 });
       makeBoxInteractive(kickCanvasOverlay, () => kickState.box, (box) => {
         kickState.box = box;
@@ -2511,9 +2692,7 @@
         syncPhonePreview({ force: true });
       }, { seekOnRelease: true });
       platformSelect.addEventListener("change", () => {
-        selectedFormat = platformSelect.value === "YouTube horizontal" ? "horizontal" : "vertical";
-        document.querySelectorAll(".chip[data-format]").forEach((chip) => chip.classList.toggle("active", chip.dataset.format === selectedFormat));
-        applyFormat();
+        setFormat(platformSelect.value === "YouTube horizontal" ? "horizontal" : "vertical");
       });
       platformPill.addEventListener("click", () => {
         platformSelect.selectedIndex = (platformSelect.selectedIndex + 1) % platformSelect.options.length;
@@ -2523,7 +2702,7 @@
 
       function getExportQualitySettings() {
         const activeQuality = document.querySelector(".quality-card.active")?.dataset?.quality || "1080";
-        const vertical = selectedFormat !== "horizontal";
+        const vertical = layoutState.format !== "horizontal";
         if (activeQuality === "720") return { width: vertical ? 720 : 1280, height: vertical ? 1280 : 720, fps: 30 };
         if (activeQuality === "720-60") return { width: vertical ? 720 : 1280, height: vertical ? 1280 : 720, fps: 60 };
         return { width: vertical ? 1080 : 1920, height: vertical ? 1920 : 1080, fps: 60 };
@@ -2816,7 +2995,7 @@
           const result = await renderFinalCompositionBlob();
           const startLabel = formatClock(result.start).replace(":", "-");
           const endLabel = formatClock(result.end).replace(":", "-");
-          downloadBlob(result.blob, `clipperviral-final-${safeFileName(selectedLayout)}-${startLabel}-${endLabel}.${result.extension}`);
+          downloadBlob(result.blob, `clipperviral-final-${safeFileName(layoutState.activeLayoutKey)}-${startLabel}-${endLabel}.${result.extension}`);
           setStatus(exportStatus, `Final render downloaded (${result.extension.toUpperCase()}). Includes selected layout, trim range and active overlays.`, "success");
         } catch (error) {
           setStatus(exportStatus, `Final render failed: ${error instanceof Error ? error.message : "Unknown export error."}`, "error");
@@ -2826,6 +3005,7 @@
         }
       });
 
+      validateLayoutRegistry();
       renderLayoutCards();
       applyLayout();
       applyFormat();
