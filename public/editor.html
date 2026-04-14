@@ -70,7 +70,7 @@
       .app-shell {
         min-height: 100vh;
         display: grid;
-        grid-template-columns: 74px 370px minmax(520px, 1fr);
+        grid-template-columns: 68px 360px minmax(560px, 1fr);
         background: var(--soft);
       }
 
@@ -138,6 +138,7 @@
         font-size: 12px;
         font-weight: 850;
         box-shadow: 0 12px 26px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.10);
+        transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background 150ms ease, color 150ms ease;
       }
 
       .tool-btn::before {
@@ -155,6 +156,7 @@
         color: rgba(255,255,255,0.72);
         font-size: 10px;
         font-weight: 950;
+        transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
       }
 
       .tool-btn .icon {
@@ -186,6 +188,7 @@
         border-radius: 999px;
         background: var(--green);
         box-shadow: 0 0 16px rgba(131,255,63,0.72);
+        transition: opacity 150ms ease, background 150ms ease, box-shadow 150ms ease;
       }
 
       .rail-spacer { flex: 1; }
@@ -413,9 +416,9 @@
       }
 
       .source-panel input.input-error {
-        border-color: #c83131;
+        border-color: #d92d20;
         background: #fff7f7;
-        box-shadow: 0 0 0 3px rgba(200, 49, 49, 0.10);
+        box-shadow: 0 0 0 3px rgba(217, 45, 32, 0.14), inset 0 1px 2px rgba(16, 19, 28, 0.04);
       }
 
       .source-panel .field-hint {
@@ -623,6 +626,7 @@
         text-align: left;
         box-shadow: 0 14px 30px rgba(16, 19, 28, 0.09);
         cursor: pointer;
+        transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background 150ms ease;
       }
 
       .layout-card:hover {
@@ -833,6 +837,7 @@
         text-shadow: 2px 2px 0 #262626, -2px 2px 0 #262626, 2px -2px 0 #262626, -2px -2px 0 #262626;
         cursor: pointer;
         box-shadow: 0 14px 30px rgba(16, 19, 28, 0.09);
+        transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background 150ms ease;
       }
 
       .caption-card:hover {
@@ -946,6 +951,7 @@
         margin-bottom: 8px;
         box-shadow: 0 14px 30px rgba(16, 19, 28, 0.09);
         cursor: pointer;
+        transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background 150ms ease;
       }
 
       .quality-card:hover {
@@ -1046,10 +1052,10 @@
 
       .stage-row {
         display: grid;
-        grid-template-columns: minmax(420px, 1fr) 240px;
+        grid-template-columns: minmax(460px, 1fr) 250px;
         gap: 26px;
         min-height: 0;
-        padding: 18px 32px 18px 26px;
+        padding: 18px 34px 18px 30px;
         align-items: center;
       }
 
@@ -1066,18 +1072,18 @@
       }
 
       .editor-canvas {
-        width: min(360px, 100%);
+        width: min(390px, 100%);
         aspect-ratio: 9 / 16;
         border-radius: 14px;
         background: #090909;
-        box-shadow: 0 28px 70px rgba(16, 19, 28, 0.22);
+        box-shadow: 0 34px 82px rgba(16, 19, 28, 0.28);
         position: relative;
         overflow: hidden;
         outline: 1px solid rgba(255,255,255,0.75);
       }
 
       .editor-canvas[data-format="horizontal"] {
-        width: min(640px, 100%);
+        width: min(700px, 100%);
         aspect-ratio: 16 / 9;
       }
 
@@ -1321,7 +1327,7 @@
       }
 
       .phone-preview {
-        width: 124px;
+        width: 132px;
         aspect-ratio: 9 / 16;
         background: #050505;
         border-radius: 14px;
@@ -1332,7 +1338,7 @@
       }
 
       .phone-preview[data-format="horizontal"] {
-        width: 220px;
+        width: 232px;
         aspect-ratio: 16 / 9;
         border-radius: 12px;
         outline-color: var(--green);
@@ -1821,11 +1827,13 @@
         font-weight: 820;
         line-height: 1.35;
         box-shadow: 0 8px 18px rgba(16, 19, 28, 0.05);
+        transition: background 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
       }
 
       .export-panel .status.error {
-        border-color: rgba(200, 49, 49, 0.28);
-        background: #fff7f7;
+        border-color: rgba(217, 45, 32, 0.34);
+        background: #fff4f2;
+        box-shadow: 0 10px 22px rgba(217, 45, 32, 0.10);
       }
 
       .export-panel .status.success {
@@ -1843,8 +1851,9 @@
         color: #4e5260;
         font-size: 13px;
         min-height: 19px;
+        transition: background 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
       }
-      .status.error { color: #c83131; }
+      .status.error { color: #b42318; }
       .status.success { color: #247a36; }
       .status.loading { color: #3158d4; }
 
@@ -1857,11 +1866,13 @@
         padding: 9px 10px;
         font-weight: 800;
         line-height: 1.35;
+        transition: background 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
       }
 
       .source-panel .status.error {
-        border-color: rgba(200, 49, 49, 0.28);
-        background: #fff7f7;
+        border-color: rgba(217, 45, 32, 0.34);
+        background: #fff4f2;
+        box-shadow: 0 10px 22px rgba(217, 45, 32, 0.10);
       }
 
       .source-panel .status.success {
@@ -1957,8 +1968,8 @@
           <div class="panel-head">
             <div>
               <div class="panel-kicker">Start here</div>
-              <h1>Add your clip</h1>
-              <p>Upload a video or scan a YouTube or Kick link, then move straight into editing.</p>
+              <h1>Add clip</h1>
+              <p>Paste a link or upload a file. Then edit.</p>
             </div>
           </div>
           <div class="source-tabs" role="tablist" aria-label="Source method">
@@ -1984,16 +1995,16 @@
               </div>
               <p id="sourceUrlHint" class="field-hint">Supports YouTube and Kick. We’ll return ranked moments.</p>
               <label class="toggle-field">Rank strongest moments <input id="youtubeAiInput" type="checkbox" checked /></label>
-              <button id="analyzeYoutubeButton" class="primary-btn source-action" type="button">Find clip candidates</button>
+              <button id="analyzeYoutubeButton" class="primary-btn source-action" type="button">Find clips</button>
             </div>
-            <div id="youtubeHint" class="status" role="status" aria-live="polite">Paste a link to find clip candidates.</div>
+            <div id="youtubeHint" class="status" role="status" aria-live="polite">Paste link to find clips.</div>
             <div id="youtubeCandidates" class="candidate-list" aria-live="polite"></div>
           </div>
           <div id="sourceModeUpload" class="source-mode" data-source-view="upload" role="tabpanel" aria-labelledby="sourceTabUpload" hidden>
             <div class="upload-zone">
               <div class="upload-card">
                 <span class="upload-icon">+</span>
-                <strong>Upload video</strong>
+                <strong>Upload file</strong>
                 <p id="uploadHint">Video files only. Opens in this editor session.</p>
                 <input id="localClipInput" type="file" accept="video/*" aria-describedby="uploadHint" />
               </div>
@@ -2005,8 +2016,8 @@
           <div class="panel-head">
             <div>
               <div class="panel-kicker">Composition</div>
-              <h1>Choose your layout</h1>
-              <p>Set the output format and camera arrangement the preview and export should use.</p>
+              <h1>Choose layout</h1>
+              <p>Set format and camera view.</p>
             </div>
           </div>
           <div class="section-title">Format</div>
@@ -2090,7 +2101,7 @@
             <div>
               <div class="panel-kicker">Final render</div>
               <h1>Export</h1>
-              <p>Choose the render size and download the composed clip with layout, trim, overlays, and captions.</p>
+              <p>Choose size. Export the composed MP4.</p>
             </div>
           </div>
           <div role="radiogroup" aria-label="Export quality">
@@ -2098,8 +2109,8 @@
             <button class="quality-card" data-quality="720-60" type="button" role="radio" aria-checked="false"><span class="radio-dot"></span><strong>720p<br /><span>60 fps</span></strong><span><strong>Smooth</strong>Higher frame rate at 720p</span></button>
             <button class="quality-card active" data-quality="1080" type="button" role="radio" aria-checked="true"><span class="radio-dot"></span><strong>1080p<br /><span>60 fps</span></strong><span><strong>Full HD</strong>Sharpest editor export</span></button>
           </div>
-          <button id="exportButton" class="export-btn" type="button">Render and download clip ⇧</button>
-          <div id="exportStatus" class="status">Load a source to render the final composed clip.</div>
+          <button id="exportButton" class="export-btn" type="button">Export MP4 ⇧</button>
+          <div id="exportStatus" class="status">Load a source to export.</div>
         </section>
       </aside>
 
@@ -2367,7 +2378,7 @@
       async function handleSourceFile(file) {
         if (!file) return;
         if (!isSupportedVideoFile(file)) {
-          setStatus(youtubeHint, "Choose a video file. MP4, MOV, or WebM works best.", "error");
+          setStatus(youtubeHint, "Choose a video file. Try MP4, MOV, or WebM.", "error");
           localClipInput.value = "";
           return;
         }
@@ -2385,7 +2396,7 @@
         } catch (error) {
           setSourceSummary("");
           setStatus(youtubeHint, `Upload failed: ${error instanceof Error ? error.message : "Could not read this video."} Try another file or export as MP4.`, "error");
-          setStatus(exportStatus, "Load a source before exporting.", "");
+          setStatus(exportStatus, "Load a source to export.", "");
           setStep("source");
         }
       }
@@ -2422,15 +2433,15 @@
         try {
           parsed = new URL(urlWithProtocol);
         } catch {
-          throw new Error("Enter a complete URL that starts with https://.");
+          throw new Error("Paste a complete URL. Try https://youtube.com/...");
         }
         if (!/^https?:$/.test(parsed.protocol)) {
-          throw new Error("Only http or https links can be analyzed.");
+          throw new Error("Use an http or https link. Try YouTube or Kick.");
         }
         const host = parsed.hostname.replace(/^www\./, "");
         const supported = host === "youtu.be" || host.endsWith("youtube.com") || host.endsWith("kick.com");
         if (!supported) {
-          throw new Error("Paste a YouTube or Kick link to scan clips.");
+          throw new Error("Paste a YouTube or Kick link. Or upload a file.");
         }
         return parsed.toString();
       }
@@ -3196,7 +3207,7 @@
           setSourceUrlError(false);
         } catch (error) {
           setSourceUrlError(true);
-          setStatus(youtubeHint, error instanceof Error ? error.message : "Paste a valid YouTube or Kick URL first.", "error");
+          setStatus(youtubeHint, error instanceof Error ? error.message : "Paste a YouTube or Kick link. Or upload a file.", "error");
           return;
         }
         const requestId = ++sourceScanRequestId;
@@ -3232,7 +3243,7 @@
         } finally {
           if (requestId === sourceScanRequestId) {
             analyzeYoutubeButton.disabled = false;
-            analyzeYoutubeButton.textContent = originalText || "Find clip candidates";
+            analyzeYoutubeButton.textContent = originalText || "Find clips";
           }
         }
       }
@@ -3934,24 +3945,24 @@
         if (!videoUrl) {
           setStep("source");
           setStatus(youtubeHint, "Add or preview a clip before exporting.", "error");
-          setStatus(exportStatus, "Export needs a loaded clip first.", "error");
+          setStatus(exportStatus, "Load a source first. Then export MP4.", "error");
           return;
         }
         const originalText = exportButton.textContent;
         exportButton.disabled = true;
-        exportButton.textContent = "Rendering final...";
-        setStatus(exportStatus, "Rendering final composition with layout, trim, overlays, and timed captions...", "loading");
+        exportButton.textContent = "Exporting...";
+        setStatus(exportStatus, "Exporting MP4 with layout, trim, overlays, and captions...", "loading");
         try {
           const result = await renderFinalCompositionBlob();
           const startLabel = formatClock(result.start).replace(":", "-");
           const endLabel = formatClock(result.end).replace(":", "-");
           downloadBlob(result.blob, `clipperviral-final-${safeFileName(layoutState.activeLayoutKey)}-${startLabel}-${endLabel}.${result.extension}`);
-          setStatus(exportStatus, `Final render downloaded (${result.extension.toUpperCase()}). Includes selected layout, trim range, active overlays, and timed captions when enabled.`, "success");
+          setStatus(exportStatus, `Export downloaded (${result.extension.toUpperCase()}).`, "success");
         } catch (error) {
-          setStatus(exportStatus, `Final render failed: ${error instanceof Error ? error.message : "Unknown export error."}`, "error");
+          setStatus(exportStatus, `Export failed: ${error instanceof Error ? error.message : "Unknown error."} Try a shorter trim or reload the source.`, "error");
         } finally {
           exportButton.disabled = false;
-          exportButton.textContent = originalText || "Render final clip ⇧";
+          exportButton.textContent = originalText || "Export MP4 ⇧";
         }
       });
 
