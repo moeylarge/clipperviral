@@ -8,10 +8,10 @@ export default function ShowsPage() {
   return (
     <div className="page-stack">
       <section className="surface-panel-strong p-6 md:p-7">
-        <p className="section-kicker">Workflow library</p>
-        <h1 className="mt-2 text-3xl md:text-4xl">All clip workflows</h1>
+        <p className="section-kicker">Tool library</p>
+        <h1 className="mt-2 text-3xl md:text-4xl">Clip tools</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-          Use the Unified Clip Editor for the main flow. The older dedicated workspaces stay here as fallbacks while we fold their strongest pieces into the editor.
+          Start in the editor for the full clip flow, or open a focused tool for a dedicated template, caption, or URL workflow.
         </p>
       </section>
 
@@ -28,7 +28,7 @@ export default function ShowsPage() {
             <div className="mt-5">
               <Button asChild variant={tool.id === "editor" ? "cta" : "outline"} className="w-full">
                 <Link href={`/shows/${tool.routeSlug}`}>
-                  Open workflow
+                  {tool.id === "editor" ? "Open editor" : "Open tool"}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>

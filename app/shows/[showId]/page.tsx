@@ -15,7 +15,7 @@ export default async function ToolWorkflowPage({ params }: ToolWorkflowPageProps
   return (
     <div className="page-stack">
       <section className="surface-panel-strong p-6 md:p-7">
-        <p className="section-kicker">Workflow detail</p>
+        <p className="section-kicker">Tool detail</p>
         <h1 className="mt-2 text-3xl md:text-4xl">{tool.label}</h1>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">{tool.description}</p>
         <div className="mt-5 flex flex-wrap gap-2">
@@ -26,14 +26,14 @@ export default async function ToolWorkflowPage({ params }: ToolWorkflowPageProps
             </Link>
           </Button>
           <Button asChild variant="outline">
-            <Link href="/shows">Back to workflows</Link>
+            <Link href="/shows">Back to tools</Link>
           </Button>
         </div>
       </section>
 
       <section className="grid gap-5 lg:grid-cols-[380px_minmax(0,1fr)]">
         <article className="surface-panel p-5">
-          <h2 className="text-xl">Step sequence</h2>
+          <h2 className="text-xl">Flow</h2>
           <ol className="mt-3 grid gap-2">
             {tool.steps.map((step, index) => (
               <li key={step} className="step-item">
@@ -45,7 +45,7 @@ export default async function ToolWorkflowPage({ params }: ToolWorkflowPageProps
             ))}
           </ol>
 
-          <h3 className="mt-5 text-base font-semibold">Quality checks</h3>
+          <h3 className="mt-5 text-base font-semibold">Export checks</h3>
           <ul className="mt-2 grid gap-2">
             {tool.checks.map((check) => (
               <li key={check} className="inline-flex items-center gap-2 text-sm text-foreground">

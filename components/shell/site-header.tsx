@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleHelp, LayoutGrid, UserCircle2 } from "lucide-react";
+import { Clapperboard, Sparkles, UserCircle2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SessionStatus } from "@/components/auth/session-status";
@@ -8,14 +8,14 @@ export function SiteHeader() {
   return (
     <header className="topbar">
       <div className="inline-flex items-center gap-2">
-        <LayoutGrid className="h-4 w-4 text-muted-foreground" />
-        <p className="text-sm font-semibold text-foreground">Dashboard</p>
+        <Sparkles className="h-4 w-4 text-muted-foreground" />
+        <p className="text-sm font-semibold text-foreground">Creator workspace</p>
       </div>
       <div className="flex items-center gap-2">
-        <Button asChild size="sm" variant="ghost">
-          <Link href="/auth/signin">
-            <CircleHelp className="h-3.5 w-3.5" />
-            Help
+        <Button asChild size="sm" variant="cta">
+          <Link href="/editor.html">
+            <Clapperboard className="h-3.5 w-3.5" />
+            Open editor
           </Link>
         </Button>
         <div className="flex items-center gap-2">

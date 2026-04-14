@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Clapperboard, LayoutGrid, Scissors, Subtitles, WandSparkles } from "lucide-react";
+import { Clapperboard, Home, Scissors, Subtitles, WandSparkles } from "lucide-react";
 import { Inter, Sora } from "next/font/google";
 
 import { SiteHeader } from "@/components/shell/site-header";
@@ -18,16 +18,16 @@ const body = Inter({
 });
 
 const navLinks = [
-  { href: "/", label: "Dashboard", icon: LayoutGrid },
-  { href: "/editor.html", label: "Unified Editor", icon: Clapperboard },
+  { href: "/", label: "Home", icon: Home },
+  { href: "/editor.html", label: "Editor", icon: Clapperboard },
   { href: "/shows/youtube-ai-clips", label: "URL Clips", icon: WandSparkles },
   { href: "/shows/caption-studio", label: "Captions", icon: Subtitles },
-  { href: "/shows/kick-template", label: "Kick Fallback", icon: Scissors },
+  { href: "/shows/kick-template", label: "Kick Template", icon: Scissors },
 ];
 
 export const metadata: Metadata = {
-  title: "ClipperViral Dashboard",
-  description: "Unified editor dashboard for uploads, YouTube AI clips, captions, layouts, and exports.",
+  title: "ClipperViral",
+  description: "ClipperViral editor for uploads, YouTube AI clips, captions, layouts, and exports.",
 };
 
 export default function RootLayout({

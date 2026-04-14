@@ -39,7 +39,7 @@ export default function HomePage() {
               <MousePointerClick className="h-4 w-4" />
               Start here
             </p>
-            <p className="mt-3 text-sm leading-6 text-white/70">The unified editor is the primary path. Older tools are available only as fallback workspaces.</p>
+            <p className="mt-3 text-sm leading-6 text-white/70">Start in the editor, then use focused tools when you need a dedicated template or caption workflow.</p>
           </div>
         </div>
         <div className="mt-7 flex flex-wrap gap-3">
@@ -50,26 +50,26 @@ export default function HomePage() {
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <Link href="/shows">View fallback workspaces</Link>
+            <Link href="/shows">Browse tools</Link>
           </Button>
         </div>
       </section>
 
       <section className="data-grid">
         <article className="metric-card">
-          <p className="metric-label">Tools online</p>
-          <p className="metric-value">4 / 4</p>
-        </article>
-        <article className="metric-card">
-          <p className="metric-label">Production status</p>
-          <p className="metric-value">Stable</p>
-        </article>
-        <article className="metric-card">
-          <p className="metric-label">Primary workflow</p>
+          <p className="metric-label">Entry point</p>
           <p className="metric-value">Editor</p>
         </article>
         <article className="metric-card">
-          <p className="metric-label">Active view</p>
+          <p className="metric-label">Source modes</p>
+          <p className="metric-value">Upload + URL</p>
+        </article>
+        <article className="metric-card">
+          <p className="metric-label">Formats</p>
+          <p className="metric-value">9:16 + 16:9</p>
+        </article>
+        <article className="metric-card">
+          <p className="metric-label">Selected tool</p>
           <p className="metric-value">{selectedTool.shortLabel}</p>
         </article>
       </section>
@@ -113,7 +113,7 @@ export default function HomePage() {
             </div>
             <Button asChild size="lg" variant="cta">
               <Link href={selectedTool.href}>
-                {selectedTool.id === "editor" ? "Open editor" : "Open fallback"}
+                {selectedTool.id === "editor" ? "Open editor" : "Open tool"}
                 <ArrowUpRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -140,7 +140,7 @@ export default function HomePage() {
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 <Sparkles className="h-3.5 w-3.5" />
-                Quality checks
+                Export checks
               </p>
               <ul className="mt-3 grid gap-2">
                 {selectedTool.checks.map((check) => (
@@ -152,7 +152,7 @@ export default function HomePage() {
               </ul>
               <p className="mt-5 chip">
                 <span className="status-dot" />
-                Estimated run time: {selectedTool.eta}
+                Typical setup: {selectedTool.eta}
               </p>
             </div>
           </div>

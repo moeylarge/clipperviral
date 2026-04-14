@@ -10,7 +10,7 @@ export async function SessionStatus() {
     return (
       <Link
         href="/auth/signin"
-        className="rounded-md border border-border bg-white px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        className="inline-flex cursor-pointer items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-black text-foreground shadow-sm transition-colors hover:border-primary/50 hover:text-primary"
       >
         Sign in
       </Link>

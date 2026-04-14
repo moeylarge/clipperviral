@@ -78,18 +78,16 @@ export function SignInForm() {
           />
         </div>
 
-        {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+        {error ? <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">{error}</p> : null}
 
         <Button type="submit" size="sm" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? "Signing in..." : "Sign in"}
         </Button>
 
-        <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-          Manual owner login is enabled for this deployment.
-        </p>
+        <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Protected workspace access.</p>
         <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
           <Link href="/" className="text-foreground underline-offset-4 hover:underline">
-            Back to home
+            Back to ClipperViral
           </Link>
         </p>
       </form>

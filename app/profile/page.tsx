@@ -1,10 +1,7 @@
-import { BarChart3, Bolt, ShieldCheck, UserCircle2 } from "lucide-react";
+import Link from "next/link";
+import { BarChart3, Clapperboard, ShieldCheck, UserCircle2 } from "lucide-react";
 
-const recentRuns = [
-  { tool: "Kick Template", status: "Completed", duration: "01:52", when: "Today" },
-  { tool: "Caption Studio", status: "Completed", duration: "03:41", when: "Today" },
-  { tool: "YouTube AI Clips", status: "Completed", duration: "08:22", when: "Yesterday" },
-];
+import { Button } from "@/components/ui/button";
 
 export default function ProfilePage() {
   return (
@@ -14,7 +11,7 @@ export default function ProfilePage() {
           <div>
             <p className="section-kicker">Account</p>
             <h1 className="mt-2 text-3xl md:text-4xl">Profile</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Session identity, usage summary, and workflow history.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Session access and workspace shortcuts.</p>
           </div>
           <div className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-border bg-white">
             <UserCircle2 className="h-8 w-8 text-muted-foreground" />
@@ -31,48 +28,37 @@ export default function ProfilePage() {
           </p>
         </article>
         <article className="metric-card">
-          <p className="metric-label">Runs this week</p>
-          <p className="metric-value">24</p>
+          <p className="metric-label">Primary tool</p>
+          <p className="metric-value">Editor</p>
         </article>
         <article className="metric-card">
-          <p className="metric-label">Avg process time</p>
-          <p className="metric-value">4m 11s</p>
+          <p className="metric-label">Sources</p>
+          <p className="metric-value">Upload + URL</p>
         </article>
         <article className="metric-card">
-          <p className="metric-label">Success rate</p>
-          <p className="metric-value inline-flex items-center gap-2">
-            98%
-            <Bolt className="h-4 w-4 text-amber-500" />
-          </p>
+          <p className="metric-label">Output</p>
+          <p className="metric-value">Export</p>
         </article>
       </section>
 
       <section className="surface-panel p-5">
         <h2 className="inline-flex items-center gap-2 text-xl">
           <BarChart3 className="h-5 w-5 text-muted-foreground" />
-          Recent runs
+          Workspace activity
         </h2>
-        <div className="mt-4 overflow-hidden rounded-lg border border-border">
-          <table className="w-full border-collapse text-sm">
-            <thead className="bg-muted/60 text-left text-xs uppercase tracking-[0.08em] text-muted-foreground">
-              <tr>
-                <th className="px-3 py-2">Tool</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">Duration</th>
-                <th className="px-3 py-2">When</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentRuns.map((run) => (
-                <tr key={`${run.tool}-${run.when}`} className="border-t border-border bg-white">
-                  <td className="px-3 py-2 font-medium text-foreground">{run.tool}</td>
-                  <td className="px-3 py-2 text-emerald-600">{run.status}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{run.duration}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{run.when}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mt-4 rounded-lg border border-border bg-muted/40 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold text-foreground">Open the editor to create your next clip.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Export history will appear here once connected storage is available.</p>
+            </div>
+            <Button asChild variant="cta">
+              <Link href="/editor.html">
+                <Clapperboard className="mr-2 h-4 w-4" />
+                Open editor
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
     </div>
