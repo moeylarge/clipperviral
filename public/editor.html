@@ -1414,7 +1414,7 @@
         overflow: hidden;
         background: #06140c;
         box-shadow: 0 12px 26px rgba(0,0,0,0.35);
-        z-index: 13;
+        z-index: 18;
         cursor: move;
         touch-action: none;
       }
@@ -1434,11 +1434,27 @@
 
       .editor-canvas .kick-lower-third {
         background: transparent;
-        box-shadow: none;
+        border-color: rgba(183,255,90,0.95);
+        box-shadow: 0 0 0 1px rgba(16,19,28,0.18), 0 12px 26px rgba(0,0,0,0.18);
       }
 
       .editor-canvas .kick-lower-third img {
         opacity: 0;
+      }
+
+      .editor-canvas .kick-lower-third::before {
+        content: "Drag overlay";
+        position: absolute;
+        left: 8px;
+        top: -24px;
+        color: #fff;
+        background: rgba(20,23,31,0.78);
+        border-radius: 6px;
+        padding: 4px 7px;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0;
+        pointer-events: none;
       }
 
       .resize-handle {
@@ -1556,6 +1572,29 @@
         border: 8px solid var(--purple);
         background: repeating-linear-gradient(90deg, #bd7446 0 32px, #6b3323 32px 36px, #d29562 36px 64px);
         position: relative;
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      .frame-strip {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        gap: 2px;
+        background:
+          linear-gradient(180deg, rgba(255,255,255,0.2), rgba(0,0,0,0.16)),
+          linear-gradient(90deg, #dfe4eb, #c8d0da);
+        pointer-events: none;
+      }
+
+      .frame-thumb {
+        min-width: 0;
+        background: linear-gradient(140deg, #e7ebf0, #aeb8c5);
+        background-position: center;
+        background-size: cover;
+        border-right: 1px solid rgba(255,255,255,0.2);
       }
 
       .overlay-lane {
@@ -2563,6 +2602,16 @@
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.70), 0 10px 24px rgba(20,23,31,0.08);
       }
 
+      .frame-strip {
+        border-radius: 11px;
+      }
+
+      .frame-strip.is-empty .frame-thumb {
+        background:
+          radial-gradient(circle at 25% 30%, rgba(255,255,255,0.85), transparent 16%),
+          linear-gradient(140deg, #eef2f7 0%, #c9d2dd 52%, #aab5c2 100%);
+      }
+
       .trim-window {
         height: 58px;
         border: 2px solid rgba(183,255,90,0.95);
@@ -2596,6 +2645,11 @@
 
       .playhead {
         background: rgba(16,19,28,0.72);
+        width: 3px;
+        border-radius: 999px;
+        box-shadow: 0 0 0 4px rgba(255,255,255,0.78), 0 8px 18px rgba(16,19,28,0.2);
+        cursor: ew-resize;
+        pointer-events: auto;
       }
 
       .trim-editor {
@@ -2639,7 +2693,7 @@
         .timeline { margin: 0 16px 20px; }
       }
 
-      /* Phase 1 canvas-driven preview: one visible real-video canvas, no competing right preview. */
+      /* Canvas-driven preview: one canonical renderer, plus a synced secondary canvas preview. */
       body {
         overflow: hidden;
       }
@@ -2656,17 +2710,20 @@
         max-height: 100vh;
         min-height: 0;
         overflow: hidden;
+        grid-template-rows: auto minmax(0, 1fr) 218px;
       }
 
       .stage-row {
-        grid-template-columns: minmax(420px, 760px);
+        grid-template-columns: minmax(300px, 520px) minmax(132px, 178px);
         justify-content: center;
         align-items: center;
-        padding-right: 48px;
+        gap: clamp(26px, 4vw, 58px);
+        min-height: 0;
+        padding: 20px 48px 16px;
       }
 
       .workspace[data-format="horizontal"] .stage-row {
-        grid-template-columns: minmax(560px, 860px);
+        grid-template-columns: minmax(560px, 820px) minmax(190px, 240px);
       }
 
       .editor-canvas {
@@ -2678,6 +2735,47 @@
       .editor-canvas[data-format="horizontal"] {
         width: min(760px, 100%);
         max-width: 760px;
+      }
+
+      .preview-column {
+        align-self: center;
+        display: grid;
+        justify-items: center;
+        gap: 10px;
+      }
+
+      .preview-title {
+        color: #191c23;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0;
+      }
+
+      .side-preview {
+        width: 148px;
+        aspect-ratio: 9 / 16;
+        border-radius: 16px;
+        position: relative;
+        overflow: hidden;
+        background: #050505;
+        box-shadow: 0 24px 62px rgba(20,23,31,0.18), 0 0 0 6px rgba(255,255,255,0.55);
+        outline: 1px solid rgba(16,19,28,0.14);
+      }
+
+      .side-preview[data-format="horizontal"] {
+        width: 238px;
+        aspect-ratio: 16 / 9;
+        border-radius: 14px;
+      }
+
+      .side-preview canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .timeline {
+        margin: 0 28px 18px;
       }
 
       .editor-canvas:not(.has-source) .selection-box {
@@ -2961,13 +3059,19 @@
             </div>
             <div class="player-row"><span>↞</span><button id="playButton" type="button" class="chip">▶</button><span>↠</span></div>
           </div>
+          <div class="preview-column">
+            <div class="preview-title">Live preview</div>
+            <div class="side-preview" id="sidePreview" data-format="vertical">
+              <canvas id="sidePreviewCanvas" aria-hidden="true"></canvas>
+            </div>
+          </div>
         </section>
 
         <section class="timeline">
           <div class="timeline-tools" aria-live="polite"><span>Trim the rendered section.</span></div>
           <div class="timeline-track">
             <div class="ticks"><span>00:00</span><span>00:12</span><span>00:24</span><span id="durationLabel">00:34</span></div>
-            <div class="thumb-strip"><div id="trimWindow" class="trim-window"><span class="timeline-handle start" data-trim-handle="start"></span><span class="timeline-handle end" data-trim-handle="end"></span></div></div>
+            <div class="thumb-strip"><div id="frameStrip" class="frame-strip is-empty" aria-hidden="true"></div><div id="trimWindow" class="trim-window"><span class="timeline-handle start" data-trim-handle="start"></span><span class="timeline-handle end" data-trim-handle="end"></span></div></div>
             <div class="overlay-lane" aria-label="Element overlay lane"><div id="kickTimelineClip" class="kick-overlay-clip"><span id="kickTimelineLabel">KICK</span><span class="timeline-handle start" data-kick-handle="start"></span><span class="timeline-handle end" data-kick-handle="end"></span></div></div>
             <div class="playhead"></div>
           </div>
@@ -3059,7 +3163,7 @@
               safeEdge: 14,
               textOffset: 0,
               exactKickWidth: true,
-              box: { x: 0.05, y: 0.87, w: 0.9, h: 0.08 },
+              box: { x: 5, y: 87, w: 90, h: 8 },
             },
           },
           captions: {
@@ -3180,6 +3284,9 @@
       const editorCanvas = document.getElementById("editorCanvas");
       const compositionCanvas = document.getElementById("compositionCanvas");
       const compositionCtx = compositionCanvas?.getContext("2d", { alpha: false });
+      const sidePreview = document.getElementById("sidePreview");
+      const sidePreviewCanvas = document.getElementById("sidePreviewCanvas");
+      const sidePreviewCtx = sidePreviewCanvas?.getContext("2d", { alpha: false });
       const playButton = document.getElementById("playButton");
       const exportButton = document.getElementById("exportButton");
       const exportStatus = document.getElementById("exportStatus");
@@ -3235,6 +3342,8 @@
       const timelineTrack = document.querySelector(".timeline-track");
       const playhead = document.querySelector(".playhead");
       const timelineScrubLayer = document.querySelector(".thumb-strip");
+      const frameStrip = document.getElementById("frameStrip");
+      let timelineFrameRequestId = 0;
 
       function setStep(step) {
         if (!steps.includes(step)) return;
@@ -3311,6 +3420,7 @@
         setStep("layouts");
         try {
           await waitForVideoReady(mainVideo);
+          buildTimelineFrameStrip();
           setSourceSummary(`${activeSourceLabel} loaded (${formatClock(getEffectiveDuration())}). Ready to edit.`);
           setStatus(youtubeHint, "Ready to edit. Choose a layout next.", "success");
         } catch (error) {
@@ -3641,6 +3751,7 @@
         }
         layoutState.transformsByPanel[panelKey] = transform;
         applyCropState();
+        syncCanvasPreview();
         return true;
       }
 
@@ -3664,10 +3775,12 @@
         }
         editorState.scene.captions = editorState.scene.captions || {};
         editorState.source.url = url || "";
+        editorState.source.currentTime = 0;
         editorCanvas.classList.toggle("has-source", Boolean(url));
         mainVideo.src = url;
         canvasPlaceholder.hidden = true;
         mainVideo.load();
+        renderEmptyTimelineFrames();
         applyLayout();
       }
 
@@ -3982,10 +4095,20 @@
       }
 
       function syncCanvasPreview() {
-        if (!mainVideo.src) return;
-        const scene = buildResolvedScene(editorState, { time: mainVideo.currentTime });
+        const scene = buildResolvedScene(editorState, { time: Number(mainVideo.currentTime) || editorState.source.currentTime || trimState.start });
         editorState.source.currentTime = scene.source.currentTime;
         renderResolvedSceneToCanvas(scene);
+      }
+
+      function seekToSceneTime(seconds) {
+        const duration = getEffectiveDuration();
+        const nextTime = clamp(seconds, 0, duration);
+        editorState.source.currentTime = nextTime;
+        if (mainVideo.src) {
+          mainVideo.currentTime = nextTime;
+        } else {
+          renderResolvedSceneToCanvas(buildResolvedScene(editorState, { time: nextTime }));
+        }
       }
 
       function getActiveTime() {
@@ -4010,12 +4133,18 @@
         return { width: horizontal ? 1280 : 720, height: horizontal ? 720 : 1280 };
       }
 
-      function renderResolvedSceneToVisibleCanvas(scene) {
-        if (!compositionCanvas || !compositionCtx || !scene) return;
+      function renderResolvedSceneToCanvasElement(canvas, ctx, scene) {
+        if (!canvas || !ctx || !scene) return;
         const { width, height } = getVisiblePreviewRenderSize(scene);
-        if (compositionCanvas.width !== width) compositionCanvas.width = width;
-        if (compositionCanvas.height !== height) compositionCanvas.height = height;
-        drawCompositionFrame(compositionCtx, width, height, scene);
+        if (canvas.width !== width) canvas.width = width;
+        if (canvas.height !== height) canvas.height = height;
+        drawCompositionFrame(ctx, width, height, scene);
+      }
+
+      function renderResolvedSceneToVisibleCanvas(scene) {
+        renderResolvedSceneToCanvasElement(compositionCanvas, compositionCtx, scene);
+        renderResolvedSceneToCanvasElement(sidePreviewCanvas, sidePreviewCtx, scene);
+        if (sidePreview) sidePreview.dataset.format = scene.layout.format;
       }
 
       function renderResolvedSceneToCanvas(scene) {
@@ -4026,6 +4155,7 @@
         editorCanvas.dataset.format = activeLayout.format;
         editorCanvas.dataset.cameraMode = activeLayout.cameraMode;
         editorCanvas.dataset.aspectRatio = activeLayout.aspectRatio;
+        if (sidePreview) sidePreview.dataset.format = activeLayout.format;
         applyCropState(activeLayout.crops);
         applyKickSceneToPreview(scene.overlays.kick, scene.source.duration);
         setCaptionOverlayCue(scene.captions.activeCue, scene.captions);
@@ -4171,6 +4301,8 @@
         updateTrimControls();
         updateKickOverlay();
         updateCaptionOverlay();
+        buildTimelineFrameStrip();
+        syncCanvasPreview();
       }
 
       function safeFileName(value) {
@@ -4617,6 +4749,7 @@
         kickTimelineClip.style.left = `${left}%`;
         kickTimelineClip.style.width = `${width}%`;
         kickTimelineLabel.textContent = kickState.apply === "whole" ? "KICK whole clip" : `KICK ${formatClock(start)}-${formatClock(end)}`;
+        syncCanvasPreview();
       }
 
       function updateTrimControls() {
@@ -4693,6 +4826,116 @@
 
       function secondsFromTimelineEvent(event, element) {
         return (timelinePercentFromEvent(event, element) / 100) * getEffectiveDuration();
+      }
+
+      function renderEmptyTimelineFrames(count = 12) {
+        if (!frameStrip) return;
+        timelineFrameRequestId += 1;
+        frameStrip.classList.add("is-empty");
+        frameStrip.innerHTML = "";
+        for (let index = 0; index < count; index += 1) {
+          const thumb = document.createElement("span");
+          thumb.className = "frame-thumb";
+          frameStrip.appendChild(thumb);
+        }
+      }
+
+      async function buildTimelineFrameStrip() {
+        if (!frameStrip) return;
+        const requestId = ++timelineFrameRequestId;
+        const sourceUrl = editorState.source.url;
+        const duration = getEffectiveDuration();
+        if (!sourceUrl || !mainVideo.videoWidth || !mainVideo.videoHeight) {
+          renderEmptyTimelineFrames();
+          return;
+        }
+
+        frameStrip.classList.remove("is-empty");
+        frameStrip.innerHTML = "";
+        const frameCount = Math.min(14, Math.max(8, Math.round(duration / 4)));
+        const thumbs = [];
+        for (let index = 0; index < frameCount; index += 1) {
+          const thumb = document.createElement("span");
+          thumb.className = "frame-thumb";
+          frameStrip.appendChild(thumb);
+          thumbs.push(thumb);
+        }
+
+        const previewVideo = document.createElement("video");
+        previewVideo.muted = true;
+        previewVideo.playsInline = true;
+        previewVideo.preload = "auto";
+        previewVideo.src = sourceUrl;
+        const captureCanvas = document.createElement("canvas");
+        captureCanvas.width = 180;
+        captureCanvas.height = 96;
+        const captureCtx = captureCanvas.getContext("2d");
+
+        try {
+          await waitForVideoReady(previewVideo);
+          for (let index = 0; index < thumbs.length; index += 1) {
+            if (requestId !== timelineFrameRequestId) return;
+            const time = (index / Math.max(1, thumbs.length - 1)) * Math.max(0, duration - 0.05);
+            await seekVideo(previewVideo, time).catch(() => {});
+            if (requestId !== timelineFrameRequestId || !previewVideo.videoWidth || !previewVideo.videoHeight) return;
+            captureCtx.clearRect(0, 0, captureCanvas.width, captureCanvas.height);
+            const scale = Math.max(captureCanvas.width / previewVideo.videoWidth, captureCanvas.height / previewVideo.videoHeight);
+            const drawW = previewVideo.videoWidth * scale;
+            const drawH = previewVideo.videoHeight * scale;
+            captureCtx.drawImage(
+              previewVideo,
+              (captureCanvas.width - drawW) / 2,
+              (captureCanvas.height - drawH) / 2,
+              drawW,
+              drawH,
+            );
+            thumbs[index].style.backgroundImage = `url("${captureCanvas.toDataURL("image/jpeg", 0.68)}")`;
+          }
+        } catch {
+          if (requestId === timelineFrameRequestId) renderEmptyTimelineFrames();
+        } finally {
+          previewVideo.removeAttribute("src");
+          previewVideo.load();
+        }
+      }
+
+      function makePlayheadInteractive() {
+        if (!playhead || !timelineScrubLayer) return;
+        let dragging = false;
+        let activePointerId = null;
+
+        function seekFromEvent(event) {
+          seekToSceneTime(secondsFromTimelineEvent(event, timelineScrubLayer));
+          syncCanvasPreview();
+        }
+
+        playhead.addEventListener("pointerdown", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          dragging = true;
+          activePointerId = event.pointerId;
+          playhead.setPointerCapture(event.pointerId);
+          seekFromEvent(event);
+        });
+
+        playhead.addEventListener("pointermove", (event) => {
+          if (!dragging || event.pointerId !== activePointerId) return;
+          seekFromEvent(event);
+        });
+
+        ["pointerup", "pointercancel"].forEach((eventName) => {
+          playhead.addEventListener(eventName, (event) => {
+            if (event.pointerId !== activePointerId) return;
+            dragging = false;
+            activePointerId = null;
+          });
+        });
+
+        timelineTrack?.addEventListener("click", (event) => {
+          if (event.target.closest(".timeline-handle, .trim-window, .kick-overlay-clip")) return;
+          seekToSceneTime(secondsFromTimelineEvent(event, timelineScrubLayer));
+          syncCanvasPreview();
+        });
       }
 
       function makeTimelineRangeInteractive(element, lane, getRange, setRange, options = {}) {
@@ -5180,6 +5423,7 @@
         syncCanvasPreview();
       });
       mainVideo.addEventListener("loadedmetadata", () => setDuration(mainVideo.duration));
+      mainVideo.addEventListener("loadeddata", () => buildTimelineFrameStrip());
       mainVideo.addEventListener("seeked", () => syncCanvasPreview());
       mainVideo.addEventListener("timeupdate", () => {
         if (!isExporting && mainVideo.src && !mainVideo.paused && mainVideo.currentTime > trimState.end) {
@@ -5339,6 +5583,7 @@
         updateKickOverlay();
         syncCanvasPreview();
       }, { seekOnRelease: true });
+      makePlayheadInteractive();
       platformSelect.addEventListener("change", () => {
         setFormat(platformSelect.value === "YouTube horizontal" ? "horizontal" : "vertical");
       });
@@ -5487,6 +5732,48 @@
         return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
       }
 
+      function drawPlaceholderPanel(ctx, panelKey, box, options = {}) {
+        const facecam = panelKey === "facecamLeft" || panelKey === "facecamRight";
+        ctx.save();
+        drawRoundedRectPath(ctx, box.x, box.y, box.w, box.h, options.radius || 0);
+        ctx.clip();
+        const fill = ctx.createLinearGradient(box.x, box.y, box.x + box.w, box.y + box.h);
+        if (facecam) {
+          fill.addColorStop(0, "#eff4fb");
+          fill.addColorStop(0.52, "#d4deea");
+          fill.addColorStop(1, "#aab8c8");
+        } else {
+          fill.addColorStop(0, "#10131a");
+          fill.addColorStop(0.55, "#252b35");
+          fill.addColorStop(1, "#111820");
+        }
+        ctx.fillStyle = fill;
+        ctx.fillRect(box.x, box.y, box.w, box.h);
+        if (facecam) {
+          const cx = box.x + box.w * 0.5;
+          const headR = Math.min(box.w, box.h) * 0.18;
+          const headY = box.y + box.h * 0.38;
+          ctx.fillStyle = "rgba(255,255,255,0.92)";
+          ctx.beginPath();
+          ctx.arc(cx, headY, headR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "rgba(255,255,255,0.74)";
+          ctx.beginPath();
+          ctx.ellipse(cx, box.y + box.h * 0.72, box.w * 0.28, box.h * 0.20, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(18,23,31,0.14)";
+          ctx.lineWidth = Math.max(1, Math.min(box.w, box.h) * 0.02);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = "rgba(255,255,255,0.78)";
+          ctx.font = `900 ${Math.max(14, Math.min(box.w, box.h) * 0.08)}px Arial, sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("Add clip", box.x + box.w / 2, box.y + box.h / 2);
+        }
+        ctx.restore();
+      }
+
       function drawVideoCover(ctx, video, box, options = {}) {
         if (!video.videoWidth || !video.videoHeight || box.w <= 0 || box.h <= 0) return;
         const scale = Math.max(box.w / video.videoWidth, box.h / video.videoHeight);
@@ -5539,11 +5826,16 @@
         const scale = Math.max(scaleX, scaleY);
         const radius = panelBox.radius ? parseFloat(panelBox.radius) || 0 : parseFloat(style?.borderRadius || 0);
         const borderWidth = parseFloat(style?.borderTopWidth || 0);
-        drawVideoCover(ctx, mainVideo, rect, {
+        const drawOptions = {
           opacity: parseFloat(style?.opacity || "1"),
           filter: style?.filter && style.filter !== "none" ? style.filter : "",
           radius: (Number.isFinite(radius) ? radius : 0) * scale,
-        });
+        };
+        if (mainVideo.videoWidth && mainVideo.videoHeight) {
+          drawVideoCover(ctx, mainVideo, rect, drawOptions);
+        } else {
+          drawPlaceholderPanel(ctx, panelKey, rect, drawOptions);
+        }
         drawLayerBorder(ctx, rect, (style ? style.borderTopColor : "") || "transparent", borderWidth * scale, (Number.isFinite(radius) ? radius : 0) * scale);
       }
 
@@ -5785,6 +6077,8 @@
       updateCaptionOverlay();
       requestAnimationFrame(applyCropState);
       setDuration(34);
+      renderEmptyTimelineFrames();
+      syncCanvasPreview();
       setStep("source");
     </script>
   </body>
