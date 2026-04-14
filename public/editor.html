@@ -833,6 +833,50 @@
         padding: 9px 10px;
       }
 
+      .caption-progress {
+        height: 5px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e9edf7;
+      }
+
+      .caption-progress[hidden] {
+        display: none;
+      }
+
+      .caption-progress::before {
+        content: "";
+        display: block;
+        width: 42%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #10131c, #4de8ff);
+        animation: captionProgress 1.1s ease-in-out infinite;
+      }
+
+      @keyframes captionProgress {
+        0% { transform: translateX(-110%); }
+        100% { transform: translateX(260%); }
+      }
+
+      .caption-retry {
+        justify-self: start;
+        min-height: 34px;
+        padding: 0 12px;
+        border: 1px solid rgba(180, 35, 24, 0.36);
+        border-radius: 8px;
+        background: #fff;
+        color: #b42318;
+        font-size: 12px;
+        font-weight: 950;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(180, 35, 24, 0.08);
+      }
+
+      .caption-retry[hidden] {
+        display: none;
+      }
+
       .caption-status.active {
         border-color: rgba(36, 122, 54, 0.26);
         background: #f4fff6;
@@ -1353,33 +1397,13 @@
         display: flex;
       }
 
-      .kick-wordmark {
-        align-self: stretch;
-        display: grid;
-        place-items: center;
-        padding: 4px 13px;
-        color: var(--green);
-        background: #0b2013;
-        font-size: 28px;
-        font-weight: 1000;
-        letter-spacing: -0.08em;
-        text-transform: uppercase;
-        text-shadow: 2px 0 0 #001e07, 0 2px 0 #001e07;
-      }
-
-      .kick-handle {
-        flex: 1;
-        min-width: 0;
-        padding: 0 12px;
-        color: var(--green);
-        font-size: 13px;
-        font-weight: 1000;
-        letter-spacing: 0.02em;
-        text-align: center;
-        text-transform: uppercase;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+      .kick-lower-third img,
+      .mini-preview img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+        pointer-events: none;
       }
 
       .resize-handle {
@@ -1553,16 +1577,8 @@
         border-radius: 4px;
       }
 
-      .phone-preview .kick-wordmark {
-        padding: 1px 5px;
-        font-size: 10px;
-        letter-spacing: -0.06em;
-        text-shadow: 1px 0 0 #001e07;
-      }
-
-      .phone-preview .kick-handle {
-        padding: 0 4px;
-        font-size: 4px;
+      .phone-preview .kick-lower-third img {
+        image-rendering: auto;
       }
 
       .phone-preview .caption-layer {
@@ -1833,12 +1849,9 @@
         font-weight: 950;
       }
 
-      .mini-preview .kick-wordmark {
-        font-size: 22px;
-      }
-
-      .mini-preview .kick-handle {
-        font-size: 11px;
+      .mini-preview img {
+        width: calc(100% - 54px);
+        min-height: 54px;
       }
 
       .segmented {
@@ -1861,6 +1874,44 @@
       .segmented button.active {
         background: linear-gradient(135deg, var(--purple), var(--purple-2));
         color: #fff;
+      }
+
+      .kick-style-options {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .element-slider-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .element-slider-grid label {
+        border: 1px solid #dfe4f1;
+        border-radius: 8px;
+        background: #fff;
+        padding: 8px;
+        color: #4a5060;
+        font-size: 11px;
+        font-weight: 950;
+      }
+
+      .element-slider-grid span {
+        float: right;
+        color: #667085;
+      }
+
+      .element-slider-grid input {
+        width: 100%;
+        margin-top: 7px;
+        accent-color: var(--green);
+      }
+
+      .secondary-action {
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid #cfd4e4;
+        box-shadow: 0 10px 22px rgba(16, 19, 28, 0.07);
       }
 
       .element-hint,
@@ -2180,14 +2231,35 @@
                 <span class="element-badge">Template</span>
               </div>
               <button id="kickTemplateToggle" class="mini-preview" type="button" aria-pressed="false" data-state-label="Off" aria-label="Toggle Kick lower-third overlay">
-                <span class="kick-wordmark">KICK</span>
-                <span id="kickMiniHandle" class="kick-handle">KICK.COM/EDMATTHEWS</span>
+                <img id="kickMiniPreviewImage" alt="" />
               </button>
               <div class="field-stack">
                 <label for="kickHandleInput">Handle text</label>
-                <input id="kickHandleInput" type="text" value="KICK.COM/EDMATTHEWS" maxlength="32" autocomplete="off" />
+                <input id="kickHandleInput" type="text" value="EDMATTHEWS" maxlength="32" autocomplete="off" />
                 <div id="kickHandleHint" class="element-hint">Use a channel handle or short callout.</div>
               </div>
+              <div class="section-title">Custom banner size</div>
+              <div class="range-fields">
+                <label>Width<input id="kickWidthInput" type="number" min="25" max="100" step="1" value="90" /></label>
+                <label>Height<input id="kickHeightInput" type="number" min="5" max="24" step="1" value="13" /></label>
+              </div>
+              <div class="section-title">Style</div>
+              <div class="segmented kick-style-options" aria-label="Kick overlay color">
+                <button class="active" data-kick-style="green" type="button" aria-pressed="true">Kick Green</button>
+                <button data-kick-style="lime-gradient" type="button" aria-pressed="false">Lime Gradient</button>
+                <button data-kick-style="green-white" type="button" aria-pressed="false">Green to White</button>
+              </div>
+              <div class="segmented" aria-label="Kick overlay capitalization">
+                <button class="active" data-kick-caps="all" type="button" aria-pressed="true">All caps</button>
+                <button data-kick-caps="none" type="button" aria-pressed="false">No caps</button>
+              </div>
+              <div class="element-slider-grid">
+                <label>Glow <span id="kickGlowValue">0%</span><input id="kickGlowInput" type="range" min="0" max="150" step="5" value="0" /></label>
+                <label>Gap <span id="kickGapValue">0px</span><input id="kickGapInput" type="range" min="0" max="16" step="1" value="0" /></label>
+                <label>Safe edge <span id="kickSafeEdgeValue">14px</span><input id="kickSafeEdgeInput" type="range" min="0" max="40" step="1" value="14" /></label>
+                <label>Text offset <span id="kickTextOffsetValue">0px</span><input id="kickTextOffsetInput" type="range" min="-6" max="8" step="1" value="0" /></label>
+              </div>
+              <label class="toggle-field"><input id="kickExactWidthToggle" type="checkbox" checked /> Exact Kick width</label>
               <div class="segmented" aria-label="Kick overlay timing">
                 <button class="active" data-kick-apply="whole" type="button" aria-pressed="true">Whole clip</button>
                 <button data-kick-apply="range" type="button" aria-pressed="false">Range</button>
@@ -2198,6 +2270,7 @@
               </div>
               <div id="kickElementStatus" class="element-status" aria-live="polite">Kick lower-third overlay is off.</div>
               <button id="kickApplyCurrentButton" class="primary-btn source-action" type="button">Place at playhead</button>
+              <button id="kickDownloadPngButton" class="primary-btn source-action secondary-action" type="button">Download PNG</button>
             </article>
           </div>
         </section>
@@ -2226,6 +2299,8 @@
             </div>
             <label class="toggle-field"><input id="captionLayerToggle" type="checkbox" /> Show captions in preview and export</label>
             <div id="captionStatus" class="caption-status" aria-live="polite">Load a clip, then generate captions.</div>
+            <div id="captionProgress" class="caption-progress" role="progressbar" aria-label="Generating captions" hidden></div>
+            <button id="captionRetryButton" class="caption-retry" type="button" hidden>Retry captions</button>
             <div id="captionSegmentList" class="caption-segment-list" aria-label="Editable caption segments">
               <div class="caption-empty-state">Generated caption lines will appear here for quick edits.</div>
             </div>
@@ -2299,7 +2374,7 @@
               <video id="mainVideo" playsinline controls></video>
               <div id="canvasPlaceholder" class="canvas-placeholder">Add a clip from Source to begin</div>
               <div id="kickCanvasOverlay" class="kick-lower-third" aria-hidden="true">
-                <span class="kick-wordmark">KICK</span><span id="kickCanvasHandle" class="kick-handle">KICK.COM/EDMATTHEWS</span>
+                <img id="kickCanvasImage" alt="" />
                 <span class="resize-handle tl" data-resize="tl"></span><span class="resize-handle tr" data-resize="tr"></span><span class="resize-handle bl" data-resize="bl"></span><span class="resize-handle br" data-resize="br"></span>
               </div>
               <div id="captionCanvasOverlay" class="caption-layer" data-style="kick" data-motion="fade" data-position="bottom" aria-hidden="true"><span></span></div>
@@ -2325,7 +2400,7 @@
                 <video id="phoneMapVideo" class="phone-map" muted playsinline></video>
                 <video id="phoneFacecamLeftVideo" class="phone-facecam-left" muted playsinline></video>
                 <video id="phoneFacecamRightVideo" class="phone-facecam-right" muted playsinline></video>
-                <div id="kickPhoneOverlay" class="kick-lower-third" aria-hidden="true"><span class="kick-wordmark">KICK</span><span id="kickPhoneHandle" class="kick-handle">KICK.COM/EDMATTHEWS</span></div>
+                <div id="kickPhoneOverlay" class="kick-lower-third" aria-hidden="true"><img id="kickPhoneImage" alt="" /></div>
                 <div id="captionPhoneOverlay" class="caption-layer" data-style="kick" data-motion="fade" data-position="bottom" aria-hidden="true"><span></span></div>
               </div>
             </div>
@@ -2401,7 +2476,26 @@
         overrides: {},
       };
       const trimState = { start: 0, end: 34 };
-      const kickState = { enabled: false, apply: "whole", start: 0, end: 34, text: "KICK.COM/EDMATTHEWS", box: { x: 5, y: 78, w: 90, h: 13 } };
+      const kickState = {
+        enabled: false,
+        apply: "whole",
+        start: 0,
+        end: 34,
+        user: "edmatthews",
+        text: "KICK.COM/EDMATTHEWS",
+        style: "green",
+        allCaps: true,
+        glow: 0,
+        gap: 0,
+        safeEdge: 14,
+        textOffset: 0,
+        exactKickWidth: true,
+        box: { x: 5, y: 78, w: 90, h: 13 },
+      };
+      const KICK_LOGO_VIEWBOX = { x: 15, y: 90, w: 220, h: 70.6422 };
+      const KICK_LOGO_PATH = "M15 90H38.5714V105.698H46.4286V97.8491H54.2857V90H77.8571V113.547H70V121.397H62.1429V129.246H70V137.095H77.8571V160.642H54.2857V152.793H46.4286V144.944H38.5714V160.642H15V90ZM172.143 90H195.714V105.698H203.571V97.8491H211.429V90H235V113.547H227.143V121.397H219.286V129.246H227.143V137.095H235V160.642H211.429V152.793H203.571V144.944H195.714V160.642H172.143V90ZM85.7143 90H109.286V160.642H85.7143V90ZM125 90V97.8491H117.143V152.793H125V160.642H164.286V137.095H140.714V113.547H164.286V90H125Z";
+      const kickLogoImage = new Image();
+      kickLogoImage.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="15 90 220 70.6422"><path d="${KICK_LOGO_PATH}" fill="#53FC18"/></svg>`)}`;
       const CAPTION_STYLE_REGISTRY = {
         kick: { fill: "#53fc18", stroke: "rgba(0,0,0,0.9)" },
         white: { fill: "#ffffff", stroke: "rgba(0,0,0,0.9)" },
@@ -2409,7 +2503,13 @@
         magenta: { fill: "#ff4de8", stroke: "rgba(0,0,0,0.9)" },
         neon: { fill: "#4de8ff", stroke: "rgba(0,0,0,0.9)" },
       };
+      const CAPTION_SETTINGS_STORAGE_KEY = "clipperviral.captionSettings.v1";
       const captionState = { enabled: false, language: "en", style: "kick", motion: "fade", strokeWidth: 2, position: "bottom", cues: [] };
+      let captionSourceVersion = 0;
+      let captionGenerationRequestId = 0;
+      let captionGenerationController = null;
+      let isCaptionGenerating = false;
+      let captionGenerationError = "";
       const cropState = layoutState.transformsByPanel;
       const SINGLE_LAYOUT_BY_FORMAT = { horizontal: DEFAULT_LAYOUT_BY_FORMAT.horizontal };
       const LAYOUT_UI_COPY = {
@@ -2465,11 +2565,23 @@
       const durationLabel = document.getElementById("durationLabel");
       const kickTemplateToggle = document.getElementById("kickTemplateToggle");
       const kickHandleInput = document.getElementById("kickHandleInput");
-      const kickMiniHandle = document.getElementById("kickMiniHandle");
+      const kickMiniPreviewImage = document.getElementById("kickMiniPreviewImage");
       const kickCanvasOverlay = document.getElementById("kickCanvasOverlay");
       const kickPhoneOverlay = document.getElementById("kickPhoneOverlay");
-      const kickCanvasHandle = document.getElementById("kickCanvasHandle");
-      const kickPhoneHandle = document.getElementById("kickPhoneHandle");
+      const kickCanvasImage = document.getElementById("kickCanvasImage");
+      const kickPhoneImage = document.getElementById("kickPhoneImage");
+      const kickWidthInput = document.getElementById("kickWidthInput");
+      const kickHeightInput = document.getElementById("kickHeightInput");
+      const kickGlowInput = document.getElementById("kickGlowInput");
+      const kickGlowValue = document.getElementById("kickGlowValue");
+      const kickGapInput = document.getElementById("kickGapInput");
+      const kickGapValue = document.getElementById("kickGapValue");
+      const kickSafeEdgeInput = document.getElementById("kickSafeEdgeInput");
+      const kickSafeEdgeValue = document.getElementById("kickSafeEdgeValue");
+      const kickTextOffsetInput = document.getElementById("kickTextOffsetInput");
+      const kickTextOffsetValue = document.getElementById("kickTextOffsetValue");
+      const kickExactWidthToggle = document.getElementById("kickExactWidthToggle");
+      const kickDownloadPngButton = document.getElementById("kickDownloadPngButton");
       const kickStartInput = document.getElementById("kickStartInput");
       const kickEndInput = document.getElementById("kickEndInput");
       const kickApplyCurrentButton = document.getElementById("kickApplyCurrentButton");
@@ -2483,6 +2595,8 @@
       const captionSegmentList = document.getElementById("captionSegmentList");
       const captionStrokeInput = document.getElementById("captionStrokeInput");
       const captionStatus = document.getElementById("captionStatus");
+      const captionProgress = document.getElementById("captionProgress");
+      const captionRetryButton = document.getElementById("captionRetryButton");
       const captionCanvasOverlay = document.getElementById("captionCanvasOverlay");
       const captionPhoneOverlay = document.getElementById("captionPhoneOverlay");
       const trimStartRange = document.getElementById("trimStartRange");
@@ -2824,6 +2938,8 @@
       }
 
       function formatCaptionStatus(time = Number(mainVideo.currentTime) || trimState.start) {
+        if (captionGenerationError) return { text: captionGenerationError, tone: "error" };
+        if (isCaptionGenerating) return { text: "Generating captions from the loaded clip...", tone: "warning" };
         if (!activeCaptionClipFile && !captionState.cues.length) return { text: "Load a clip, then generate captions.", tone: "" };
         if (!captionState.cues.length) return { text: "Generate captions from the loaded clip.", tone: "warning" };
         if (!captionState.enabled) return { text: `${captionState.cues.length} caption ${captionState.cues.length === 1 ? "line is" : "lines are"} ready. Turn captions on to render them.`, tone: "warning" };
@@ -2842,9 +2958,44 @@
         captionStatus.classList.toggle("error", tone === "error");
       }
 
+      function setCaptionGenerationLoading(active) {
+        isCaptionGenerating = active;
+        captionGenerateButton.disabled = active;
+        captionGenerateButton.setAttribute("aria-busy", String(active));
+        captionGenerateButton.textContent = active ? "Generating..." : "Generate captions";
+        captionProgress.hidden = !active;
+      }
+
+      function setCaptionError(message) {
+        captionGenerationError = message;
+        setCaptionStatus(message, "error");
+        captionRetryButton.hidden = false;
+      }
+
       function updateCaptionStatus(time) {
         const status = formatCaptionStatus(time);
         setCaptionStatus(status.text, status.tone);
+      }
+
+      function readCaptionSettings() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(CAPTION_SETTINGS_STORAGE_KEY) || "{}");
+          return parsed && typeof parsed === "object" ? parsed : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function persistCaptionSettings() {
+        try {
+          localStorage.setItem(CAPTION_SETTINGS_STORAGE_KEY, JSON.stringify({
+            language: captionState.language,
+            style: captionState.style,
+            motion: captionState.motion,
+            strokeWidth: captionState.strokeWidth,
+            position: captionState.position,
+          }));
+        } catch {}
       }
 
       function formatCaptionTimeRange(cue) {
@@ -2898,6 +3049,14 @@
       }
 
       function resetCaptionsForNewSource() {
+        captionSourceVersion += 1;
+        captionGenerationError = "";
+        captionRetryButton.hidden = true;
+        if (captionGenerationController) {
+          captionGenerationController.abort();
+          captionGenerationController = null;
+        }
+        setCaptionGenerationLoading(false);
         captionState.cues = [];
         captionState.enabled = false;
         captionLayerToggle.checked = false;
@@ -2956,40 +3115,52 @@
       }
 
       async function generateEditorCaptions() {
+        if (isCaptionGenerating) return;
         if (!activeCaptionClipFile) {
           setStep("source");
-          setCaptionStatus("Load a clip before generating captions.", "error");
+          setCaptionError("Load a clip before generating captions.");
           setStatus(youtubeHint, "Load a clip first, then return to Captions.", "error");
           return;
         }
-        const originalText = captionGenerateButton.textContent;
-        captionGenerateButton.disabled = true;
-        captionGenerateButton.textContent = "Generating...";
+        const requestId = captionGenerationRequestId + 1;
+        captionGenerationRequestId = requestId;
+        const sourceVersion = captionSourceVersion;
+        captionGenerationController = new AbortController();
+        captionGenerationError = "";
+        captionRetryButton.hidden = true;
+        setCaptionGenerationLoading(true);
         setCaptionStatus("Generating captions from the loaded clip...", "warning");
         try {
           const form = new FormData();
           form.append("clip", activeCaptionClipFile, activeCaptionClipFile.name || "clip.mp4");
           form.append("language", captionLanguageSelect.value);
-          const response = await fetch("/api/captions", { method: "POST", body: form });
+          const response = await fetch("/api/captions", { method: "POST", body: form, signal: captionGenerationController.signal });
+          if (requestId !== captionGenerationRequestId || sourceVersion !== captionSourceVersion) return;
           const isJson = (response.headers.get("content-type") || "").includes("application/json");
           const payload = isJson ? await response.json() : { error: await response.text() };
+          if (requestId !== captionGenerationRequestId || sourceVersion !== captionSourceVersion) return;
           if (!response.ok) {
             throw new Error([payload?.error, payload?.details].filter(Boolean).join(" | ") || "Could not generate captions.");
           }
           const cues = normalizeCaptionSegments(payload.segments);
           if (!cues.length) {
             setCaptionCues([]);
-            setCaptionStatus("No readable speech found. Try a clip with clearer audio.", "error");
+            setCaptionError("No readable speech found. Try a clip with clearer audio.");
             return;
           }
           captionState.language = captionLanguageSelect.value;
+          persistCaptionSettings();
           setCaptionCues(cues);
           setCaptionStatus(`${cues.length} ${cues.length === 1 ? "caption cue" : "caption cues"} generated and synced.`, "active");
         } catch (error) {
-          setCaptionStatus(`Caption generation failed: ${error instanceof Error ? error.message : "Unknown error."}`, "error");
+          if (error?.name === "AbortError") return;
+          if (requestId !== captionGenerationRequestId || sourceVersion !== captionSourceVersion) return;
+          setCaptionError(`Caption generation failed: ${error instanceof Error ? error.message : "Unknown error."}`);
         } finally {
-          captionGenerateButton.disabled = false;
-          captionGenerateButton.textContent = originalText || "Generate captions";
+          if (requestId === captionGenerationRequestId) {
+            captionGenerationController = null;
+            setCaptionGenerationLoading(false);
+          }
         }
       }
 
@@ -3142,8 +3313,134 @@
       }
 
       function normalizeKickHandle(value) {
-        const text = `${value || ""}`.trim().toUpperCase();
-        return text || "KICK.COM/EDMATTHEWS";
+        const text = `${value || ""}`
+          .trim()
+          .replace(/^https?:\/\/(www\.)?kick\.com\//i, "")
+          .replace(/^kick\.com\//i, "")
+          .replace(/^[@/\s]+/g, "")
+          .replace(/\s+/g, "")
+          .toLowerCase();
+        return text || "edmatthews";
+      }
+
+      function getKickDisplayText() {
+        const user = kickState.allCaps ? kickState.user.toUpperCase() : kickState.user.toLowerCase();
+        return kickState.allCaps ? `KICK.COM/${user}` : `kick.com/${user}`;
+      }
+
+      function getKickTextColors() {
+        if (kickState.style === "lime-gradient") return { start: "#d9ff79", end: "#52f51b" };
+        if (kickState.style === "green-white") return { start: "#52f51b", end: "#ffffff" };
+        return { start: "#52f51b", end: "#52f51b" };
+      }
+
+      function drawKickTemplateLogo(ctx, x, y, w, h, glow = 0) {
+        ctx.save();
+        if (glow > 0) {
+          ctx.shadowBlur = Math.max(2, h * 0.18 * glow);
+          ctx.shadowColor = `rgba(83, 252, 24, ${Math.min(0.6, 0.25 + glow * 0.25)})`;
+        }
+        if (kickLogoImage.complete && kickLogoImage.naturalWidth > 0) {
+          ctx.drawImage(kickLogoImage, x, y, w, h);
+        } else if (typeof Path2D === "function") {
+          const path = new Path2D(KICK_LOGO_PATH);
+          const scaleX = w / KICK_LOGO_VIEWBOX.w;
+          const scaleY = h / KICK_LOGO_VIEWBOX.h;
+          ctx.translate(x - KICK_LOGO_VIEWBOX.x * scaleX, y - KICK_LOGO_VIEWBOX.y * scaleY);
+          ctx.scale(scaleX, scaleY);
+          ctx.fillStyle = "#53FC18";
+          ctx.fill(path);
+        }
+        ctx.restore();
+
+        ctx.save();
+        const sheen = ctx.createLinearGradient(x, y + h * 0.1, x, y + h * 0.28);
+        sheen.addColorStop(0, "rgba(255,255,255,0.44)");
+        sheen.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = sheen;
+        ctx.globalAlpha = 0.45;
+        ctx.fillRect(x + w * 0.06, y + h * 0.1, w * 0.82, Math.max(2, h * 0.18));
+        ctx.restore();
+      }
+
+      function fitKickText(ctx, text, maxWidth, fontSize) {
+        let next = fontSize;
+        while (next > 11) {
+          ctx.font = `700 ${next}px Oswald, Arial Black, Impact, sans-serif`;
+          if (ctx.measureText(text).width <= maxWidth) return next;
+          next -= 1;
+        }
+        return next;
+      }
+
+      function renderKickBannerCanvas(width, height, options = {}) {
+        const pixelRatio = options.pixelRatio || 2;
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(width * pixelRatio));
+        canvas.height = Math.max(1, Math.round(height * pixelRatio));
+        const ctx = canvas.getContext("2d");
+        ctx.scale(pixelRatio, pixelRatio);
+
+        const glow = clamp(kickState.glow, 0, 150) / 100;
+        const safeEdge = clamp(kickState.safeEdge, 0, 40);
+        const gap = clamp(kickState.gap, 0, 16);
+        const textOffset = clamp(kickState.textOffset, -6, 8);
+        const barH = Math.max(height * 0.6, 20);
+        const barY = height - barH;
+        const maxLogoW = width * 0.36;
+        const naturalLogoW = Math.min(maxLogoW, Math.min(height * 0.9, barH * 1.42) * 3.12);
+        const logoW = kickState.exactKickWidth ? naturalLogoW : Math.min(width * 0.4, naturalLogoW + gap * 0.4);
+        const logoH = logoW / 3.12;
+        const logoX = Math.max(6, safeEdge * 0.55);
+        const logoY = height - logoH - Math.max(1, height * 0.1);
+        const textX = logoX + logoW + Math.max(4, gap);
+        const rightPad = Math.max(8, safeEdge);
+        const textMaxW = Math.max(20, width - textX - rightPad);
+        const text = getKickDisplayText();
+        const colors = getKickTextColors();
+
+        ctx.save();
+        ctx.shadowBlur = Math.round(12 * glow);
+        ctx.shadowColor = `rgba(83,252,24,${0.18 * glow})`;
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, barY, width, barH);
+        ctx.restore();
+
+        drawKickTemplateLogo(ctx, logoX, logoY, logoW, logoH, glow);
+
+        const baseFont = Math.max(11, Math.min(barH * 0.62, height * 0.44));
+        const fontSize = fitKickText(ctx, text, textMaxW, baseFont);
+        const gradient = ctx.createLinearGradient(textX, 0, Math.min(width, textX + textMaxW), 0);
+        gradient.addColorStop(0, colors.start);
+        gradient.addColorStop(1, colors.end);
+        const textY = barY + barH / 2 + fontSize * 0.36 + textOffset;
+
+        ctx.save();
+        ctx.font = `700 ${fontSize}px Oswald, Arial Black, Impact, sans-serif`;
+        ctx.lineJoin = "round";
+        ctx.miterLimit = 2;
+        ctx.shadowBlur = Math.round(4 * glow);
+        ctx.shadowColor = `rgba(83,252,24,${0.24 * glow})`;
+        ctx.strokeStyle = "rgba(0,0,0,0.92)";
+        ctx.lineWidth = Math.max(1, fontSize * 0.07);
+        ctx.fillStyle = gradient;
+        ctx.strokeText(text, textX, textY, textMaxW);
+        ctx.fillText(text, textX, textY, textMaxW);
+        ctx.restore();
+
+        return canvas;
+      }
+
+      function updateKickStyleLabels() {
+        kickGlowValue.textContent = `${Math.round(kickState.glow)}%`;
+        kickGapValue.textContent = `${Math.round(kickState.gap)}px`;
+        kickSafeEdgeValue.textContent = `${Math.round(kickState.safeEdge)}px`;
+        kickTextOffsetValue.textContent = `${Math.round(kickState.textOffset)}px`;
+      }
+
+      function syncKickSizeInputs() {
+        kickWidthInput.value = String(Math.round(kickState.box.w));
+        kickHeightInput.value = String(Math.round(kickState.box.h));
       }
 
       function setKickApplyMode(mode) {
@@ -3187,12 +3484,18 @@
         const end = kickState.apply === "whole" ? duration : clamp(kickState.end, start + 0.1, duration);
         kickState.start = start;
         kickState.end = end;
-        kickState.text = normalizeKickHandle(kickHandleInput.value);
-        kickState.box = normalizeBox(kickState.box, 20, 7);
+        kickState.user = normalizeKickHandle(kickHandleInput.value);
+        kickState.text = getKickDisplayText();
+        kickState.box = normalizeBox(kickState.box, 25, 5);
 
-        kickMiniHandle.textContent = kickState.text;
-        kickCanvasHandle.textContent = kickState.text;
-        kickPhoneHandle.textContent = kickState.text;
+        const previewCanvas = renderKickBannerCanvas(Math.max(260, 720 * kickState.box.w / 100), Math.max(42, 720 * kickState.box.h / 100), { pixelRatio: 1 });
+        const previewSrc = previewCanvas.toDataURL("image/png");
+        kickMiniPreviewImage.src = previewSrc;
+        kickCanvasImage.src = previewSrc;
+        kickPhoneImage.src = previewSrc;
+        kickHandleInput.value = kickState.user;
+        syncKickSizeInputs();
+        updateKickStyleLabels();
         kickStartInput.value = String(Number(start.toFixed(1)));
         kickEndInput.value = String(Number(end.toFixed(1)));
 
@@ -3664,6 +3967,7 @@
           item.tabIndex = active ? 0 : -1;
         });
         captionState.style = button.dataset.captionStyle || "kick";
+        persistCaptionSettings();
         updateCaptionOverlay();
       }
 
@@ -3678,12 +3982,14 @@
       function setCaptionMotion(button) {
         captionState.motion = button.dataset.captionMotion || "fade";
         setSegmentedButtonState(captionMotionButtons, button);
+        persistCaptionSettings();
         updateCaptionOverlay();
       }
 
       function setCaptionPosition(button) {
         captionState.position = button.dataset.captionPosition || "bottom";
         setSegmentedButtonState(captionPositionButtons, button);
+        persistCaptionSettings();
         updateCaptionOverlay();
       }
 
@@ -3691,10 +3997,19 @@
         const next = Math.round(clamp(captionStrokeInput.value || 2, 0, 5));
         captionState.strokeWidth = next;
         captionStrokeInput.value = String(next);
+        persistCaptionSettings();
         updateCaptionOverlay();
       }
 
-      setCaptionStyle(captionStyleButtons.find((button) => button.classList.contains("active")) || captionStyleButtons[0]);
+      const savedCaptionSettings = readCaptionSettings();
+      if (["en", "es"].includes(savedCaptionSettings.language)) {
+        captionState.language = savedCaptionSettings.language;
+        captionLanguageSelect.value = savedCaptionSettings.language;
+      }
+      if (Number.isFinite(Number(savedCaptionSettings.strokeWidth))) {
+        captionStrokeInput.value = String(Math.round(clamp(savedCaptionSettings.strokeWidth, 0, 5)));
+      }
+      setCaptionStyle(captionStyleButtons.find((button) => button.dataset.captionStyle === savedCaptionSettings.style) || captionStyleButtons.find((button) => button.classList.contains("active")) || captionStyleButtons[0]);
       captionStyleButtons.forEach((button) => button.addEventListener("click", () => setCaptionStyle(button)));
       document.querySelector('.caption-card-grid[role="radiogroup"]').addEventListener("keydown", (event) => {
         const handledKeys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"];
@@ -3712,14 +4027,16 @@
       captionLayerToggle.addEventListener("change", updateCaptionOverlay);
       captionLanguageSelect.addEventListener("change", () => {
         captionState.language = captionLanguageSelect.value;
+        persistCaptionSettings();
       });
       captionGenerateButton.addEventListener("click", generateEditorCaptions);
+      captionRetryButton.addEventListener("click", generateEditorCaptions);
       captionMotionButtons.forEach((button) => button.addEventListener("click", () => setCaptionMotion(button)));
       captionPositionButtons.forEach((button) => button.addEventListener("click", () => setCaptionPosition(button)));
       captionStrokeInput.addEventListener("input", syncCaptionStroke);
       captionStrokeInput.addEventListener("blur", syncCaptionStroke);
-      setCaptionMotion(captionMotionButtons.find((button) => button.classList.contains("active")) || captionMotionButtons[0]);
-      setCaptionPosition(captionPositionButtons.find((button) => button.classList.contains("active")) || captionPositionButtons[0]);
+      setCaptionMotion(captionMotionButtons.find((button) => button.dataset.captionMotion === savedCaptionSettings.motion) || captionMotionButtons.find((button) => button.classList.contains("active")) || captionMotionButtons[0]);
+      setCaptionPosition(captionPositionButtons.find((button) => button.dataset.captionPosition === savedCaptionSettings.position) || captionPositionButtons.find((button) => button.classList.contains("active")) || captionPositionButtons[0]);
       syncCaptionStroke();
       analyzeYoutubeButton.addEventListener("click", analyzeYoutube);
       localClipInput.addEventListener("change", () => {
@@ -3774,6 +4091,51 @@
         syncPhonePreview();
       });
       mainVideo.addEventListener("ratechange", () => syncPhonePreview({ force: true }));
+      function setKickStyle(style) {
+        kickState.style = ["green", "lime-gradient", "green-white"].includes(style) ? style : "green";
+        document.querySelectorAll("[data-kick-style]").forEach((item) => {
+          const active = item.dataset.kickStyle === kickState.style;
+          item.classList.toggle("active", active);
+          item.setAttribute("aria-pressed", String(active));
+        });
+        updateKickOverlay();
+      }
+
+      function setKickCaps(mode) {
+        kickState.allCaps = mode !== "none";
+        document.querySelectorAll("[data-kick-caps]").forEach((item) => {
+          const active = item.dataset.kickCaps === (kickState.allCaps ? "all" : "none");
+          item.classList.toggle("active", active);
+          item.setAttribute("aria-pressed", String(active));
+        });
+        updateKickOverlay();
+      }
+
+      function syncKickStyleControls() {
+        kickState.glow = clamp(kickGlowInput.value, 0, 150);
+        kickState.gap = clamp(kickGapInput.value, 0, 16);
+        kickState.safeEdge = clamp(kickSafeEdgeInput.value, 0, 40);
+        kickState.textOffset = clamp(kickTextOffsetInput.value, -6, 8);
+        kickState.exactKickWidth = !!kickExactWidthToggle.checked;
+        updateKickOverlay();
+      }
+
+      function syncKickCustomSize() {
+        kickState.box.w = clamp(kickWidthInput.value, 25, 100);
+        kickState.box.h = clamp(kickHeightInput.value, 5, 24);
+        kickState.box = normalizeBox(kickState.box, 25, 5);
+        updateKickOverlay();
+      }
+
+      document.querySelectorAll("[data-kick-style]").forEach((button) => button.addEventListener("click", () => setKickStyle(button.dataset.kickStyle)));
+      document.querySelectorAll("[data-kick-caps]").forEach((button) => button.addEventListener("click", () => setKickCaps(button.dataset.kickCaps)));
+      [kickGlowInput, kickGapInput, kickSafeEdgeInput, kickTextOffsetInput, kickExactWidthToggle].forEach((input) => input.addEventListener("input", syncKickStyleControls));
+      kickExactWidthToggle.addEventListener("change", syncKickStyleControls);
+      [kickWidthInput, kickHeightInput].forEach((input) => {
+        input.addEventListener("input", syncKickCustomSize);
+        input.addEventListener("blur", syncKickCustomSize);
+      });
+      kickLogoImage.addEventListener("load", updateKickOverlay, { once: true });
       kickTemplateToggle.addEventListener("click", () => {
         kickState.enabled = !kickState.enabled;
         if (kickState.enabled && kickState.apply === "whole") {
@@ -3792,8 +4154,17 @@
       });
       kickHandleInput.addEventListener("input", updateKickOverlay);
       kickHandleInput.addEventListener("blur", () => {
-        kickHandleInput.value = normalizeKickHandle(kickHandleInput.value);
+        kickHandleInput.value = kickState.user;
         updateKickOverlay();
+      });
+      kickDownloadPngButton.addEventListener("click", () => {
+        const baseWidth = layoutState.format === "horizontal" ? 1280 : 720;
+        const baseHeight = layoutState.format === "horizontal" ? 720 : 1280;
+        const width = Math.max(260, Math.round(baseWidth * kickState.box.w / 100));
+        const height = Math.max(42, Math.round(baseHeight * kickState.box.h / 100));
+        const canvas = renderKickBannerCanvas(width, height, { pixelRatio: 2 });
+        downloadBlob(dataUrlToBlob(canvas.toDataURL("image/png")), `kick-${safeFileName(kickState.user)}.png`);
+        setStatus(exportStatus, "Kick overlay PNG downloaded.", "success");
       });
       document.querySelectorAll("[data-kick-apply]").forEach((button) => {
         button.addEventListener("click", () => {
@@ -3846,7 +4217,7 @@
       makeBoxInteractive(kickCanvasOverlay, () => kickState.box, (box) => {
         kickState.box = box;
         updateKickOverlay();
-      }, { minW: 20, minH: 7 });
+      }, { minW: 25, minH: 5 });
       makeTimelineRangeInteractive(kickTimelineClip, document.querySelector(".overlay-lane"), () => ({ start: kickState.start, end: kickState.end }), (range) => {
         kickState.enabled = true;
         kickState.apply = "range";
@@ -4057,32 +4428,8 @@
       function renderKickOverlayToCanvas(ctx, outputWidth, outputHeight) {
         if (!canDrawElement(kickPhoneOverlay)) return;
         const box = getPreviewBox(kickPhoneOverlay, outputWidth, outputHeight);
-        const radius = Math.max(6, box.h * 0.18);
-        const wordWidth = Math.min(Math.max(box.w * 0.23, 120), box.w * 0.4);
-
-        ctx.save();
-        drawRoundedRectPath(ctx, box.x, box.y, box.w, box.h, radius);
-        ctx.fillStyle = "#06140c";
-        ctx.fill();
-        ctx.lineWidth = Math.max(2, box.h * 0.05);
-        ctx.strokeStyle = "#1f7f55";
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.rect(box.x, box.y, wordWidth, box.h);
-        ctx.clip();
-        ctx.fillStyle = "#0b2013";
-        ctx.fillRect(box.x, box.y, wordWidth, box.h);
-        ctx.restore();
-
-        ctx.save();
-        ctx.fillStyle = "#83ff3f";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.font = `900 ${Math.max(26, box.h * 0.54)}px Impact, Arial Black, sans-serif`;
-        ctx.fillText("KICK", box.x + wordWidth / 2, box.y + box.h / 2);
-        ctx.font = `900 ${Math.max(14, box.h * 0.26)}px Arial Black, sans-serif`;
-        ctx.fillText(kickState.text, box.x + wordWidth + (box.w - wordWidth) / 2, box.y + box.h / 2, Math.max(20, box.w - wordWidth - 24));
-        ctx.restore();
+        const bannerCanvas = renderKickBannerCanvas(box.w, box.h, { pixelRatio: 2 });
+        ctx.drawImage(bannerCanvas, box.x, box.y, box.w, box.h);
       }
 
       function getCanvasCaptionStyle(styleKey) {
@@ -4243,6 +4590,15 @@
         if (!chunks.length) throw new Error("Final render completed with no video data.");
         const blob = new Blob(chunks, { type: mimeType });
         return { blob, extension: "mp4", start: exportStart, end: exportEnd };
+      }
+
+      function dataUrlToBlob(dataUrl) {
+        const [header, data] = dataUrl.split(",");
+        const mime = header.match(/data:([^;]+)/)?.[1] || "application/octet-stream";
+        const binary = atob(data || "");
+        const bytes = new Uint8Array(binary.length);
+        for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+        return new Blob([bytes], { type: mime });
       }
 
       function downloadBlob(blob, filename) {
