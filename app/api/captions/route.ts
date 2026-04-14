@@ -29,20 +29,11 @@ const bundledFfmpegPath = (() => {
   }
 })();
 
-const installerFfmpegPath = (() => {
-  try {
-    const installer = require("@ffmpeg-installer/ffmpeg");
-    return installer && typeof installer.path === "string" ? installer.path : null;
-  } catch {
-    return null;
-  }
-})();
 
 function getFfmpegCandidates() {
   const candidates = [
     process.env.FFMPEG_PATH?.trim(),
     bundledFfmpegPath?.trim(),
-    installerFfmpegPath?.trim(),
     "ffmpeg",
     "/usr/local/bin/ffmpeg",
     "/opt/homebrew/bin/ffmpeg",
@@ -231,7 +222,7 @@ async function transcribeByChunking(file: File, apiKey: string, language: string
             error: "FFmpeg is not installed on this machine.",
             details:
               `Large-file captioning needs ffmpeg to split chunks. Attempted binaries: ${describeFfmpegCandidates()}. Install one of: ` +
-              "`npm install @ffmpeg-installer/ffmpeg ffmpeg-static`, then restart `npm run dev`, or set FFMPEG_PATH in .env.local.",
+              "`npm install ffmpeg-static`, then restart `npm run dev`, or set FFMPEG_PATH in .env.local.",
             status: 500,
           },
         };

@@ -33,14 +33,6 @@ const requireFfmpegPath = () => {
   }
 };
 
-const requireInstallerFfmpegPath = () => {
-  try {
-    const installer = require("@ffmpeg-installer/ffmpeg");
-    return installer && typeof installer.path === "string" ? installer.path : null;
-  } catch {
-    return null;
-  }
-};
 
 const requireFfmpegStaticPackagePath = () => {
   try {
@@ -99,7 +91,6 @@ function getBinaryCandidates() {
     ffmpegPath,
     requireFfmpegPath(),
     requireFfmpegStaticPackagePath(),
-    requireInstallerFfmpegPath(),
     "ffmpeg",
     "/usr/local/bin/ffmpeg",
     "/opt/homebrew/bin/ffmpeg",
@@ -1791,6 +1782,10 @@ export async function GET(req: NextRequest) {
       estimatedTotalSeconds,
       maxClips: Math.min(Math.max(Math.round(Number.isFinite(maxClips) ? maxClips : 8), 1), 20),
       clipDuration: Math.min(Math.max(Number.isFinite(clipDuration) ? clipDuration : 30, 10), 120),
+      note:
+        duration === null && hasYtDlpProxy()
+          ? "Duration metadata was not available from local yt-dlp; POST analysis will depend on the configured external downloader."
+          : undefined,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to estimate analysis duration.";

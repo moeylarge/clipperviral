@@ -575,7 +575,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
       );
       addScore(autoWinner, moveForward ? 8 : 14);
     },
-    [activeContestant.id, addScore, contestants, keepPercent, queue, roundState, swapPercent, totalVotes, triggerTransitionPulse, votes.keep, votes.swap]
+    [activeContestant, addScore, contestants, keepPercent, queue, roundState, swapPercent, totalVotes, triggerTransitionPulse, votes.keep, votes.swap]
   );
 
   const startRound = useCallback(() => {
@@ -628,7 +628,7 @@ export default function ShowLobbyClient({ showId }: ShowLobbyClientProps) {
       detail: `${next.name} moved to center spotlight lane.`,
       tone: "ready",
     }, 1100);
-  }, [canAdvanceContestant, clearPulseState, queue, resetContestantStatuses]);
+  }, [canAdvanceContestant, clearPulseState, queue, resetContestantStatuses, triggerTransitionPulse]);
 
   const resetDemo = useCallback(() => {
     clearPulseState();

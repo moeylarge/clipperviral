@@ -23,20 +23,11 @@ const bundledFfmpegPath = (() => {
   }
 })();
 
-const installerFfmpegPath = (() => {
-  try {
-    const installer = require("@ffmpeg-installer/ffmpeg");
-    return installer && typeof installer.path === "string" ? installer.path : null;
-  } catch {
-    return null;
-  }
-})();
 
 function ffmpegCandidates() {
   return [
     { label: "FFMPEG_PATH", value: process.env.FFMPEG_PATH },
     { label: "ffmpeg-static", value: bundledFfmpegPath },
-    { label: "@ffmpeg-installer/ffmpeg", value: installerFfmpegPath },
     { label: "ffmpeg", value: "ffmpeg" },
     { label: "/usr/local/bin/ffmpeg", value: "/usr/local/bin/ffmpeg" },
     { label: "/opt/homebrew/bin/ffmpeg", value: "/opt/homebrew/bin/ffmpeg" },

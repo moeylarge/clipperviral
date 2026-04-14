@@ -1119,18 +1119,6 @@
         opacity: 1;
       }
 
-      .phone-preview::after {
-        content: "ClipperViral\A preview caption\A goes here";
-        white-space: pre;
-        position: absolute;
-        left: 10px;
-        bottom: 20px;
-        color: #fff;
-        font-size: 6px;
-        line-height: 1.25;
-        font-weight: 800;
-      }
-
       .phone-preview .kick-lower-third {
         left: 6%;
         right: 6%;
@@ -1653,8 +1641,8 @@
           <button class="quality-card" data-quality="720-60" type="button"><span class="radio-dot"></span><strong>720p<br /><span>60 fps</span></strong><span><strong>720p High Frame Rate</strong>Enhanced smoothness</span></button>
           <button class="quality-card active" data-quality="1080" type="button"><span class="radio-dot"></span><strong>1080p<br /><span>60 fps</span></strong><span><strong>Full HD 1080p</strong>Best for creators</span></button>
           <div class="green-strip">The best choice for 23% more engagement 🎉</div>
-          <button id="exportButton" class="export-btn" type="button">Download preview clip ⇧</button>
-          <div id="exportStatus" class="status">Export is ready after you add or preview a clip.</div>
+          <button id="exportButton" class="export-btn" type="button">Render final clip ⇧</button>
+          <div id="exportStatus" class="status">Final render is ready after you add or preview a clip.</div>
           <div class="save-template">
             <h1>Save Template</h1>
             <p>Save your current settings, crops and stickers as a reusable template.</p>
@@ -1751,6 +1739,7 @@
       let selectedLayout = "dual";
       let selectedFormat = "vertical";
       let clipDuration = 34;
+      let isExporting = false;
       const trimState = { start: 0, end: 34 };
       const kickState = { enabled: false, apply: "whole", start: 0, end: 34, text: "KICK.COM/EDMATTHEWS", box: { x: 5, y: 78, w: 90, h: 13 } };
       const cropState = {
@@ -1927,10 +1916,10 @@
       }
 
       function formatClock(seconds) {
-        const safe = Math.max(0, Number(seconds) || 0);
-        const min = Math.floor(safe / 60);
-        const sec = Math.floor(safe % 60);
-        const tenth = Math.floor((safe % 1) * 10);
+        const totalTenths = Math.round(Math.max(0, Number(seconds) || 0) * 10);
+        const min = Math.floor(totalTenths / 600);
+        const sec = Math.floor((totalTenths % 600) / 10);
+        const tenth = totalTenths % 10;
         return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}.${tenth}`;
       }
 
@@ -2240,7 +2229,7 @@
               setStep("layouts");
               mainVideo.play().catch(() => {});
               syncPhonePreview({ force: true });
-              setStatus(youtubeHint, "Preview loaded. Choose a layout, add overlays, then export.", "success");
+              setStatus(youtubeHint, "Preview loaded. Choose a layout, add overlays, then render the final clip.", "success");
             } catch (error) {
               setStatus(youtubeHint, `Preview failed: ${error instanceof Error ? error.message : "Could not preview clip."}`, "error");
             } finally {
@@ -2249,7 +2238,7 @@
             }
           });
           const download = document.createElement("button");
-          download.textContent = "Download mp4";
+          download.textContent = "Download source mp4";
           download.addEventListener("click", async () => {
             const originalText = download.textContent;
             download.disabled = true;
@@ -2268,7 +2257,7 @@
               setStatus(youtubeHint, `Download failed: ${error instanceof Error ? error.message : "Could not download clip."}`, "error");
             } finally {
               download.disabled = false;
-              download.textContent = originalText || "Download mp4";
+              download.textContent = originalText || "Download source mp4";
             }
           });
           actions.append(preview, download);
@@ -2395,7 +2384,7 @@
         }
         setVideoSource(URL.createObjectURL(file));
         setStatus(youtubeHint, `${file.name} loaded. Choose your layout next.`, "success");
-        setStatus(exportStatus, "Preview clip loaded. Export/download is available.", "success");
+        setStatus(exportStatus, "Preview clip loaded. Final render will include trim, layout and active overlays.", "success");
         setStep("layouts");
       });
       playButton.addEventListener("click", () => {
@@ -2423,7 +2412,7 @@
       mainVideo.addEventListener("loadedmetadata", () => setDuration(mainVideo.duration));
       mainVideo.addEventListener("seeked", () => syncPhonePreview({ force: true }));
       mainVideo.addEventListener("timeupdate", () => {
-        if (mainVideo.src && !mainVideo.paused && mainVideo.currentTime > trimState.end) {
+        if (!isExporting && mainVideo.src && !mainVideo.paused && mainVideo.currentTime > trimState.end) {
           mainVideo.pause();
           mainVideo.currentTime = trimState.start;
         }
@@ -2531,7 +2520,288 @@
         platformSelect.dispatchEvent(new Event("change"));
       });
       shapeSelect.addEventListener("change", applyShape);
-      exportButton.addEventListener("click", () => {
+
+      function getExportQualitySettings() {
+        const activeQuality = document.querySelector(".quality-card.active")?.dataset?.quality || "1080";
+        const vertical = selectedFormat !== "horizontal";
+        if (activeQuality === "720") return { width: vertical ? 720 : 1280, height: vertical ? 1280 : 720, fps: 30 };
+        if (activeQuality === "720-60") return { width: vertical ? 720 : 1280, height: vertical ? 1280 : 720, fps: 60 };
+        return { width: vertical ? 1080 : 1920, height: vertical ? 1920 : 1080, fps: 60 };
+      }
+
+      function getRecorderMimeType() {
+        if (!window.MediaRecorder) return "";
+        return [
+          "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+          "video/mp4",
+          "video/webm;codecs=vp9,opus",
+          "video/webm;codecs=vp8,opus",
+          "video/webm",
+        ].find((type) => MediaRecorder.isTypeSupported(type)) || "";
+      }
+
+      function waitForVideoReady(video) {
+        if (video.readyState >= 2 && Number.isFinite(video.duration)) return Promise.resolve();
+        return new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            cleanup();
+            reject(new Error("Clip metadata did not load in time."));
+          }, 10000);
+          function cleanup() {
+            clearTimeout(timeout);
+            video.removeEventListener("loadedmetadata", onReady);
+            video.removeEventListener("canplay", onReady);
+            video.removeEventListener("error", onError);
+          }
+          function onReady() {
+            cleanup();
+            resolve();
+          }
+          function onError() {
+            cleanup();
+            reject(new Error("Clip could not be read for rendering."));
+          }
+          video.addEventListener("loadedmetadata", onReady, { once: true });
+          video.addEventListener("canplay", onReady, { once: true });
+          video.addEventListener("error", onError, { once: true });
+          video.load();
+        });
+      }
+
+      function seekVideo(video, seconds) {
+        return new Promise((resolve, reject) => {
+          const target = clamp(seconds, 0, getEffectiveDuration());
+          const timeout = setTimeout(() => {
+            cleanup();
+            reject(new Error("Clip seek timed out before rendering."));
+          }, 10000);
+          function cleanup() {
+            clearTimeout(timeout);
+            video.removeEventListener("seeked", onSeeked);
+            video.removeEventListener("error", onError);
+          }
+          function onSeeked() {
+            cleanup();
+            resolve();
+          }
+          function onError() {
+            cleanup();
+            reject(new Error("Clip seek failed before rendering."));
+          }
+          video.addEventListener("seeked", onSeeked, { once: true });
+          video.addEventListener("error", onError, { once: true });
+          video.currentTime = target;
+          if (Math.abs(video.currentTime - target) < 0.05) {
+            cleanup();
+            resolve();
+          }
+        });
+      }
+
+      function drawRoundedRectPath(ctx, x, y, width, height, radius) {
+        const r = Math.max(0, Math.min(radius, width / 2, height / 2));
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + width - r, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+        ctx.lineTo(x + width, y + height - r);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+        ctx.lineTo(x + r, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      function getPreviewBox(element, outputWidth, outputHeight) {
+        const previewRect = phonePreview.getBoundingClientRect();
+        const rect = element.getBoundingClientRect();
+        const scaleX = outputWidth / previewRect.width;
+        const scaleY = outputHeight / previewRect.height;
+        return {
+          x: (rect.left - previewRect.left) * scaleX,
+          y: (rect.top - previewRect.top) * scaleY,
+          w: rect.width * scaleX,
+          h: rect.height * scaleY,
+          scale: Math.max(scaleX, scaleY),
+        };
+      }
+
+      function canDrawElement(element) {
+        if (!element) return false;
+        const style = window.getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
+      }
+
+      function drawVideoCover(ctx, video, box, options = {}) {
+        if (!video.videoWidth || !video.videoHeight || box.w <= 0 || box.h <= 0) return;
+        const scale = Math.max(box.w / video.videoWidth, box.h / video.videoHeight);
+        const sourceWidth = box.w / scale;
+        const sourceHeight = box.h / scale;
+        const sx = (video.videoWidth - sourceWidth) / 2;
+        const sy = (video.videoHeight - sourceHeight) / 2;
+        ctx.save();
+        if (options.opacity != null) ctx.globalAlpha = options.opacity;
+        if (options.filter) ctx.filter = options.filter;
+        drawRoundedRectPath(ctx, box.x, box.y, box.w, box.h, options.radius || 0);
+        ctx.clip();
+        ctx.drawImage(video, sx, sy, sourceWidth, sourceHeight, box.x, box.y, box.w, box.h);
+        ctx.restore();
+      }
+
+      function drawLayerBorder(ctx, box, color, width, radius) {
+        if (width <= 0) return;
+        ctx.save();
+        drawRoundedRectPath(ctx, box.x, box.y, box.w, box.h, radius);
+        ctx.lineWidth = width;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function renderVideoLayerToCanvas(ctx, element, outputWidth, outputHeight) {
+        if (!canDrawElement(element)) return;
+        const style = window.getComputedStyle(element);
+        const box = getPreviewBox(element, outputWidth, outputHeight);
+        const radius = parseFloat(style.borderRadius || "0") * box.scale;
+        drawVideoCover(ctx, element, box, {
+          filter: style.filter && style.filter !== "none" ? style.filter : "",
+          opacity: parseFloat(style.opacity || "1"),
+          radius,
+        });
+        const borderWidth = parseFloat(style.borderTopWidth || "0") * box.scale;
+        drawLayerBorder(ctx, box, style.borderTopColor || "transparent", borderWidth, radius);
+      }
+
+      function renderKickOverlayToCanvas(ctx, outputWidth, outputHeight) {
+        if (!canDrawElement(kickPhoneOverlay)) return;
+        const box = getPreviewBox(kickPhoneOverlay, outputWidth, outputHeight);
+        const radius = Math.max(6, box.h * 0.18);
+        const wordWidth = Math.min(Math.max(box.w * 0.23, 120), box.w * 0.4);
+
+        ctx.save();
+        drawRoundedRectPath(ctx, box.x, box.y, box.w, box.h, radius);
+        ctx.fillStyle = "#06140c";
+        ctx.fill();
+        ctx.lineWidth = Math.max(2, box.h * 0.05);
+        ctx.strokeStyle = "#1f7f55";
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.rect(box.x, box.y, wordWidth, box.h);
+        ctx.clip();
+        ctx.fillStyle = "#0b2013";
+        ctx.fillRect(box.x, box.y, wordWidth, box.h);
+        ctx.restore();
+
+        ctx.save();
+        ctx.fillStyle = "#83ff3f";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = `900 ${Math.max(26, box.h * 0.54)}px Impact, Arial Black, sans-serif`;
+        ctx.fillText("KICK", box.x + wordWidth / 2, box.y + box.h / 2);
+        ctx.font = `900 ${Math.max(14, box.h * 0.26)}px Arial Black, sans-serif`;
+        ctx.fillText(kickState.text, box.x + wordWidth + (box.w - wordWidth) / 2, box.y + box.h / 2, Math.max(20, box.w - wordWidth - 24));
+        ctx.restore();
+      }
+
+      function drawCompositionFrame(ctx, outputWidth, outputHeight) {
+        ctx.fillStyle = "#050505";
+        ctx.fillRect(0, 0, outputWidth, outputHeight);
+        [
+          document.getElementById("phoneBgVideo"),
+          phoneVideo,
+          document.getElementById("phoneMapVideo"),
+          document.getElementById("phoneFacecamLeftVideo"),
+          document.getElementById("phoneFacecamRightVideo"),
+        ].forEach((layer) => renderVideoLayerToCanvas(ctx, layer, outputWidth, outputHeight));
+        renderKickOverlayToCanvas(ctx, outputWidth, outputHeight);
+      }
+
+      async function renderFinalCompositionBlob() {
+        if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+          throw new Error("This browser cannot render the final composition. Use current Chrome or Edge.");
+        }
+        const mimeType = getRecorderMimeType();
+        if (!mimeType) throw new Error("This browser has no supported video recorder format.");
+
+        await waitForVideoReady(mainVideo);
+        const duration = getEffectiveDuration();
+        const exportStart = clamp(trimState.start, 0, duration - 0.1);
+        const exportEnd = clamp(trimState.end, exportStart + 0.1, duration);
+        const { width, height, fps } = getExportQualitySettings();
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d", { alpha: false });
+        if (!ctx) throw new Error("Could not create a render canvas.");
+
+        const previousTime = Number(mainVideo.currentTime) || 0;
+        const wasPaused = mainVideo.paused;
+        const previousPlaybackRate = mainVideo.playbackRate;
+        const chunks = [];
+        isExporting = true;
+        updateKickOverlay();
+        syncPhonePreview({ force: true });
+
+        try {
+          await seekVideo(mainVideo, exportStart);
+          mainVideo.playbackRate = 1;
+          const canvasStream = canvas.captureStream(fps);
+          const sourceStream = typeof mainVideo.captureStream === "function" ? mainVideo.captureStream() : null;
+          const tracks = [...canvasStream.getVideoTracks()];
+          sourceStream?.getAudioTracks().forEach((track) => tracks.push(track));
+          const stream = new MediaStream(tracks);
+          const recorder = new MediaRecorder(stream, { mimeType });
+          const stopped = new Promise((resolve, reject) => {
+            recorder.ondataavailable = (event) => {
+              if (event.data && event.data.size) chunks.push(event.data);
+            };
+            recorder.onerror = () => reject(new Error("The browser recorder failed during export."));
+            recorder.onstop = resolve;
+          });
+
+          recorder.start(250);
+          await mainVideo.play();
+          await new Promise((resolve) => {
+            function drawFrame() {
+              drawCompositionFrame(ctx, width, height);
+              if ((Number(mainVideo.currentTime) || 0) >= exportEnd || mainVideo.ended) {
+                resolve();
+                return;
+              }
+              requestAnimationFrame(drawFrame);
+            }
+            requestAnimationFrame(drawFrame);
+          });
+          if (recorder.state !== "inactive") recorder.stop();
+          await stopped;
+          stream.getTracks().forEach((track) => track.stop());
+        } finally {
+          mainVideo.pause();
+          mainVideo.playbackRate = previousPlaybackRate;
+          await seekVideo(mainVideo, Math.min(previousTime, getEffectiveDuration())).catch(() => {});
+          if (!wasPaused) mainVideo.play().catch(() => {});
+          isExporting = false;
+          syncPhonePreview({ force: true });
+        }
+
+        if (!chunks.length) throw new Error("Final render completed with no video data.");
+        const blob = new Blob(chunks, { type: mimeType });
+        const extension = mimeType.includes("mp4") ? "mp4" : "webm";
+        return { blob, extension, start: exportStart, end: exportEnd };
+      }
+
+      function downloadBlob(blob, filename) {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 10000);
+      }
+
+      exportButton.addEventListener("click", async () => {
         if (!videoUrl) {
           setStep("source");
           setStatus(youtubeHint, "Add or preview a clip before exporting.", "error");
@@ -2540,18 +2810,20 @@
         }
         const originalText = exportButton.textContent;
         exportButton.disabled = true;
-        exportButton.textContent = "Starting download...";
-        const a = document.createElement("a");
-        a.href = videoUrl;
-        a.download = "clipperviral-export-preview.mp4";
-        document.body.appendChild(a);
-        a.click();
-        setStatus(exportStatus, "Download started. This exports the current preview clip.", "success");
-        setTimeout(() => {
-          a.remove();
+        exportButton.textContent = "Rendering final...";
+        setStatus(exportStatus, "Rendering final composition with layout, trim and active overlays...", "loading");
+        try {
+          const result = await renderFinalCompositionBlob();
+          const startLabel = formatClock(result.start).replace(":", "-");
+          const endLabel = formatClock(result.end).replace(":", "-");
+          downloadBlob(result.blob, `clipperviral-final-${safeFileName(selectedLayout)}-${startLabel}-${endLabel}.${result.extension}`);
+          setStatus(exportStatus, `Final render downloaded (${result.extension.toUpperCase()}). Includes selected layout, trim range and active overlays.`, "success");
+        } catch (error) {
+          setStatus(exportStatus, `Final render failed: ${error instanceof Error ? error.message : "Unknown export error."}`, "error");
+        } finally {
           exportButton.disabled = false;
-          exportButton.textContent = originalText || "Download preview clip ⇧";
-        }, 250);
+          exportButton.textContent = originalText || "Render final clip ⇧";
+        }
       });
 
       renderLayoutCards();

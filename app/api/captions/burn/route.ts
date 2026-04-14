@@ -28,20 +28,11 @@ const bundledFfmpegPath = (() => {
     return null;
   }
 })();
-const fallbackInstallerFfmpegPath = (() => {
-  try {
-    const installer = require("@ffmpeg-installer/ffmpeg");
-    return installer && typeof installer.path === "string" ? installer.path : null;
-  } catch {
-    return null;
-  }
-})();
 
 function getAvailableFfmpegCommand() {
   const candidates = [
     { label: "FFMPEG_PATH", value: process.env.FFMPEG_PATH },
     { label: "ffmpeg-static", value: bundledFfmpegPath },
-    { label: "@ffmpeg-installer/ffmpeg", value: fallbackInstallerFfmpegPath },
     { label: "ffmpeg", value: "ffmpeg" },
   ];
 
@@ -161,7 +152,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ResponseJSON 
           {
             error: "FFmpeg is not installed on this machine.",
             details:
-              `No executable ffmpeg detected at runtime. Checked:\nFFMPEG_PATH: ${process.env.FFMPEG_PATH || "not set"}\nffmpeg-static: ${bundledFfmpegPath || "not available"}\n@ffmpeg-installer/ffmpeg: ${fallbackInstallerFfmpegPath || "not available"}\nffmpeg fallback: not checked here`,
+              `No executable ffmpeg detected at runtime. Checked:\nFFMPEG_PATH: ${process.env.FFMPEG_PATH || "not set"}\nffmpeg-static: ${bundledFfmpegPath || "not available"}\nffmpeg fallback: not checked here`,
             status: 500,
           },
           { status: 500 }

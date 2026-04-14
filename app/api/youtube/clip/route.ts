@@ -29,20 +29,11 @@ const ffmpegStatic = (() => {
   }
 })();
 
-const ffmpegInstallerPath = (() => {
-  try {
-    const installer = require("@ffmpeg-installer/ffmpeg");
-    return installer && typeof installer.path === "string" ? installer.path : null;
-  } catch {
-    return null;
-  }
-})();
 
 function getCandidates() {
   return [
     process.env.FFMPEG_PATH?.trim(),
     ffmpegStatic,
-    ffmpegInstallerPath,
     "ffmpeg",
     "/usr/local/bin/ffmpeg",
     "/opt/homebrew/bin/ffmpeg",
@@ -103,7 +94,13 @@ function parseProxyError(payload: Record<string, unknown>) {
 async function renderClipViaProxy(sourceUrl: string, start: number, duration: number) {
   const proxyUrl = getYtDlpProxyUrl();
   if (!proxyUrl) {
-    return NextResponse.json({ error: "Job not found or expired." }, { status: 404 });
+    return NextResponse.json(
+      {
+        error: "YouTube preview job is not available.",
+        details: "Re-run Analyze URL. If this keeps happening, YTDLP_PROXY_URL must be configured and reachable for expired jobs.",
+      },
+      { status: 404 },
+    );
   }
 
   const authToken = process.env.YTDLP_PROXY_TOKEN?.trim();
@@ -253,7 +250,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(
         {
           error: "FFmpeg is not installed on this machine.",
-          details: `Set FFMPEG_PATH or install one of: ffmpeg-static, @ffmpeg-installer/ffmpeg.`,
+          details: `Set FFMPEG_PATH or install ffmpeg-static.`,
         },
         { status: 500 },
       );
