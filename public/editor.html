@@ -1457,14 +1457,25 @@
         gap: 10px;
       }
 
+      .elements-panel .panel-head {
+        margin-bottom: 12px;
+      }
+
       .element-card {
         border: 1px solid #d6dbe9;
         border-radius: 8px;
         background: #fff;
-        padding: 13px;
+        padding: 12px;
         display: grid;
-        gap: 10px;
+        gap: 11px;
         box-shadow: 0 12px 28px rgba(16, 19, 28, 0.07);
+      }
+
+      .element-card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
       }
 
       .element-card strong {
@@ -1477,6 +1488,18 @@
         font-size: 13px;
       }
 
+      .element-badge {
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: #f2f5fb;
+        color: #4a5060;
+        padding: 5px 8px;
+        font-size: 10px;
+        font-weight: 950;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
       .mini-preview {
         min-height: 54px;
         border-radius: 8px;
@@ -1486,6 +1509,20 @@
         overflow: hidden;
         border: 2px solid #247a54;
         box-shadow: 0 14px 30px rgba(31, 127, 85, 0.20);
+      }
+
+      .mini-preview[aria-pressed="true"] {
+        border-color: #83ff3f;
+        box-shadow: 0 0 0 3px rgba(131, 255, 63, 0.18), 0 14px 30px rgba(31, 127, 85, 0.24);
+      }
+
+      .mini-preview::after {
+        content: attr(data-state-label);
+        margin-left: auto;
+        padding: 0 12px;
+        color: #dfffd7;
+        font-size: 11px;
+        font-weight: 950;
       }
 
       .mini-preview .kick-wordmark {
@@ -1517,10 +1554,35 @@
         color: #fff;
       }
 
+      .element-hint,
+      .element-status {
+        color: #667085;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.35;
+      }
+
+      .element-status {
+        border: 1px solid #dfe4f1;
+        border-radius: 8px;
+        background: #f8faff;
+        padding: 9px 10px;
+      }
+
+      .element-status.active {
+        border-color: rgba(36, 122, 54, 0.26);
+        background: #f4fff6;
+        color: #247a36;
+      }
+
       .range-fields {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 8px;
+      }
+
+      .range-fields.is-disabled {
+        opacity: 0.55;
       }
 
       .range-fields input {
@@ -1529,6 +1591,11 @@
         border-radius: 8px;
         min-height: 38px;
         padding: 8px 10px;
+      }
+
+      .range-fields input:disabled {
+        cursor: not-allowed;
+        background: #f6f8fd;
       }
 
       .playhead {
@@ -1744,37 +1811,42 @@
           <div id="layoutStatus" class="layout-status" aria-live="polite"></div>
         </section>
 
-        <section class="step-view" data-view="elements">
+        <section class="step-view elements-panel" data-view="elements">
           <div class="panel-head">
             <div>
               <div class="panel-kicker">Template</div>
               <h1>Elements</h1>
-              <p>Add a Kick lower third to the full clip or a timed range.</p>
+              <p>Add the Kick lower third to the clip or a timed range.</p>
             </div>
           </div>
           <div class="element-list">
             <article class="element-card">
-              <div>
-                <strong>Kick lower third</strong>
-                <p>Toggle the strip, edit the handle, then place it on the timeline.</p>
+              <div class="element-card-head">
+                <div>
+                  <strong>Kick lower third</strong>
+                  <p>Enable the strip, edit the handle, then choose when it appears.</p>
+                </div>
+                <span class="element-badge">Template</span>
               </div>
-              <button id="kickTemplateToggle" class="mini-preview" type="button" aria-pressed="false">
+              <button id="kickTemplateToggle" class="mini-preview" type="button" aria-pressed="false" data-state-label="Off">
                 <span class="kick-wordmark">KICK</span>
                 <span id="kickMiniHandle" class="kick-handle">KICK.COM/EDMATTHEWS</span>
               </button>
               <div class="field-stack">
                 <label for="kickHandleInput">Handle text</label>
-                <input id="kickHandleInput" type="text" value="KICK.COM/EDMATTHEWS" />
+                <input id="kickHandleInput" type="text" value="KICK.COM/EDMATTHEWS" maxlength="32" autocomplete="off" />
+                <div id="kickHandleHint" class="element-hint">Use a channel handle or short callout.</div>
               </div>
               <div class="segmented" aria-label="Kick overlay timing">
-                <button class="active" data-kick-apply="whole" type="button">Whole clip</button>
-                <button data-kick-apply="range" type="button">Selected range</button>
+                <button class="active" data-kick-apply="whole" type="button" aria-pressed="true">Whole clip</button>
+                <button data-kick-apply="range" type="button" aria-pressed="false">Range</button>
               </div>
-              <div class="range-fields">
+              <div id="kickRangeFields" class="range-fields is-disabled">
                 <label>Start time<input id="kickStartInput" type="number" min="0" step="0.1" value="0" /></label>
                 <label>End time<input id="kickEndInput" type="number" min="0" step="0.1" value="20" /></label>
               </div>
-              <button id="kickApplyCurrentButton" class="primary-btn source-action" type="button">Place on timeline</button>
+              <div id="kickElementStatus" class="element-status" aria-live="polite">Kick lower third is off.</div>
+              <button id="kickApplyCurrentButton" class="primary-btn source-action" type="button">Place at playhead</button>
             </article>
           </div>
         </section>
@@ -2004,6 +2076,8 @@
       const kickStartInput = document.getElementById("kickStartInput");
       const kickEndInput = document.getElementById("kickEndInput");
       const kickApplyCurrentButton = document.getElementById("kickApplyCurrentButton");
+      const kickRangeFields = document.getElementById("kickRangeFields");
+      const kickElementStatus = document.getElementById("kickElementStatus");
       const kickTimelineClip = document.getElementById("kickTimelineClip");
       const kickTimelineLabel = document.getElementById("kickTimelineLabel");
       const captionLayerToggle = document.getElementById("captionLayerToggle");
@@ -2574,13 +2648,53 @@
         return current >= kickState.start && current <= kickState.end;
       }
 
+      function normalizeKickHandle(value) {
+        const text = `${value || ""}`.trim().toUpperCase();
+        return text || "KICK.COM/EDMATTHEWS";
+      }
+
+      function setKickApplyMode(mode) {
+        kickState.apply = mode === "range" ? "range" : "whole";
+        document.querySelectorAll("[data-kick-apply]").forEach((item) => {
+          const active = item.dataset.kickApply === kickState.apply;
+          item.classList.toggle("active", active);
+          item.setAttribute("aria-pressed", String(active));
+        });
+        const rangeMode = kickState.apply === "range";
+        kickRangeFields.classList.toggle("is-disabled", !rangeMode);
+        [kickStartInput, kickEndInput].forEach((input) => {
+          input.disabled = !rangeMode;
+        });
+      }
+
+      function normalizeKickRange() {
+        const duration = getEffectiveDuration();
+        const start = clamp(kickStartInput.value || kickState.start, 0, Math.max(0, duration - 0.1));
+        const end = clamp(kickEndInput.value || kickState.end, start + 0.1, duration);
+        kickState.start = start;
+        kickState.end = end;
+      }
+
+      function updateKickElementStatus(start, end) {
+        const enabled = kickState.enabled;
+        kickTemplateToggle.dataset.stateLabel = enabled ? "On" : "Off";
+        kickElementStatus.classList.toggle("active", enabled);
+        if (!enabled) {
+          kickElementStatus.textContent = "Kick lower third is off.";
+          return;
+        }
+        kickElementStatus.textContent = kickState.apply === "whole"
+          ? `Visible for the whole clip as ${kickState.text}.`
+          : `Visible from ${formatClock(start)} to ${formatClock(end)} as ${kickState.text}.`;
+      }
+
       function updateKickOverlay() {
         const duration = getEffectiveDuration();
         const start = kickState.apply === "whole" ? 0 : clamp(kickState.start, 0, duration);
         const end = kickState.apply === "whole" ? duration : clamp(kickState.end, start + 0.1, duration);
         kickState.start = start;
         kickState.end = end;
-        kickState.text = (kickHandleInput.value || "KICK.COM/EDMATTHEWS").trim().toUpperCase();
+        kickState.text = normalizeKickHandle(kickHandleInput.value);
         kickState.box = normalizeBox(kickState.box, 20, 7);
 
         kickMiniHandle.textContent = kickState.text;
@@ -2595,7 +2709,8 @@
         applyBox(kickCanvasOverlay, kickState.box);
         applyPhoneBox(kickPhoneOverlay, kickState.box);
         kickTemplateToggle.setAttribute("aria-pressed", String(kickState.enabled));
-        kickTemplateToggle.style.outline = kickState.enabled ? "2px solid #70a7ff" : "";
+        setKickApplyMode(kickState.apply);
+        updateKickElementStatus(start, end);
 
         const left = (start / duration) * 100;
         const width = Math.max(2, ((end - start) / duration) * 100);
@@ -3098,18 +3213,20 @@
       });
       kickApplyCurrentButton.addEventListener("click", () => {
         kickState.enabled = true;
-        if (kickState.apply === "range") {
-          const current = clamp(mainVideo.currentTime || trimState.start, trimState.start, trimState.end);
-          kickState.start = clamp(current, 0, getEffectiveDuration() - 0.1);
-          kickState.end = clamp(current + 6, kickState.start + 0.1, getEffectiveDuration());
-        }
+        setKickApplyMode("range");
+        const current = clamp(mainVideo.currentTime || trimState.start, trimState.start, trimState.end);
+        kickState.start = clamp(current, 0, getEffectiveDuration() - 0.1);
+        kickState.end = clamp(current + 6, kickState.start + 0.1, getEffectiveDuration());
         updateKickOverlay();
       });
       kickHandleInput.addEventListener("input", updateKickOverlay);
+      kickHandleInput.addEventListener("blur", () => {
+        kickHandleInput.value = normalizeKickHandle(kickHandleInput.value);
+        updateKickOverlay();
+      });
       document.querySelectorAll("[data-kick-apply]").forEach((button) => {
         button.addEventListener("click", () => {
-          kickState.apply = button.dataset.kickApply;
-          document.querySelectorAll("[data-kick-apply]").forEach((item) => item.classList.toggle("active", item === button));
+          setKickApplyMode(button.dataset.kickApply);
           if (kickState.apply === "whole") {
             kickState.start = 0;
             kickState.end = getEffectiveDuration();
@@ -3122,10 +3239,12 @@
       });
       [kickStartInput, kickEndInput].forEach((input) => {
         input.addEventListener("input", () => {
-          kickState.apply = "range";
-          document.querySelectorAll("[data-kick-apply]").forEach((item) => item.classList.toggle("active", item.dataset.kickApply === "range"));
-          kickState.start = Number(kickStartInput.value) || 0;
-          kickState.end = Number(kickEndInput.value) || getEffectiveDuration();
+          setKickApplyMode("range");
+          normalizeKickRange();
+          updateKickOverlay();
+        });
+        input.addEventListener("blur", () => {
+          normalizeKickRange();
           updateKickOverlay();
         });
       });
