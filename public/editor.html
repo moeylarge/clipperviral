@@ -773,6 +773,10 @@
         gap: 10px;
       }
 
+      .caption-card-grid.compact {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
       .captions-panel .panel-head {
         margin-bottom: 14px;
       }
@@ -785,9 +789,29 @@
         box-shadow: 0 14px 30px rgba(16, 19, 28, 0.08);
       }
 
-      .caption-controls textarea {
-        min-height: 132px;
-        font-weight: 760;
+      .caption-control-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .caption-controls select,
+      .caption-controls input[type="number"],
+      .caption-segment textarea {
+        border: 1px solid #cfd5e6;
+        border-radius: 8px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 850;
+      }
+
+      .caption-controls select,
+      .caption-controls input[type="number"] {
+        min-height: 42px;
+        padding: 0 11px;
+        cursor: pointer;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7), 0 8px 18px rgba(16, 19, 28, 0.06);
       }
 
       .caption-hint,
@@ -821,8 +845,64 @@
         color: #8a4b00;
       }
 
+      .caption-status.error {
+        border-color: rgba(180, 35, 24, 0.28);
+        background: #fff4f2;
+        color: #b42318;
+      }
+
+      .caption-segment-list {
+        display: grid;
+        gap: 8px;
+        max-height: 236px;
+        overflow: auto;
+        padding-right: 2px;
+      }
+
+      .caption-empty-state,
+      .caption-segment {
+        border: 1px solid #dfe4f1;
+        border-radius: 8px;
+        background: #fff;
+        padding: 10px;
+      }
+
+      .caption-empty-state {
+        color: #667085;
+        font-size: 12px;
+        font-weight: 850;
+        line-height: 1.45;
+      }
+
+      .caption-segment {
+        display: grid;
+        grid-template-columns: 74px 1fr;
+        gap: 9px;
+        align-items: start;
+      }
+
+      .caption-time-chip {
+        border: 1px solid #dfe4f1;
+        border-radius: 999px;
+        background: #f7f8fc;
+        color: #5f6573;
+        padding: 6px 7px;
+        font-size: 10px;
+        font-weight: 950;
+        line-height: 1.2;
+        text-align: center;
+      }
+
+      .caption-segment textarea {
+        min-height: 54px;
+        width: 100%;
+        resize: vertical;
+        padding: 8px 9px;
+        line-height: 1.35;
+      }
+
       .caption-card {
-        min-height: 98px;
+        min-height: 76px;
         border: 1px solid #cfd4e4;
         border-radius: 8px;
         background: radial-gradient(circle at 50% 50%, #fff 0%, #f5f5f7 70%);
@@ -888,7 +968,37 @@
         color: var(--purple);
       }
 
+      .caption-card[data-caption-style="kick"] strong { color: #53fc18; }
+      .caption-card[data-caption-style="white"] strong { color: #ffffff; }
+      .caption-card[data-caption-style="yellow"] strong { color: #dbff4d; }
+      .caption-card[data-caption-style="magenta"] strong { color: #ff4de8; }
+      .caption-card[data-caption-style="neon"] strong { color: #4de8ff; }
+
+      .caption-options {
+        display: grid;
+        gap: 10px;
+      }
+
+      .caption-option-label {
+        display: block;
+        margin: 2px 0 7px;
+        color: #596170;
+        font-size: 11px;
+        font-weight: 950;
+        text-transform: uppercase;
+      }
+
+      .caption-stepper {
+        display: grid;
+        grid-template-columns: 1fr 78px;
+        gap: 10px;
+        align-items: center;
+      }
+
       .caption-layer {
+        --caption-fill: #53fc18;
+        --caption-stroke-color: rgba(0,0,0,0.9);
+        --caption-stroke-width: 2px;
         position: absolute;
         left: 9%;
         right: 9%;
@@ -905,6 +1015,10 @@
         text-transform: uppercase;
       }
 
+      .caption-layer[data-position="middle"] {
+        bottom: 44%;
+      }
+
       .caption-layer.active {
         display: flex;
       }
@@ -912,27 +1026,36 @@
       .caption-layer span {
         max-width: 100%;
         padding: 2px 5px;
+        color: var(--caption-fill);
+        -webkit-text-stroke: var(--caption-stroke-width) var(--caption-stroke-color);
+        text-shadow: 2px 2px 3px rgba(0,0,0,.95), 0 0 9px rgba(0,0,0,0.45);
       }
 
-      .caption-layer[data-style="ninja"] span {
-        color: #fff;
-        text-shadow: 2px 2px 0 #151515, -2px 2px 0 #151515, 2px -2px 0 #151515, -2px -2px 0 #151515, 0 4px 10px rgba(0,0,0,0.45);
+      .caption-layer.show[data-motion="fade"] span {
+        animation: captionFade 180ms ease both;
       }
 
-      .caption-layer[data-style="quirky"] span,
-      .caption-layer[data-style="quirky-cta"] span {
-        color: #f4f05c;
-        text-shadow: 2px 2px 0 #10131c, -2px 2px 0 #10131c, 2px -2px 0 #10131c, -2px -2px 0 #10131c;
+      .caption-layer.show[data-motion="sideways"] span {
+        animation: captionSideways 180ms ease both;
       }
 
-      .caption-layer[data-style="west"] span {
-        color: #fff1d3;
-        text-shadow: 2px 2px 0 #4f22f2, -2px 2px 0 #4f22f2, 2px -2px 0 #4f22f2, -2px -2px 0 #4f22f2;
+      .caption-layer.show[data-motion="skewed"] span {
+        animation: captionSkewed 180ms ease both;
       }
 
-      .caption-layer[data-style="headturning"] span {
-        color: #83ff3f;
-        text-shadow: 2px 2px 0 #04130a, -2px 2px 0 #04130a, 2px -2px 0 #04130a, -2px -2px 0 #04130a;
+      @keyframes captionFade {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes captionSideways {
+        from { opacity: 0; transform: translate(-24px, 0); }
+        to { opacity: 1; transform: translate(0, 0); }
+      }
+
+      @keyframes captionSkewed {
+        from { opacity: 0; transform: translate(-16px, 4px) skewX(-10deg); }
+        to { opacity: 1; transform: translate(0, 0) skewX(0); }
       }
 
       .editor-canvas .caption-layer {
@@ -1449,9 +1572,17 @@
         font-size: 8px;
       }
 
+      .phone-preview .caption-layer[data-position="middle"] {
+        bottom: 44%;
+      }
+
       .phone-preview[data-format="horizontal"] .caption-layer {
         bottom: 14%;
         font-size: 9px;
+      }
+
+      .phone-preview[data-format="horizontal"] .caption-layer[data-position="middle"] {
+        bottom: 44%;
       }
 
       .platform-pill {
@@ -2074,25 +2205,62 @@
         <section class="step-view captions-panel" data-view="captions">
           <div class="panel-head">
             <div>
-              <div class="panel-kicker">Timed text</div>
+              <div class="panel-kicker">Speech to captions</div>
               <h1>Captions</h1>
-              <p>Add timed caption lines that render in preview and final export.</p>
+              <p>Generate captions from the loaded clip, edit the lines, then export the same burned-in text.</p>
             </div>
           </div>
           <div class="field-stack caption-controls">
-            <label class="toggle-field"><input id="captionLayerToggle" type="checkbox" /> Render captions in preview and export</label>
-            <label for="captionTextInput">Caption lines</label>
-            <textarea id="captionTextInput" rows="5" spellcheck="true" aria-describedby="captionCueHint captionStatus" placeholder="[00:00.0-00:01.4] First caption&#10;[00:01.4-00:03.0] Next caption"></textarea>
-            <div id="captionCueHint" class="caption-hint">Use one line per caption. Timing is relative to the trimmed clip.</div>
-            <div id="captionStatus" class="caption-status" aria-live="polite">Caption layer is off.</div>
+            <div class="caption-control-grid">
+              <div>
+                <label for="captionLanguageSelect">Language</label>
+                <select id="captionLanguageSelect" aria-label="Caption language">
+                  <option value="en" selected>English</option>
+                  <option value="es">Spanish</option>
+                </select>
+              </div>
+              <div>
+                <label>&nbsp;</label>
+                <button id="captionGenerateButton" class="primary-btn source-action" type="button">Generate captions</button>
+              </div>
+            </div>
+            <label class="toggle-field"><input id="captionLayerToggle" type="checkbox" /> Show captions in preview and export</label>
+            <div id="captionStatus" class="caption-status" aria-live="polite">Load a clip, then generate captions.</div>
+            <div id="captionSegmentList" class="caption-segment-list" aria-label="Editable caption segments">
+              <div class="caption-empty-state">Generated caption lines will appear here for quick edits.</div>
+            </div>
           </div>
           <div class="section-title">Caption style</div>
-          <div class="caption-card-grid" role="radiogroup" aria-label="Caption style">
-            <button class="caption-card active" data-caption-style="ninja" data-caption-state="Style" type="button" role="radio" aria-checked="true"><strong>Clean<br />Outline</strong><span>default</span></button>
-            <button class="caption-card" data-caption-style="quirky" data-caption-state="Style" type="button" role="radio" aria-checked="false"><strong>Bold<br />Yellow</strong><span>high contrast</span></button>
-            <button class="caption-card" data-caption-style="quirky-cta" data-caption-state="Style" type="button" role="radio" aria-checked="false"><strong>Yellow<br />CTA</strong><span>callout</span></button>
-            <button class="caption-card" data-caption-style="west" data-caption-state="Style" type="button" role="radio" aria-checked="false"><strong>Soft<br />Purple</strong><span>subtle</span></button>
-            <button class="caption-card" data-caption-style="headturning" data-caption-state="Style" type="button" role="radio" aria-checked="false"><strong>Green<br />Pop</strong><span>bright</span></button>
+          <div class="caption-card-grid compact" role="radiogroup" aria-label="Caption color">
+            <button class="caption-card active" data-caption-style="kick" data-caption-state="Color" type="button" role="radio" aria-checked="true"><strong>Green</strong><span>kick</span></button>
+            <button class="caption-card" data-caption-style="white" data-caption-state="Color" type="button" role="radio" aria-checked="false"><strong>White</strong><span>clean</span></button>
+            <button class="caption-card" data-caption-style="yellow" data-caption-state="Color" type="button" role="radio" aria-checked="false"><strong>Yellow</strong><span>bold</span></button>
+            <button class="caption-card" data-caption-style="magenta" data-caption-state="Color" type="button" role="radio" aria-checked="false"><strong>Pink</strong><span>pop</span></button>
+            <button class="caption-card" data-caption-style="neon" data-caption-state="Color" type="button" role="radio" aria-checked="false"><strong>Blue</strong><span>neon</span></button>
+          </div>
+          <div class="caption-options">
+            <div>
+              <span class="caption-option-label">Motion</span>
+              <div class="segmented" aria-label="Caption motion">
+                <button class="active" data-caption-motion="fade" type="button" aria-pressed="true">Fade</button>
+                <button data-caption-motion="sideways" type="button" aria-pressed="false">Sideways</button>
+                <button data-caption-motion="skewed" type="button" aria-pressed="false">Skewed</button>
+              </div>
+            </div>
+            <div class="caption-stepper">
+              <div>
+                <label for="captionStrokeInput">Stroke size</label>
+                <div class="caption-hint">Use 0-5 for outline strength.</div>
+              </div>
+              <input id="captionStrokeInput" type="number" min="0" max="5" step="1" value="2" aria-label="Caption stroke size" />
+            </div>
+            <div>
+              <span class="caption-option-label">Position</span>
+              <div class="segmented" aria-label="Caption position">
+                <button class="active" data-caption-position="bottom" type="button" aria-pressed="true">Bottom</button>
+                <button data-caption-position="middle" type="button" aria-pressed="false">Middle</button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -2134,7 +2302,7 @@
                 <span class="kick-wordmark">KICK</span><span id="kickCanvasHandle" class="kick-handle">KICK.COM/EDMATTHEWS</span>
                 <span class="resize-handle tl" data-resize="tl"></span><span class="resize-handle tr" data-resize="tr"></span><span class="resize-handle bl" data-resize="bl"></span><span class="resize-handle br" data-resize="br"></span>
               </div>
-              <div id="captionCanvasOverlay" class="caption-layer" data-style="ninja" aria-hidden="true"><span></span></div>
+              <div id="captionCanvasOverlay" class="caption-layer" data-style="kick" data-motion="fade" data-position="bottom" aria-hidden="true"><span></span></div>
               <div class="selection-box" aria-hidden="true">
                 <div class="focus-panel"><span class="handle tl"></span><span class="handle tr"></span><span class="handle bl"></span><span class="handle br"></span></div>
                 <div class="map-box"><span class="label-chip">Map</span><span class="resize-handle tl" data-resize="tl"></span><span class="resize-handle tr" data-resize="tr"></span><span class="resize-handle bl" data-resize="bl"></span><span class="resize-handle br" data-resize="br"></span></div>
@@ -2158,7 +2326,7 @@
                 <video id="phoneFacecamLeftVideo" class="phone-facecam-left" muted playsinline></video>
                 <video id="phoneFacecamRightVideo" class="phone-facecam-right" muted playsinline></video>
                 <div id="kickPhoneOverlay" class="kick-lower-third" aria-hidden="true"><span class="kick-wordmark">KICK</span><span id="kickPhoneHandle" class="kick-handle">KICK.COM/EDMATTHEWS</span></div>
-                <div id="captionPhoneOverlay" class="caption-layer" data-style="ninja" aria-hidden="true"><span></span></div>
+                <div id="captionPhoneOverlay" class="caption-layer" data-style="kick" data-motion="fade" data-position="bottom" aria-hidden="true"><span></span></div>
               </div>
             </div>
             <button id="platformPill" class="platform-pill" type="button">♪ TikTok preview⌄</button>
@@ -2200,6 +2368,9 @@
       let isExporting = false;
       let sourceScanRequestId = 0;
       let activeSourceLabel = "";
+      let activeCaptionClipFile = null;
+      let exportAudioContext = null;
+      let exportAudioSourceNode = null;
 
       const LAYOUT_REGISTRY = {
         small: { key: "small", label: "Small facecam", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "small", panels: ["focus", "facecamLeft"], panelBoxes: { focus: { x: 0, y: 33, w: 100, h: 67 }, facecamLeft: { x: 19, y: 8, w: 62, h: 28, radius: 8 } } },
@@ -2231,8 +2402,14 @@
       };
       const trimState = { start: 0, end: 34 };
       const kickState = { enabled: false, apply: "whole", start: 0, end: 34, text: "KICK.COM/EDMATTHEWS", box: { x: 5, y: 78, w: 90, h: 13 } };
-      const captionState = { enabled: false, text: "", style: "ninja", cues: [] };
-      const CAPTION_TIMING_PATTERN = /^\[?\s*((?:\d+:)?\d{1,2}:\d{2}(?:[.,]\d+)?|\d+(?:[.,]\d+)?)\s*(?:-->|-|–|to)\s*((?:\d+:)?\d{1,2}:\d{2}(?:[.,]\d+)?|\d+(?:[.,]\d+)?)\s*\]?\s*(.+)$/i;
+      const CAPTION_STYLE_REGISTRY = {
+        kick: { fill: "#53fc18", stroke: "rgba(0,0,0,0.9)" },
+        white: { fill: "#ffffff", stroke: "rgba(0,0,0,0.9)" },
+        yellow: { fill: "#dbff4d", stroke: "rgba(0,0,0,0.9)" },
+        magenta: { fill: "#ff4de8", stroke: "rgba(0,0,0,0.9)" },
+        neon: { fill: "#4de8ff", stroke: "rgba(0,0,0,0.9)" },
+      };
+      const captionState = { enabled: false, language: "en", style: "kick", motion: "fade", strokeWidth: 2, position: "bottom", cues: [] };
       const cropState = layoutState.transformsByPanel;
       const SINGLE_LAYOUT_BY_FORMAT = { horizontal: DEFAULT_LAYOUT_BY_FORMAT.horizontal };
       const LAYOUT_UI_COPY = {
@@ -2301,7 +2478,10 @@
       const kickTimelineClip = document.getElementById("kickTimelineClip");
       const kickTimelineLabel = document.getElementById("kickTimelineLabel");
       const captionLayerToggle = document.getElementById("captionLayerToggle");
-      const captionTextInput = document.getElementById("captionTextInput");
+      const captionLanguageSelect = document.getElementById("captionLanguageSelect");
+      const captionGenerateButton = document.getElementById("captionGenerateButton");
+      const captionSegmentList = document.getElementById("captionSegmentList");
+      const captionStrokeInput = document.getElementById("captionStrokeInput");
       const captionStatus = document.getElementById("captionStatus");
       const captionCanvasOverlay = document.getElementById("captionCanvasOverlay");
       const captionPhoneOverlay = document.getElementById("captionPhoneOverlay");
@@ -2383,6 +2563,8 @@
           return;
         }
         activeSourceLabel = file.name || "Local video";
+        activeCaptionClipFile = file;
+        resetCaptionsForNewSource();
         clearSourceCandidates();
         setSourceSummary(`Loading ${activeSourceLabel} (${formatFileSize(file.size)})...`);
         setVideoSource(URL.createObjectURL(file));
@@ -2394,6 +2576,8 @@
           setSourceSummary(`${activeSourceLabel} loaded (${formatClock(getEffectiveDuration())}). Ready to edit.`);
           setStatus(youtubeHint, "Ready to edit. Choose a layout next.", "success");
         } catch (error) {
+          activeCaptionClipFile = null;
+          resetCaptionsForNewSource();
           setSourceSummary("");
           setStatus(youtubeHint, `Upload failed: ${error instanceof Error ? error.message : "Could not read this video."} Try another file or export as MP4.`, "error");
           setStatus(exportStatus, "Load a source to export.", "");
@@ -2639,97 +2823,98 @@
         applyLayout();
       }
 
-      function getCaptionText() {
-        return captionState.text.trim();
-      }
-
-      function parseCaptionTimestamp(value) {
-        const text = `${value || ""}`.trim().replace(",", ".");
-        const parts = text.split(":").map((part) => Number(part));
-        if (parts.some((part) => !Number.isFinite(part))) return NaN;
-        if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-        if (parts.length === 2) return parts[0] * 60 + parts[1];
-        if (parts.length === 1) return parts[0];
-        return NaN;
-      }
-
-      function splitCaptionLine(line) {
-        const words = line.trim().split(/\s+/).filter(Boolean);
-        if (words.length <= 9) return [line.trim()];
-        const chunks = [];
-        for (let index = 0; index < words.length; index += 7) {
-          chunks.push(words.slice(index, index + 7).join(" "));
-        }
-        return chunks;
-      }
-
-      function getCaptionLineCount(text) {
-        return `${text || ""}`.split(/\n+/).map((line) => line.trim()).filter(Boolean).length;
-      }
-
-      function getTimedCaptionLineCount(text) {
-        return `${text || ""}`.split(/\n+/).filter((line) => CAPTION_TIMING_PATTERN.test(line.trim())).length;
-      }
-
       function formatCaptionStatus(time = Number(mainVideo.currentTime) || trimState.start) {
-        const lineCount = getCaptionLineCount(captionState.text);
-        const timedCount = getTimedCaptionLineCount(captionState.text);
-        if (!captionState.enabled && !lineCount) return { text: "Caption layer is off.", tone: "" };
-        if (!captionState.enabled) return { text: `${lineCount} caption ${lineCount === 1 ? "line is" : "lines are"} ready. Turn captions on to render them in preview and export.`, tone: "warning" };
-        if (!lineCount) return { text: "Add caption lines to preview and export timed text.", tone: "warning" };
+        if (!activeCaptionClipFile && !captionState.cues.length) return { text: "Load a clip, then generate captions.", tone: "" };
+        if (!captionState.cues.length) return { text: "Generate captions from the loaded clip.", tone: "warning" };
+        if (!captionState.enabled) return { text: `${captionState.cues.length} caption ${captionState.cues.length === 1 ? "line is" : "lines are"} ready. Turn captions on to render them.`, tone: "warning" };
         const activeCue = getActiveCaptionCue(time);
-        const timingLabel = timedCount ? `${timedCount} timed` : "Auto-timed";
         const cueLabel = `${captionState.cues.length} ${captionState.cues.length === 1 ? "cue" : "cues"}`;
         return {
-          text: activeCue ? `${timingLabel}. ${cueLabel} ready. Current cue: "${activeCue.text}"` : `${timingLabel}. ${cueLabel} ready for preview and export.`,
+          text: activeCue ? `${cueLabel} synced. Current: "${activeCue.text}"` : `${cueLabel} synced for preview and export.`,
           tone: "active",
         };
       }
 
-      function updateCaptionStatus(time) {
-        const status = formatCaptionStatus(time);
-        captionStatus.textContent = status.text;
-        captionStatus.classList.toggle("active", status.tone === "active");
-        captionStatus.classList.toggle("warning", status.tone === "warning");
+      function setCaptionStatus(message, tone = "") {
+        captionStatus.textContent = message;
+        captionStatus.classList.toggle("active", tone === "active");
+        captionStatus.classList.toggle("warning", tone === "warning");
+        captionStatus.classList.toggle("error", tone === "error");
       }
 
-      function buildCaptionCues(text) {
-        const rawText = `${text || ""}`.trim();
-        if (!rawText) return [];
-        const exportStart = clamp(trimState.start, 0, getEffectiveDuration() - 0.1);
-        const exportEnd = clamp(trimState.end, exportStart + 0.1, getEffectiveDuration());
-        const trimDuration = Math.max(0.1, exportEnd - exportStart);
-        const lines = rawText.split(/\n+/).map((line) => line.trim()).filter(Boolean);
-        const timedCues = [];
-        const untimedLines = [];
+      function updateCaptionStatus(time) {
+        const status = formatCaptionStatus(time);
+        setCaptionStatus(status.text, status.tone);
+      }
 
-        lines.forEach((line) => {
-          const timedMatch = line.match(CAPTION_TIMING_PATTERN);
-          if (timedMatch) {
-            const start = parseCaptionTimestamp(timedMatch[1]);
-            const end = parseCaptionTimestamp(timedMatch[2]);
-            const cueText = timedMatch[3].trim();
-            if (Number.isFinite(start) && Number.isFinite(end) && cueText) {
-              const absoluteStart = clamp(exportStart + start, exportStart, exportEnd - 0.05);
-              const absoluteEnd = clamp(exportStart + end, absoluteStart + 0.05, exportEnd);
-              timedCues.push({ start: absoluteStart, end: absoluteEnd, text: cueText });
-              return;
-            }
-          }
-          splitCaptionLine(line).forEach((chunk) => untimedLines.push(chunk));
-        });
+      function formatCaptionTimeRange(cue) {
+        return `${formatClock(cue.start)}-${formatClock(cue.end)}`;
+      }
 
-        if (timedCues.length) {
-          return timedCues.sort((a, b) => a.start - b.start);
+      function normalizeCaptionSegments(segments) {
+        return (segments || [])
+          .map((segment, index) => {
+            const start = Math.max(0, Number(segment.start));
+            const fallbackEnd = start + Math.max(0.4, Math.min(3, `${segment.text || ""}`.trim().split(/\s+/).length * 0.28));
+            const end = Math.max(start + 0.05, Number(segment.end) || fallbackEnd);
+            return {
+              id: segment.id || `cue-${index}-${start.toFixed(2)}`,
+              start,
+              end,
+              text: `${segment.text || ""}`.trim(),
+            };
+          })
+          .filter((segment) => segment.text && Number.isFinite(segment.start) && Number.isFinite(segment.end))
+          .sort((a, b) => a.start - b.start);
+      }
+
+      function renderCaptionSegments() {
+        captionSegmentList.innerHTML = "";
+        if (!captionState.cues.length) {
+          const empty = document.createElement("div");
+          empty.className = "caption-empty-state";
+          empty.textContent = activeCaptionClipFile ? "Generated caption lines will appear here for quick edits." : "Load a clip first. Captions are generated from the current editor source.";
+          captionSegmentList.appendChild(empty);
+          return;
         }
+        captionState.cues.forEach((cue, index) => {
+          const row = document.createElement("div");
+          row.className = "caption-segment";
+          const time = document.createElement("div");
+          time.className = "caption-time-chip";
+          time.textContent = formatCaptionTimeRange(cue);
+          const textarea = document.createElement("textarea");
+          textarea.value = cue.text;
+          textarea.rows = 2;
+          textarea.spellcheck = true;
+          textarea.setAttribute("aria-label", `Caption ${index + 1}, ${formatCaptionTimeRange(cue)}`);
+          textarea.addEventListener("input", () => {
+            captionState.cues[index].text = textarea.value.trim();
+            updateCaptionOverlay();
+          });
+          row.append(time, textarea);
+          captionSegmentList.appendChild(row);
+        });
+      }
 
-        const cueCount = Math.max(1, untimedLines.length);
-        const cueDuration = trimDuration / cueCount;
-        return untimedLines.map((line, index) => ({
-          start: exportStart + index * cueDuration,
-          end: index === cueCount - 1 ? exportEnd : exportStart + (index + 1) * cueDuration,
-          text: line,
-        }));
+      function resetCaptionsForNewSource() {
+        captionState.cues = [];
+        captionState.enabled = false;
+        captionLayerToggle.checked = false;
+        renderCaptionSegments();
+        updateCaptionOverlay();
+      }
+
+      function setCaptionCues(cues) {
+        captionState.cues = normalizeCaptionSegments(cues);
+        captionState.enabled = captionState.cues.length > 0;
+        captionLayerToggle.checked = captionState.enabled;
+        renderCaptionSegments();
+        updateCaptionOverlay(trimState.start);
+      }
+
+      function getCaptionCueKey(cue) {
+        return cue ? `${cue.id}:${cue.start}:${cue.end}:${cue.text}` : "";
       }
 
       function getActiveCaptionCue(time = Number(mainVideo.currentTime) || 0) {
@@ -2743,18 +2928,69 @@
         [captionCanvasOverlay, captionPhoneOverlay].forEach((overlay) => {
           overlay.classList.toggle("active", overlayReady);
           overlay.dataset.style = captionState.style;
+          overlay.dataset.motion = captionState.motion;
+          overlay.dataset.position = captionState.position;
+          overlay.style.setProperty("--caption-fill", (CAPTION_STYLE_REGISTRY[captionState.style] || CAPTION_STYLE_REGISTRY.kick).fill);
+          overlay.style.setProperty("--caption-stroke-color", (CAPTION_STYLE_REGISTRY[captionState.style] || CAPTION_STYLE_REGISTRY.kick).stroke);
+          overlay.style.setProperty("--caption-stroke-width", `${captionState.strokeWidth}px`);
           overlay.setAttribute("aria-hidden", String(!activeCue));
           const textNode = overlay.querySelector("span");
           if (textNode) textNode.textContent = activeText;
+          const cueKey = getCaptionCueKey(activeCue);
+          if (cueKey && overlay.dataset.activeCueKey !== cueKey) {
+            overlay.dataset.activeCueKey = cueKey;
+            overlay.classList.remove("show");
+            void overlay.offsetWidth;
+            overlay.classList.add("show");
+          } else if (!cueKey) {
+            overlay.dataset.activeCueKey = "";
+            overlay.classList.remove("show");
+          }
         });
       }
 
       function updateCaptionOverlay(time = Number(mainVideo.currentTime) || trimState.start) {
         captionState.enabled = !!captionLayerToggle.checked;
-        captionState.text = captionTextInput.value || "";
-        captionState.cues = captionState.enabled ? buildCaptionCues(captionState.text) : [];
         setCaptionOverlayCue(getActiveCaptionCue(time));
         updateCaptionStatus(time);
+      }
+
+      async function generateEditorCaptions() {
+        if (!activeCaptionClipFile) {
+          setStep("source");
+          setCaptionStatus("Load a clip before generating captions.", "error");
+          setStatus(youtubeHint, "Load a clip first, then return to Captions.", "error");
+          return;
+        }
+        const originalText = captionGenerateButton.textContent;
+        captionGenerateButton.disabled = true;
+        captionGenerateButton.textContent = "Generating...";
+        setCaptionStatus("Generating captions from the loaded clip...", "warning");
+        try {
+          const form = new FormData();
+          form.append("clip", activeCaptionClipFile, activeCaptionClipFile.name || "clip.mp4");
+          form.append("language", captionLanguageSelect.value);
+          const response = await fetch("/api/captions", { method: "POST", body: form });
+          const isJson = (response.headers.get("content-type") || "").includes("application/json");
+          const payload = isJson ? await response.json() : { error: await response.text() };
+          if (!response.ok) {
+            throw new Error([payload?.error, payload?.details].filter(Boolean).join(" | ") || "Could not generate captions.");
+          }
+          const cues = normalizeCaptionSegments(payload.segments);
+          if (!cues.length) {
+            setCaptionCues([]);
+            setCaptionStatus("No readable speech found. Try a clip with clearer audio.", "error");
+            return;
+          }
+          captionState.language = captionLanguageSelect.value;
+          setCaptionCues(cues);
+          setCaptionStatus(`${cues.length} ${cues.length === 1 ? "caption cue" : "caption cues"} generated and synced.`, "active");
+        } catch (error) {
+          setCaptionStatus(`Caption generation failed: ${error instanceof Error ? error.message : "Unknown error."}`, "error");
+        } finally {
+          captionGenerateButton.disabled = false;
+          captionGenerateButton.textContent = originalText || "Generate captions";
+        }
       }
 
       function syncPhonePreview(options = {}) {
@@ -3150,6 +3386,8 @@
             setStatus(youtubeHint, "Rendering preview clip...", "loading");
             try {
               const blob = await fetchClipBlob(originalIndex, clip);
+              activeCaptionClipFile = new File([blob], `candidate-${index + 1}.mp4`, { type: blob.type || "video/mp4" });
+              resetCaptionsForNewSource();
               setVideoSource(URL.createObjectURL(blob));
               activeSourceLabel = `Candidate ${index + 1}`;
               setSourceSummary(`${activeSourceLabel} loaded: ${formatClock(start)} to ${formatClock(end)}. Ready to edit.`);
@@ -3416,6 +3654,8 @@
         setExportQuality(qualityButtons[nextIndex]);
       });
       const captionStyleButtons = Array.from(document.querySelectorAll(".caption-card"));
+      const captionMotionButtons = Array.from(document.querySelectorAll("[data-caption-motion]"));
+      const captionPositionButtons = Array.from(document.querySelectorAll("[data-caption-position]"));
       function setCaptionStyle(button) {
         captionStyleButtons.forEach((item) => {
           const active = item === button;
@@ -3423,9 +3663,37 @@
           item.setAttribute("aria-checked", String(active));
           item.tabIndex = active ? 0 : -1;
         });
-        captionState.style = button.dataset.captionStyle || "ninja";
+        captionState.style = button.dataset.captionStyle || "kick";
         updateCaptionOverlay();
       }
+
+      function setSegmentedButtonState(buttons, activeButton) {
+        buttons.forEach((item) => {
+          const active = item === activeButton;
+          item.classList.toggle("active", active);
+          item.setAttribute("aria-pressed", String(active));
+        });
+      }
+
+      function setCaptionMotion(button) {
+        captionState.motion = button.dataset.captionMotion || "fade";
+        setSegmentedButtonState(captionMotionButtons, button);
+        updateCaptionOverlay();
+      }
+
+      function setCaptionPosition(button) {
+        captionState.position = button.dataset.captionPosition || "bottom";
+        setSegmentedButtonState(captionPositionButtons, button);
+        updateCaptionOverlay();
+      }
+
+      function syncCaptionStroke() {
+        const next = Math.round(clamp(captionStrokeInput.value || 2, 0, 5));
+        captionState.strokeWidth = next;
+        captionStrokeInput.value = String(next);
+        updateCaptionOverlay();
+      }
+
       setCaptionStyle(captionStyleButtons.find((button) => button.classList.contains("active")) || captionStyleButtons[0]);
       captionStyleButtons.forEach((button) => button.addEventListener("click", () => setCaptionStyle(button)));
       document.querySelector('.caption-card-grid[role="radiogroup"]').addEventListener("keydown", (event) => {
@@ -3442,7 +3710,17 @@
         setCaptionStyle(captionStyleButtons[nextIndex]);
       });
       captionLayerToggle.addEventListener("change", updateCaptionOverlay);
-      captionTextInput.addEventListener("input", updateCaptionOverlay);
+      captionLanguageSelect.addEventListener("change", () => {
+        captionState.language = captionLanguageSelect.value;
+      });
+      captionGenerateButton.addEventListener("click", generateEditorCaptions);
+      captionMotionButtons.forEach((button) => button.addEventListener("click", () => setCaptionMotion(button)));
+      captionPositionButtons.forEach((button) => button.addEventListener("click", () => setCaptionPosition(button)));
+      captionStrokeInput.addEventListener("input", syncCaptionStroke);
+      captionStrokeInput.addEventListener("blur", syncCaptionStroke);
+      setCaptionMotion(captionMotionButtons.find((button) => button.classList.contains("active")) || captionMotionButtons[0]);
+      setCaptionPosition(captionPositionButtons.find((button) => button.classList.contains("active")) || captionPositionButtons[0]);
+      syncCaptionStroke();
       analyzeYoutubeButton.addEventListener("click", analyzeYoutube);
       localClipInput.addEventListener("change", () => {
         const file = localClipInput.files && localClipInput.files[0];
@@ -3609,10 +3887,37 @@
         return [
           "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
           "video/mp4",
-          "video/webm;codecs=vp9,opus",
-          "video/webm;codecs=vp8,opus",
-          "video/webm",
         ].find((type) => MediaRecorder.isTypeSupported(type)) || "";
+      }
+
+      async function createExportAudioBridge() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          try {
+            if (!exportAudioContext) exportAudioContext = new AudioContextClass();
+            if (exportAudioContext.state === "suspended") await exportAudioContext.resume();
+            if (!exportAudioSourceNode) exportAudioSourceNode = exportAudioContext.createMediaElementSource(mainVideo);
+            const destination = exportAudioContext.createMediaStreamDestination();
+            exportAudioSourceNode.connect(destination);
+            return {
+              tracks: destination.stream.getAudioTracks(),
+              cleanup: () => {
+                try {
+                  exportAudioSourceNode.disconnect(destination);
+                } catch {}
+                destination.stream.getTracks().forEach((track) => track.stop());
+              },
+            };
+          } catch {
+            // Fall back to the native media element stream when Web Audio cannot attach.
+          }
+        }
+
+        const sourceStream = typeof mainVideo.captureStream === "function" ? mainVideo.captureStream() : null;
+        return {
+          tracks: sourceStream?.getAudioTracks() || [],
+          cleanup: () => sourceStream?.getTracks().forEach((track) => track.stop()),
+        };
       }
 
       function waitForVideoReady(video) {
@@ -3781,14 +4086,7 @@
       }
 
       function getCanvasCaptionStyle(styleKey) {
-        const styles = {
-          ninja: { fill: "#ffffff", stroke: "#151515" },
-          quirky: { fill: "#f4f05c", stroke: "#10131c" },
-          "quirky-cta": { fill: "#f4f05c", stroke: "#10131c" },
-          west: { fill: "#fff1d3", stroke: "#4f22f2" },
-          headturning: { fill: "#83ff3f", stroke: "#04130a" },
-        };
-        return styles[styleKey] || styles.ninja;
+        return CAPTION_STYLE_REGISTRY[styleKey] || CAPTION_STYLE_REGISTRY.kick;
       }
 
       function wrapCanvasText(ctx, text, maxWidth) {
@@ -3831,11 +4129,25 @@
 
         const lines = wrapCanvasText(ctx, text.toUpperCase(), maxWidth).slice(0, 4);
         const startY = box.y + box.h / 2 - ((lines.length - 1) * lineHeight) / 2;
+        const cueProgress = activeCue ? clamp(((Number(mainVideo.currentTime) || activeCue.start) - activeCue.start) / 0.18, 0, 1) : 1;
+        const easeProgress = 1 - Math.pow(1 - cueProgress, 3);
+        if (captionState.motion === "fade") {
+          ctx.globalAlpha = easeProgress;
+        } else if (captionState.motion === "sideways") {
+          ctx.translate(-24 * box.scale * (1 - easeProgress), 0);
+          ctx.globalAlpha = Math.max(0.25, easeProgress);
+        } else if (captionState.motion === "skewed") {
+          ctx.translate(-16 * box.scale * (1 - easeProgress), 4 * box.scale * (1 - easeProgress));
+          ctx.transform(1, 0, Math.tan((-10 * (1 - easeProgress) * Math.PI) / 180), 1, 0, 0);
+          ctx.globalAlpha = Math.max(0.25, easeProgress);
+        }
         lines.forEach((line, index) => {
           const y = startY + index * lineHeight;
-          ctx.lineWidth = Math.max(6, fontSize * 0.18);
-          ctx.strokeStyle = style.stroke;
-          ctx.strokeText(line, box.x + box.w / 2, y, maxWidth);
+          ctx.lineWidth = captionState.strokeWidth > 0 ? Math.max(1, captionState.strokeWidth * (fontSize / 14)) : 0;
+          if (ctx.lineWidth > 0) {
+            ctx.strokeStyle = style.stroke;
+            ctx.strokeText(line, box.x + box.w / 2, y, maxWidth);
+          }
           ctx.fillStyle = style.fill;
           ctx.fillText(line, box.x + box.w / 2, y, maxWidth);
         });
@@ -3861,7 +4173,7 @@
           throw new Error("This browser cannot render the final composition. Use current Chrome or Edge.");
         }
         const mimeType = getRecorderMimeType();
-        if (!mimeType) throw new Error("This browser has no supported video recorder format.");
+        if (!mimeType) throw new Error("This browser cannot export MP4. Use current Chrome or Edge.");
 
         await waitForVideoReady(mainVideo);
         const duration = getEffectiveDuration();
@@ -3882,14 +4194,15 @@
         updateKickOverlay();
         updateCaptionOverlay(exportStart);
         syncPhonePreview({ force: true });
+        let audioBridge = null;
 
         try {
           await seekVideo(mainVideo, exportStart);
           mainVideo.playbackRate = 1;
           const canvasStream = canvas.captureStream(fps);
-          const sourceStream = typeof mainVideo.captureStream === "function" ? mainVideo.captureStream() : null;
+          audioBridge = await createExportAudioBridge();
           const tracks = [...canvasStream.getVideoTracks()];
-          sourceStream?.getAudioTracks().forEach((track) => tracks.push(track));
+          audioBridge.tracks.forEach((track) => tracks.push(track));
           const stream = new MediaStream(tracks);
           const recorder = new MediaRecorder(stream, { mimeType });
           const stopped = new Promise((resolve, reject) => {
@@ -3920,6 +4233,7 @@
         } finally {
           mainVideo.pause();
           mainVideo.playbackRate = previousPlaybackRate;
+          audioBridge?.cleanup();
           await seekVideo(mainVideo, Math.min(previousTime, getEffectiveDuration())).catch(() => {});
           if (!wasPaused) mainVideo.play().catch(() => {});
           isExporting = false;
@@ -3928,8 +4242,7 @@
 
         if (!chunks.length) throw new Error("Final render completed with no video data.");
         const blob = new Blob(chunks, { type: mimeType });
-        const extension = mimeType.includes("mp4") ? "mp4" : "webm";
-        return { blob, extension, start: exportStart, end: exportEnd };
+        return { blob, extension: "mp4", start: exportStart, end: exportEnd };
       }
 
       function downloadBlob(blob, filename) {
