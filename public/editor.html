@@ -511,6 +511,40 @@
         gap: 8px;
       }
 
+      .layout-panel .panel-head {
+        margin-bottom: 12px;
+      }
+
+      .layout-panel .chip-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin: 10px 0 12px;
+      }
+
+      .layout-panel .chip {
+        min-height: 48px;
+        display: grid;
+        gap: 2px;
+        align-content: center;
+        text-align: left;
+      }
+
+      .layout-panel .chip span {
+        display: block;
+        color: inherit;
+        font-size: 11px;
+        font-weight: 800;
+        opacity: 0.72;
+      }
+
+      .layout-panel .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
       .layout-grid.fixed-mode {
         display: block;
       }
@@ -523,11 +557,15 @@
         padding: 9px;
         min-height: 176px;
         display: grid;
-        gap: 6px;
+        gap: 8px;
         font-weight: 900;
-        text-align: center;
+        text-align: left;
         box-shadow: 0 12px 26px rgba(16, 19, 28, 0.07);
         cursor: pointer;
+      }
+
+      .layout-card {
+        grid-template-rows: auto auto 1fr;
       }
 
       .layout-card.active,
@@ -537,6 +575,21 @@
         box-shadow: 0 18px 40px rgba(79, 34, 242, 0.18);
       }
 
+      .layout-card.active::after,
+      .layout-fixed-card.active::after {
+        content: "Active";
+        align-self: end;
+        justify-self: start;
+        border-radius: 999px;
+        background: #10131c;
+        color: #83ff3f;
+        padding: 4px 7px;
+        font-size: 10px;
+        font-weight: 950;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
       .layout-fixed-card {
         min-height: 0;
         text-align: left;
@@ -544,6 +597,59 @@
         gap: 8px;
         cursor: default;
         background: #f8faff;
+      }
+
+      .layout-card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .layout-card-title {
+        color: #171923;
+        font-size: 13px;
+        line-height: 1.15;
+      }
+
+      .layout-badge {
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: #f2f5fb;
+        color: #4a5060;
+        padding: 4px 7px;
+        font-size: 10px;
+        font-weight: 950;
+      }
+
+      .layout-card-meta {
+        display: block;
+        color: #667085;
+        font-size: 11px;
+        font-weight: 850;
+        line-height: 1.3;
+      }
+
+      .layout-group-title {
+        grid-column: 1 / -1;
+        margin: 8px 0 0;
+        color: #596070;
+        font-size: 11px;
+        font-weight: 950;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
+      .layout-status {
+        margin-top: 10px;
+        border: 1px solid #dfe4f1;
+        border-radius: 8px;
+        background: #f8faff;
+        color: #4d5362;
+        padding: 9px 10px;
+        font-size: 12px;
+        font-weight: 820;
+        line-height: 1.35;
       }
 
       .layout-fixed-card small,
@@ -1619,22 +1725,23 @@
           </div>
         </section>
 
-        <section class="step-view" data-view="layouts">
+        <section class="step-view layout-panel" data-view="layouts">
           <div class="panel-head">
             <div>
               <div class="panel-kicker">Composition</div>
               <h1>Choose your layout</h1>
-              <p>Pick the output format and camera arrangement. Vertical supports creator layouts; horizontal stays fullscreen.</p>
+              <p>Choose the format, then pick the camera view.</p>
             </div>
           </div>
           <div class="section-title">Format</div>
-          <div class="chip-row">
-            <button class="chip active" data-format="vertical" type="button">Vertical</button>
-            <button class="chip" data-format="horizontal" type="button">Horizontal</button>
+          <div class="chip-row" role="group" aria-label="Output format">
+            <button class="chip active" data-format="vertical" type="button" aria-pressed="true">Vertical<span>9:16, multi-view</span></button>
+            <button class="chip" data-format="horizontal" type="button" aria-pressed="false">Horizontal<span>16:9, fullscreen</span></button>
           </div>
-          <div class="section-title" id="layoutSectionTitle">Layouts</div>
+          <div class="section-title" id="layoutSectionTitle">Camera views</div>
           <div class="layout-mode-note" id="layoutModeNote">Choose the vertical camera arrangement.</div>
           <div class="layout-grid" id="layoutGrid"></div>
+          <div id="layoutStatus" class="layout-status" aria-live="polite"></div>
         </section>
 
         <section class="step-view" data-view="elements">
@@ -1836,6 +1943,20 @@
       const captionState = { enabled: false, text: "", style: "ninja", cues: [] };
       const cropState = layoutState.transformsByPanel;
       const SINGLE_LAYOUT_BY_FORMAT = { horizontal: DEFAULT_LAYOUT_BY_FORMAT.horizontal };
+      const LAYOUT_UI_COPY = {
+        small: { category: "Facecam", description: "Compact creator window over gameplay." },
+        circle: { category: "Facecam", description: "Round creator window with clean focus." },
+        "game-ui": { category: "Facecam", description: "Wide creator frame for game clips." },
+        split: { category: "Split", description: "Creator on top, clip below." },
+        blurred: { category: "Single", description: "Focused clip with soft background fill." },
+        fullscreen: { category: "Single", description: "Full vertical crop with no extra panels." },
+        basecam: { category: "Split", description: "Gameplay over a wide creator panel." },
+        mosaic: { category: "Multi-camera", description: "Gameplay with map and creator panels." },
+        dual: { category: "Multi-camera", description: "Two creator windows over the clip." },
+        duo: { category: "Multi-camera", description: "Gameplay above two creator panels." },
+        half: { category: "Split", description: "Large clip with lower creator panel." },
+        "horizontal-fullscreen": { category: "Horizontal", description: "One 16:9 fullscreen export." },
+      };
 
       const toolButtons = document.querySelectorAll(".tool-btn");
       const views = document.querySelectorAll(".step-view");
@@ -1867,6 +1988,7 @@
       const layoutGrid = document.getElementById("layoutGrid");
       const layoutSectionTitle = document.getElementById("layoutSectionTitle");
       const layoutModeNote = document.getElementById("layoutModeNote");
+      const layoutStatus = document.getElementById("layoutStatus");
       const editorCanvas = document.getElementById("editorCanvas");
       const playButton = document.getElementById("playButton");
       const exportButton = document.getElementById("exportButton");
@@ -2085,6 +2207,30 @@
         return Object.values(LAYOUT_REGISTRY).filter((layout) => layout.format === format);
       }
 
+      function getLayoutCategory(layout) {
+        return LAYOUT_UI_COPY[layout.key]?.category || layout.cameraMode;
+      }
+
+      function getLayoutDescription(layout) {
+        return LAYOUT_UI_COPY[layout.key]?.description || `${layout.aspectRatio} ${layout.cameraMode} layout.`;
+      }
+
+      function getLayoutMetaText(layout) {
+        const panelCount = layout.panels.length;
+        return `${layout.aspectRatio} · ${panelCount} ${panelCount === 1 ? "panel" : "panels"}`;
+      }
+
+      function getLayoutDisplayOrder(layout) {
+        const categoryOrder = ["Facecam", "Split", "Single", "Multi-camera"];
+        const categoryIndex = categoryOrder.indexOf(getLayoutCategory(layout));
+        return categoryIndex === -1 ? categoryOrder.length : categoryIndex;
+      }
+
+      function setLayoutStatus(message = "") {
+        layoutStatus.textContent = message;
+        layoutStatus.hidden = !message;
+      }
+
       function resolveLayoutForFormat(format, preferredKey = layoutState.activeLayoutKey) {
         if (SINGLE_LAYOUT_BY_FORMAT[format]) return SINGLE_LAYOUT_BY_FORMAT[format];
         const preferred = LAYOUT_REGISTRY[preferredKey];
@@ -2093,7 +2239,11 @@
       }
 
       function syncFormatControls() {
-        document.querySelectorAll(".chip[data-format]").forEach((chip) => chip.classList.toggle("active", chip.dataset.format === layoutState.format));
+        document.querySelectorAll(".chip[data-format]").forEach((chip) => {
+          const active = chip.dataset.format === layoutState.format;
+          chip.classList.toggle("active", active);
+          chip.setAttribute("aria-pressed", String(active));
+        });
         if (layoutState.format === "horizontal") {
           platformSelect.value = "YouTube horizontal";
         } else if (platformSelect.value === "YouTube horizontal") {
@@ -2120,6 +2270,8 @@
         applyFormat();
         applyLayout();
         renderLayoutCards();
+        const activeLayout = getActiveLayout();
+        setLayoutStatus(`${activeLayout.label} selected. Preview and export are ${activeLayout.aspectRatio}.`);
         return true;
       }
 
@@ -2140,6 +2292,7 @@
         layoutState.activeLayoutKey = layout.key;
         applyLayout();
         renderLayoutCards();
+        setLayoutStatus(`${layout.label} selected. ${getLayoutDescription(layout)}`);
         return true;
       }
 
@@ -2725,13 +2878,13 @@
 
       function renderLayoutCards() {
         layoutGrid.innerHTML = "";
-        const availableLayouts = getLayoutsForFormat(layoutState.format);
+        const availableLayouts = getLayoutsForFormat(layoutState.format).sort((a, b) => getLayoutDisplayOrder(a) - getLayoutDisplayOrder(b));
         const fixedLayoutKey = SINGLE_LAYOUT_BY_FORMAT[layoutState.format];
         layoutGrid.classList.toggle("fixed-mode", Boolean(fixedLayoutKey));
         if (fixedLayoutKey) {
           const layout = LAYOUT_REGISTRY[fixedLayoutKey];
           layoutSectionTitle.textContent = "Horizontal output";
-          layoutModeNote.textContent = "Single 16:9 fullscreen output.";
+          layoutModeNote.textContent = "Horizontal uses one fixed camera view.";
           const fixed = document.createElement("div");
           fixed.className = "layout-fixed-card active";
           fixed.dataset.layout = layout.rendererKey;
@@ -2739,25 +2892,39 @@
           fixed.dataset.format = layout.format;
           fixed.dataset.fixedLayout = "true";
           fixed.setAttribute("aria-current", "true");
-          fixed.innerHTML = `<span>${layout.label}</span><small>16:9 fullscreen export</small>`;
+          fixed.innerHTML = `<div class="layout-card-head"><span class="layout-card-title">${layout.label}</span><span class="layout-badge">${layout.aspectRatio}</span></div><span class="thumb"></span><small>${getLayoutDescription(layout)}</small>`;
           layoutGrid.appendChild(fixed);
+          setLayoutStatus(`${layout.label} selected. Preview and export stay 16:9.`);
           return;
         }
 
-        layoutSectionTitle.textContent = "Layouts";
-        layoutModeNote.textContent = "Choose the vertical camera arrangement.";
+        layoutSectionTitle.textContent = "Vertical camera views";
+        layoutModeNote.textContent = `${availableLayouts.length} views available. Horizontal stays fullscreen.`;
+        let currentCategory = "";
         availableLayouts.forEach((layout) => {
+          const category = getLayoutCategory(layout);
+          if (category !== currentCategory) {
+            currentCategory = category;
+            const heading = document.createElement("div");
+            heading.className = "layout-group-title";
+            heading.textContent = category;
+            layoutGrid.appendChild(heading);
+          }
           const button = document.createElement("button");
           button.type = "button";
           button.className = `layout-card${layout.key === layoutState.activeLayoutKey ? " active" : ""}`;
           button.dataset.layout = layout.rendererKey;
           button.dataset.layoutKey = layout.key;
           button.dataset.format = layout.format;
+          button.dataset.category = category;
+          button.setAttribute("aria-label", `${layout.label}, ${getLayoutMetaText(layout)}, ${getLayoutDescription(layout)}`);
           button.setAttribute("aria-pressed", String(layout.key === layoutState.activeLayoutKey));
-          button.innerHTML = `<span>${layout.label}</span><span class="thumb"></span>`;
+          button.innerHTML = `<div class="layout-card-head"><span class="layout-card-title">${layout.label}</span><span class="layout-badge">${layout.aspectRatio}</span></div><span class="thumb"></span><span class="layout-card-meta">${getLayoutMetaText(layout)} · ${getLayoutDescription(layout)}</span>`;
           button.addEventListener("click", () => setActiveLayout(layout.key));
           layoutGrid.appendChild(button);
         });
+        const activeLayout = getActiveLayout();
+        setLayoutStatus(`${activeLayout.label} selected. ${getLayoutDescription(activeLayout)}`);
       }
 
       function applyLayout() {
@@ -2836,6 +3003,23 @@
       document.querySelectorAll(".chip[data-format]").forEach((button) => button.addEventListener("click", () => {
         setFormat(button.dataset.format);
       }));
+      layoutGrid.addEventListener("keydown", (event) => {
+        if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
+        const cards = [...layoutGrid.querySelectorAll(".layout-card")];
+        if (!cards.length) return;
+        const currentIndex = Math.max(0, cards.findIndex((card) => card.classList.contains("active")));
+        const columns = 3;
+        let nextIndex = currentIndex;
+        if (event.key === "ArrowLeft") nextIndex = Math.max(0, currentIndex - 1);
+        if (event.key === "ArrowRight") nextIndex = Math.min(cards.length - 1, currentIndex + 1);
+        if (event.key === "ArrowUp") nextIndex = Math.max(0, currentIndex - columns);
+        if (event.key === "ArrowDown") nextIndex = Math.min(cards.length - 1, currentIndex + columns);
+        if (event.key === "Home") nextIndex = 0;
+        if (event.key === "End") nextIndex = cards.length - 1;
+        event.preventDefault();
+        cards[nextIndex].focus();
+        setActiveLayout(cards[nextIndex].dataset.layoutKey);
+      });
       document.querySelectorAll('.step-view[data-view="captions"] .chip-row .chip').forEach((button) => {
         button.addEventListener("click", () => {
           button.closest(".chip-row").querySelectorAll(".chip").forEach((item) => item.classList.toggle("active", item === button));
