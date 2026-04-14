@@ -1460,7 +1460,7 @@
             <select id="captionLanguage"><option>automatically detect</option><option>English</option><option>Spanish</option></select>
             <label class="toggle-field"><input id="captionLayerToggle" type="checkbox" /> Include caption layer</label>
             <label for="captionTextInput">Caption copy</label>
-            <textarea id="captionTextInput" placeholder="Type the caption text to preview and export."></textarea>
+            <textarea id="captionTextInput" placeholder="One caption per line. Optional: [00:00.0-00:02.4] Caption text."></textarea>
           </div>
           <div class="section-title">Selected style</div>
           <div class="caption-card-grid">
@@ -1606,7 +1606,7 @@
       };
       const trimState = { start: 0, end: 34 };
       const kickState = { enabled: false, apply: "whole", start: 0, end: 34, text: "KICK.COM/EDMATTHEWS", box: { x: 5, y: 78, w: 90, h: 13 } };
-      const captionState = { enabled: false, text: "", style: "ninja" };
+      const captionState = { enabled: false, text: "", style: "ninja", cues: [] };
       const cropState = layoutState.transformsByPanel;
       const SINGLE_LAYOUT_BY_FORMAT = { horizontal: DEFAULT_LAYOUT_BY_FORMAT.horizontal };
 
@@ -1874,19 +1874,87 @@
         return captionState.text.trim();
       }
 
-      function updateCaptionOverlay() {
-        captionState.enabled = !!captionLayerToggle.checked;
-        captionState.text = captionTextInput.value || "";
-        const text = getCaptionText();
-        const visible = captionState.enabled && Boolean(text);
+      function parseCaptionTimestamp(value) {
+        const text = `${value || ""}`.trim().replace(",", ".");
+        const parts = text.split(":").map((part) => Number(part));
+        if (parts.some((part) => !Number.isFinite(part))) return NaN;
+        if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+        if (parts.length === 2) return parts[0] * 60 + parts[1];
+        if (parts.length === 1) return parts[0];
+        return NaN;
+      }
+
+      function splitCaptionLine(line) {
+        const words = line.trim().split(/\s+/).filter(Boolean);
+        if (words.length <= 9) return [line.trim()];
+        const chunks = [];
+        for (let index = 0; index < words.length; index += 7) {
+          chunks.push(words.slice(index, index + 7).join(" "));
+        }
+        return chunks;
+      }
+
+      function buildCaptionCues(text) {
+        const rawText = `${text || ""}`.trim();
+        if (!rawText) return [];
+        const exportStart = clamp(trimState.start, 0, getEffectiveDuration() - 0.1);
+        const exportEnd = clamp(trimState.end, exportStart + 0.1, getEffectiveDuration());
+        const trimDuration = Math.max(0.1, exportEnd - exportStart);
+        const lines = rawText.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+        const timedCues = [];
+        const untimedLines = [];
+
+        lines.forEach((line) => {
+          const timedMatch = line.match(/^\[?\s*((?:\d+:)?\d{1,2}:\d{2}(?:[.,]\d+)?|\d+(?:[.,]\d+)?)\s*(?:-->|-|–|to)\s*((?:\d+:)?\d{1,2}:\d{2}(?:[.,]\d+)?|\d+(?:[.,]\d+)?)\s*\]?\s*(.+)$/i);
+          if (timedMatch) {
+            const start = parseCaptionTimestamp(timedMatch[1]);
+            const end = parseCaptionTimestamp(timedMatch[2]);
+            const cueText = timedMatch[3].trim();
+            if (Number.isFinite(start) && Number.isFinite(end) && cueText) {
+              const absoluteStart = clamp(exportStart + start, exportStart, exportEnd - 0.05);
+              const absoluteEnd = clamp(exportStart + end, absoluteStart + 0.05, exportEnd);
+              timedCues.push({ start: absoluteStart, end: absoluteEnd, text: cueText });
+              return;
+            }
+          }
+          splitCaptionLine(line).forEach((chunk) => untimedLines.push(chunk));
+        });
+
+        if (timedCues.length) {
+          return timedCues.sort((a, b) => a.start - b.start);
+        }
+
+        const cueCount = Math.max(1, untimedLines.length);
+        const cueDuration = trimDuration / cueCount;
+        return untimedLines.map((line, index) => ({
+          start: exportStart + index * cueDuration,
+          end: index === cueCount - 1 ? exportEnd : exportStart + (index + 1) * cueDuration,
+          text: line,
+        }));
+      }
+
+      function getActiveCaptionCue(time = Number(mainVideo.currentTime) || 0) {
+        return captionState.cues.find((cue) => time >= cue.start && time < cue.end) || null;
+      }
+
+      function setCaptionOverlayCue(activeCue) {
+        const overlayReady = captionState.enabled && captionState.cues.length > 0;
+        const activeText = activeCue?.text || "";
 
         [captionCanvasOverlay, captionPhoneOverlay].forEach((overlay) => {
-          overlay.classList.toggle("active", visible);
+          overlay.classList.toggle("active", overlayReady);
           overlay.dataset.style = captionState.style;
-          overlay.setAttribute("aria-hidden", String(!visible));
+          overlay.setAttribute("aria-hidden", String(!activeCue));
           const textNode = overlay.querySelector("span");
-          if (textNode) textNode.textContent = text;
+          if (textNode) textNode.textContent = activeText;
         });
+      }
+
+      function updateCaptionOverlay(time = Number(mainVideo.currentTime) || trimState.start) {
+        captionState.enabled = !!captionLayerToggle.checked;
+        captionState.text = captionTextInput.value || "";
+        captionState.cues = captionState.enabled ? buildCaptionCues(captionState.text) : [];
+        setCaptionOverlayCue(getActiveCaptionCue(time));
       }
 
       function syncPhonePreview(options = {}) {
@@ -2023,6 +2091,7 @@
         }
         updateTrimControls();
         updateKickOverlay();
+        updateCaptionOverlay();
       }
 
       function safeFileName(value) {
@@ -2079,6 +2148,7 @@
         trimSummary.textContent = isFullClip ? "Trim: full clip" : `Trim: ${formatClock(trimState.start)} → ${formatClock(trimState.end)}`;
         trimWindow.style.left = `${(trimState.start / duration) * 100}%`;
         trimWindow.style.width = `${Math.max(2, ((trimState.end - trimState.start) / duration) * 100)}%`;
+        updateCaptionOverlay();
       }
 
       function seekToTrimStart() {
@@ -2766,9 +2836,10 @@
       }
 
       function renderCaptionOverlayToCanvas(ctx, outputWidth, outputHeight) {
-        if (!canDrawElement(captionPhoneOverlay)) return;
-        const text = getCaptionText();
+        const activeCue = getActiveCaptionCue(Number(mainVideo.currentTime) || trimState.start);
+        const text = activeCue?.text || "";
         if (!text) return;
+        if (!canDrawElement(captionPhoneOverlay)) return;
 
         const box = getPreviewBox(captionPhoneOverlay, outputWidth, outputHeight);
         const style = getCanvasCaptionStyle(captionState.style);
@@ -2834,7 +2905,7 @@
         const chunks = [];
         isExporting = true;
         updateKickOverlay();
-        updateCaptionOverlay();
+        updateCaptionOverlay(exportStart);
         syncPhonePreview({ force: true });
 
         try {
@@ -2858,6 +2929,7 @@
           await mainVideo.play();
           await new Promise((resolve) => {
             function drawFrame() {
+              setCaptionOverlayCue(getActiveCaptionCue(Number(mainVideo.currentTime) || exportStart));
               drawCompositionFrame(ctx, width, height);
               if ((Number(mainVideo.currentTime) || 0) >= exportEnd || mainVideo.ended) {
                 resolve();
@@ -2904,13 +2976,13 @@
         const originalText = exportButton.textContent;
         exportButton.disabled = true;
         exportButton.textContent = "Rendering final...";
-        setStatus(exportStatus, "Rendering final composition with layout, trim and active overlays...", "loading");
+        setStatus(exportStatus, "Rendering final composition with layout, trim, overlays, and timed captions...", "loading");
         try {
           const result = await renderFinalCompositionBlob();
           const startLabel = formatClock(result.start).replace(":", "-");
           const endLabel = formatClock(result.end).replace(":", "-");
           downloadBlob(result.blob, `clipperviral-final-${safeFileName(layoutState.activeLayoutKey)}-${startLabel}-${endLabel}.${result.extension}`);
-          setStatus(exportStatus, `Final render downloaded (${result.extension.toUpperCase()}). Includes selected layout, trim range, active overlays, and caption text when enabled.`, "success");
+          setStatus(exportStatus, `Final render downloaded (${result.extension.toUpperCase()}). Includes selected layout, trim range, active overlays, and timed captions when enabled.`, "success");
         } catch (error) {
           setStatus(exportStatus, `Final render failed: ${error instanceof Error ? error.message : "Unknown export error."}`, "error");
         } finally {
