@@ -6740,6 +6740,99 @@
         display: none;
       }
       .editor-canvas[data-cv-mode="content"] .cv-moving-source-badge.is-visible { display: block; }
+
+      /* ===== Bundle B: Waveform timeline, Auto-hook finder, Waveform visualizer, Audio mix ===== */
+
+      /* #21 Waveform timeline canvas */
+      .waveform-canvas-wrap {
+        position: relative;
+        height: 44px;
+        border-radius: 4px;
+        overflow: hidden;
+        background: rgba(16,19,28,0.06);
+        margin: 4px 0 2px;
+      }
+      #waveformTimelineCanvas {
+        width: 100%;
+        height: 44px;
+        display: block;
+        cursor: pointer;
+      }
+      .waveform-status {
+        font-size: 10px;
+        color: #888;
+        text-align: center;
+        padding: 0;
+        min-height: 12px;
+        margin-bottom: 2px;
+      }
+
+      /* #7 Auto-hook finder */
+      .find-hook-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 6px;
+      }
+      .find-hook-btn {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 5px 12px;
+        border-radius: 6px;
+        border: 1.5px solid rgba(16,19,28,0.2);
+        background: #fff;
+        cursor: pointer;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .find-hook-btn:hover { background: #f0f0f0; }
+      .find-hook-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      #hookStatus { font-size: 11px; color: #888; }
+
+      /* #29 Waveform visualizer element */
+      .wviz-controls { display: flex; flex-direction: column; gap: 10px; padding: 10px 0 2px; }
+      .wviz-style-row { display: flex; gap: 6px; flex-wrap: wrap; }
+      .wviz-style-btn {
+        padding: 4px 11px;
+        border-radius: 999px;
+        border: 1.5px solid rgba(16,19,28,0.18);
+        background: #fff;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .wviz-style-btn.active { background: #0c1118; color: #fff; border-color: #0c1118; }
+      .wviz-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+      .wviz-row label { flex: 1; font-size: 12px; color: #444; }
+      .wviz-row input[type=range] { flex: 2; }
+      .wviz-row input[type=color] {
+        width: 32px; height: 28px;
+        border: 1.5px solid rgba(16,19,28,0.14);
+        border-radius: 4px; padding: 0; cursor: pointer;
+      }
+
+      /* #30 Per-panel audio mix */
+      .audio-mix-card {
+        background: rgba(16,19,28,0.04);
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin: 10px 0 0;
+      }
+      .audio-mix-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #0c1118;
+        margin-bottom: 10px;
+      }
+      .audio-mix-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .audio-mix-row:last-child { margin-bottom: 0; }
+      .audio-mix-row label { width: 76px; font-size: 12px; color: #444; flex-shrink: 0; }
+      .audio-mix-row input[type=range] { flex: 1; }
+      .audio-mix-row .vol-val { width: 38px; font-size: 11px; color: #666; text-align: right; flex-shrink: 0; }
     </style>
   </head>
   <body>
@@ -7166,6 +7259,37 @@
                 </div>
               </article>
             </details>
+            <!-- Bundle B #29: Audio waveform visualizer element overlay -->
+            <details class="overlay-section" id="waveformVizSection">
+              <summary>
+                <span class="overlay-section-icon">📊</span>
+                <span class="overlay-section-label">Waveform Visualizer</span>
+                <label class="toggle-field toggle-inline" onclick="event.stopPropagation()">
+                  <input id="waveformVizToggle" type="checkbox" />
+                </label>
+              </summary>
+              <article>
+                <div class="wviz-controls">
+                  <div class="wviz-style-row" id="wvizStyleRow" role="group" aria-label="Visualizer style">
+                    <button class="wviz-style-btn active" data-wviz-style="bars" type="button">Bars</button>
+                    <button class="wviz-style-btn" data-wviz-style="wave" type="button">Wave</button>
+                    <button class="wviz-style-btn" data-wviz-style="mirror" type="button">Mirror</button>
+                  </div>
+                  <div class="wviz-row">
+                    <label for="wvizColor">Color</label>
+                    <input id="wvizColor" type="color" value="#ffffff" />
+                  </div>
+                  <div class="wviz-row">
+                    <label for="wvizOpacity">Opacity <span id="wvizOpacityVal">80%</span></label>
+                    <input id="wvizOpacity" type="range" min="10" max="100" step="5" value="80" />
+                  </div>
+                  <div class="wviz-row">
+                    <label for="wvizHeight">Height <span id="wvizHeightVal">18%</span></label>
+                    <input id="wvizHeight" type="range" min="8" max="40" step="2" value="18" />
+                  </div>
+                </div>
+              </article>
+            </details>
             <div id="customElementSections" class="custom-element-sections" role="list"></div>
           </div>
         </section>
@@ -7394,6 +7518,11 @@
             <div class="overlay-lane" aria-label="Element overlay lane"><div id="kickTimelineClip" class="kick-overlay-clip"><span id="kickTimelineLabel">KICK</span><span class="timeline-handle start" data-kick-handle="start"></span><span class="timeline-handle end" data-kick-handle="end"></span></div></div>
             <div class="playhead"></div>
           </div>
+          <!-- Bundle B #21: Waveform timeline canvas -->
+          <div class="waveform-canvas-wrap" id="waveformCanvasWrap" hidden>
+            <canvas id="waveformTimelineCanvas" aria-label="Audio waveform" role="img"></canvas>
+          </div>
+          <div class="waveform-status" id="waveformStatus" hidden></div>
           <div class="trim-editor">
             <div class="trim-control">
               <label for="trimStartRange">Start <span id="trimStartLabel">00:00.0</span></label>
@@ -7404,6 +7533,25 @@
               <input id="trimEndRange" type="range" min="0" max="34" step="0.1" value="34" />
             </div>
             <div id="trimSummary" class="trim-summary">Trim: full clip</div>
+            <!-- Bundle B #7: Auto-hook finder -->
+            <div class="find-hook-row">
+              <button id="findHookBtn" class="find-hook-btn" type="button" disabled>🎯 Find hook</button>
+              <span id="hookStatus"></span>
+            </div>
+          </div>
+          <!-- Bundle B #30: Per-panel audio mix -->
+          <div class="audio-mix-card" id="audioMixCard" hidden>
+            <div class="audio-mix-title">🔊 Audio Mix</div>
+            <div class="audio-mix-row">
+              <label for="mainVolSlider">Main clip</label>
+              <input id="mainVolSlider" type="range" min="0" max="100" step="5" value="100" />
+              <span class="vol-val" id="mainVolVal">100%</span>
+            </div>
+            <div class="audio-mix-row" id="secondaryVolRow" hidden>
+              <label for="secondaryVolSlider">Facecam</label>
+              <input id="secondaryVolSlider" type="range" min="0" max="100" step="5" value="100" />
+              <span class="vol-val" id="secondaryVolVal">100%</span>
+            </div>
           </div>
           <div class="footer-nav"><button id="backStep" class="back-step" type="button">← Source</button><button id="nextStep" class="next-btn" type="button">Layouts →</button></div>
         </section>
@@ -7513,6 +7661,7 @@
           colorGrade: "none",
           overlays: {
             progressBar: { enabled: false, color: "#ffffff", height: 3, opacity: 0.9 },
+            waveformViz: { enabled: false, style: "bars", color: "#ffffff", opacity: 0.8, height: 18 },
             kick: {
               enabled: false,
               apply: "whole",
@@ -7583,6 +7732,7 @@
           activeTool: "source",
           selectedLayer: null,
         },
+        audioMix: { main: 1.0, secondary: 1.0 },
       };
       editorState.scene.image = editorState.scene.imageSlots.imageA;
       Object.defineProperty(window, "editorState", { value: editorState });
@@ -9396,6 +9546,20 @@
                 opacity: pb.opacity ?? 0.9,
               };
             })(),
+            waveformViz: (() => {
+              const wv = state?.scene?.overlays?.waveformViz || editorState.scene.overlays.waveformViz || {};
+              return {
+                enabled: !!wv.enabled,
+                style: wv.style || "bars",
+                color: wv.color || "#ffffff",
+                opacity: wv.opacity ?? 0.8,
+                height: wv.height ?? 18,
+              };
+            })(),
+          },
+          audioMix: {
+            main: editorState.audioMix?.main ?? 1.0,
+            secondary: editorState.audioMix?.secondary ?? 1.0,
           },
           image: imageState,
           images: imageStates,
@@ -14083,27 +14247,37 @@
             if (exportAudioContext.state === "suspended") await exportAudioContext.resume();
             if (!exportAudioSourceNode) exportAudioSourceNode = exportAudioContext.createMediaElementSource(mainVideo);
             const destination = exportAudioContext.createMediaStreamDestination();
-            exportAudioSourceNode.connect(destination);
+            // Bundle B #30: route main audio through a GainNode so per-panel volume applies.
+            try { exportAudioSourceNode.disconnect(); } catch {}
+            const mainGain = exportAudioContext.createGain();
+            mainGain.gain.value = typeof editorState?.audioMix?.main === "number" ? Math.max(0, Math.min(2, editorState.audioMix.main)) : 1;
+            exportAudioSourceNode.connect(mainGain);
+            mainGain.connect(destination);
             // Mix secondaryVideo audio into the export when dual-video stacked is active.
             const includeSecondary = hasSecondaryVideoSource() && isDualVideoStackedLayout();
             let secondaryConnected = false;
+            let secGain = null;
             if (includeSecondary) {
               try {
                 if (!exportSecondaryAudioSourceNode) {
                   exportSecondaryAudioSourceNode = exportAudioContext.createMediaElementSource(secondaryVideo);
                 }
-                exportSecondaryAudioSourceNode.connect(destination);
+                try { exportSecondaryAudioSourceNode.disconnect(); } catch {}
+                secGain = exportAudioContext.createGain();
+                secGain.gain.value = typeof editorState?.audioMix?.secondary === "number" ? Math.max(0, Math.min(2, editorState.audioMix.secondary)) : 1;
+                exportSecondaryAudioSourceNode.connect(secGain);
+                secGain.connect(destination);
                 secondaryConnected = true;
               } catch {}
             }
             return {
               tracks: destination.stream.getAudioTracks(),
               cleanup: () => {
-                try {
-                  exportAudioSourceNode.disconnect(destination);
-                } catch {}
-                if (secondaryConnected) {
-                  try { exportSecondaryAudioSourceNode.disconnect(destination); } catch {}
+                try { mainGain.disconnect(destination); } catch {}
+                try { exportAudioSourceNode.disconnect(mainGain); } catch {}
+                if (secondaryConnected && secGain) {
+                  try { secGain.disconnect(destination); } catch {}
+                  try { exportSecondaryAudioSourceNode.disconnect(secGain); } catch {}
                 }
                 destination.stream.getTracks().forEach((track) => track.stop());
               },
@@ -14674,6 +14848,71 @@
         ctx.restore();
       }
 
+      // Bundle B #29: Waveform visualizer overlay — renders a moving amplitude window synced to playback.
+      function drawWaveformViz(ctx, outputWidth, outputHeight, scene) {
+        const wv = scene?.overlays?.waveformViz;
+        if (!wv?.enabled) return;
+        const peaks = window._bundleB_waveformPeaks;
+        const dur = Math.max(0.1, (scene.source?.trimEnd ?? scene.timeline?.trim?.end ?? 34) - (scene.source?.trimStart ?? scene.timeline?.trim?.start ?? 0));
+        const currentTime = Math.max(0, (scene.source?.currentTime ?? 0) - (scene.source?.trimStart ?? scene.timeline?.trim?.start ?? 0));
+        const heightPct = Math.max(0.05, Math.min(0.5, (wv.height || 18) / 100));
+        const vizH = Math.round(outputHeight * heightPct);
+        const yBase = outputHeight - vizH;
+        const color = wv.color || "#ffffff";
+        const opacity = wv.opacity ?? 0.8;
+        const style = wv.style || "bars";
+        const N_BARS = 80;
+        ctx.save();
+        // Background scrim
+        ctx.globalAlpha = opacity * 0.5;
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(0, yBase, outputWidth, vizH);
+        ctx.globalAlpha = opacity;
+        ctx.fillStyle = color;
+        ctx.strokeStyle = color;
+        if (peaks && peaks.length > 0) {
+          const n = peaks.length;
+          const centerIdx = Math.floor((currentTime / dur) * n);
+          const halfN = Math.floor(N_BARS / 2);
+          if (style === "wave") {
+            ctx.lineWidth = Math.max(1, outputWidth / 400);
+            ctx.beginPath();
+            for (let i = 0; i < N_BARS; i++) {
+              const peakIdx = Math.max(0, Math.min(n - 1, centerIdx - halfN + i));
+              const amp = peaks[peakIdx];
+              const x = (i / (N_BARS - 1)) * outputWidth;
+              const y = yBase + vizH / 2 - amp * vizH * 0.45;
+              if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+          } else {
+            // bars (default) + mirror variant
+            const barW = outputWidth / N_BARS;
+            for (let i = 0; i < N_BARS; i++) {
+              const peakIdx = Math.max(0, Math.min(n - 1, centerIdx - halfN + i));
+              const amp = peaks[peakIdx];
+              const barH = Math.max(2, amp * vizH * 0.92);
+              const x = i * barW;
+              if (style === "mirror") {
+                ctx.fillRect(x, yBase + vizH / 2 - barH / 2, Math.max(1, barW - 1), barH);
+              } else {
+                ctx.fillRect(x, yBase + vizH - barH, Math.max(1, barW - 1), barH);
+              }
+            }
+          }
+        } else {
+          // Animated placeholder sine wave until peaks are ready
+          const barW = outputWidth / N_BARS;
+          ctx.globalAlpha = opacity * 0.35;
+          for (let i = 0; i < N_BARS; i++) {
+            const amp = Math.abs(Math.sin(i * 0.42 + currentTime * 1.8)) * 0.55 + 0.08;
+            const barH = Math.max(2, amp * vizH * 0.75);
+            ctx.fillRect(i * barW, yBase + vizH - barH, Math.max(1, barW - 1), barH);
+          }
+        }
+        ctx.restore();
+      }
+
       // Bundle A #6: progress bar countdown rendered onto every frame.
       function drawProgressBar(ctx, outputWidth, outputHeight, scene) {
         const pb = scene?.overlays?.progressBar;
@@ -14716,6 +14955,8 @@
         }
         // Bundle A #6: progress bar — drawn last so it sits on top of everything.
         drawProgressBar(ctx, outputWidth, outputHeight, scene);
+        // Bundle B #29: waveform visualizer overlay — above progress bar.
+        drawWaveformViz(ctx, outputWidth, outputHeight, scene);
       }
 
       async function renderFinalCompositionBlob() {
@@ -17032,6 +17273,321 @@
         mainVideo?.addEventListener("durationchange", () => requestAnimationFrame(computeViralScore));
 
       })(); // end initBundleA
+
+      // =========================================================
+      // Bundle B: Waveform timeline, Auto-hook finder,
+      //           Waveform visualizer, Per-panel audio mix
+      // =========================================================
+      (function initBundleB() {
+
+        // ── Shared: waveform peaks cache ─────────────────────────
+        // Float32Array of normalized amplitude values (0-1) for the loaded clip.
+        // Stored on window so drawWaveformViz can read it without closure coupling.
+        window._bundleB_waveformPeaks = null;
+        let _waveformLoading = false;
+        let _waveformRequestId = 0;
+
+        function fmtT(s) {
+          const m = Math.floor(s / 60);
+          return m + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+        }
+
+        // Decode audio into amplitude peaks using an OfflineAudioContext.
+        // Returns Float32Array or null on failure (CORS, empty src, etc.).
+        async function analyzeWaveformPeaks(videoEl, nBuckets) {
+          nBuckets = nBuckets || 280;
+          const OffCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+          if (!OffCtx || !videoEl || !videoEl.src) return null;
+          try {
+            const resp = await fetch(videoEl.src).catch(() => null);
+            if (!resp || !resp.ok) return null;
+            const arrayBuf = await resp.arrayBuffer();
+            // Decode at 8 kHz mono for speed — sufficient for amplitude display.
+            const offCtx = new OffCtx(1, Math.min(8000 * 600, 8000 * 600), 8000);
+            const audioBuf = await offCtx.decodeAudioData(arrayBuf).catch(() => null);
+            if (!audioBuf) return null;
+            const data = audioBuf.getChannelData(0);
+            const spb = Math.max(1, Math.floor(data.length / nBuckets));
+            const peaks = new Float32Array(nBuckets);
+            for (let i = 0; i < nBuckets; i++) {
+              let sum = 0;
+              const s = i * spb, e = Math.min(s + spb, data.length);
+              for (let j = s; j < e; j++) sum += Math.abs(data[j]);
+              peaks[i] = sum / (e - s);
+            }
+            const maxVal = peaks.reduce((a, b) => Math.max(a, b), 0) || 1;
+            for (let i = 0; i < peaks.length; i++) peaks[i] /= maxVal;
+            return peaks;
+          } catch (err) {
+            return null;
+          }
+        }
+
+        // ── #21 Waveform timeline ─────────────────────────────────
+        const wfWrap   = document.getElementById("waveformCanvasWrap");
+        const wfCanvas = document.getElementById("waveformTimelineCanvas");
+        const wfStatus = document.getElementById("waveformStatus");
+        const wfCtx    = wfCanvas ? wfCanvas.getContext("2d") : null;
+
+        function resizeWaveformCanvas() {
+          if (!wfCanvas || !wfWrap || wfWrap.hidden) return;
+          const dpr = window.devicePixelRatio || 1;
+          const cssW = wfWrap.getBoundingClientRect().width || wfWrap.offsetWidth || 260;
+          const cssH = 44;
+          wfCanvas.width  = Math.round(cssW * dpr);
+          wfCanvas.height = Math.round(cssH * dpr);
+          wfCanvas.style.width  = cssW + "px";
+          wfCanvas.style.height = cssH + "px";
+          wfCtx && wfCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function drawWaveformTimeline() {
+          if (!wfCtx || !wfCanvas) return;
+          const W = wfCanvas.width / (window.devicePixelRatio || 1);
+          const H = wfCanvas.height / (window.devicePixelRatio || 1);
+          wfCtx.clearRect(0, 0, W, H);
+          wfCtx.fillStyle = "rgba(16,19,28,0.07)";
+          wfCtx.fillRect(0, 0, W, H);
+
+          const peaks = window._bundleB_waveformPeaks;
+          const dur   = editorState.source?.duration || 34;
+          const ts    = trimState.start;
+          const te    = trimState.end;
+          const now   = mainVideo?.currentTime || 0;
+
+          if (peaks && peaks.length > 0) {
+            const n   = peaks.length;
+            const barW = Math.max(1, W / n);
+            for (let i = 0; i < n; i++) {
+              const t    = (i / n) * dur;
+              const inTrim = t >= ts && t <= te;
+              const barH = Math.max(2, peaks[i] * H * 0.86);
+              wfCtx.fillStyle = inTrim ? "rgba(183,255,90,0.72)" : "rgba(130,140,150,0.32)";
+              wfCtx.fillRect(i * barW, (H - barH) / 2, Math.max(1, barW - 0.5), barH);
+            }
+          } else {
+            // placeholder bars
+            wfCtx.fillStyle = "rgba(130,140,150,0.18)";
+            const np = 60, bw = W / np;
+            for (let i = 0; i < np; i++) {
+              const bh = (Math.sin(i * 0.85) * 0.3 + 0.5) * H * 0.6;
+              wfCtx.fillRect(i * bw, (H - bh) / 2, bw - 1, bh);
+            }
+          }
+
+          // Playhead line
+          if (dur > 0) {
+            const px = (now / dur) * W;
+            wfCtx.strokeStyle = "rgba(255,255,255,0.9)";
+            wfCtx.lineWidth = 1.5;
+            wfCtx.beginPath();
+            wfCtx.moveTo(px, 0);
+            wfCtx.lineTo(px, H);
+            wfCtx.stroke();
+          }
+        }
+
+        async function loadWaveformForVideo(videoEl) {
+          const requestId = ++_waveformRequestId;
+          _waveformLoading = true;
+          window._bundleB_waveformPeaks = null;
+          if (wfWrap) wfWrap.hidden = false;
+          if (wfStatus) { wfStatus.hidden = false; wfStatus.textContent = "Analyzing audio…"; }
+          const findHookBtn = document.getElementById("findHookBtn");
+          if (findHookBtn) findHookBtn.disabled = true;
+          resizeWaveformCanvas();
+          drawWaveformTimeline();
+
+          const peaks = await analyzeWaveformPeaks(videoEl, 280);
+          if (requestId !== _waveformRequestId) return;
+          window._bundleB_waveformPeaks = peaks;
+          _waveformLoading = false;
+
+          if (wfStatus) {
+            if (peaks) {
+              wfStatus.textContent = "";
+              setTimeout(() => { if (wfStatus) wfStatus.hidden = true; }, 800);
+            } else {
+              wfStatus.textContent = "Waveform unavailable (CORS or empty source)";
+            }
+          }
+          if (findHookBtn) findHookBtn.disabled = !peaks;
+          drawWaveformTimeline();
+        }
+
+        // Redraw waveform on every timeupdate (playhead tracks position).
+        mainVideo?.addEventListener("timeupdate", drawWaveformTimeline);
+        // Trigger load when a new clip is loaded.
+        mainVideo?.addEventListener("loadedmetadata", () => loadWaveformForVideo(mainVideo));
+        // Clear when video is ejected.
+        mainVideo?.addEventListener("emptied", () => {
+          _waveformRequestId++;
+          _waveformLoading = false;
+          window._bundleB_waveformPeaks = null;
+          if (wfWrap) wfWrap.hidden = true;
+          if (wfStatus) wfStatus.hidden = true;
+          const findHookBtn = document.getElementById("findHookBtn");
+          if (findHookBtn) findHookBtn.disabled = true;
+          const audioMixCard = document.getElementById("audioMixCard");
+          if (audioMixCard) audioMixCard.hidden = true;
+        });
+        // Resize observer keeps the canvas pixel-perfect when panel resizes.
+        if (wfWrap && window.ResizeObserver) {
+          new ResizeObserver(() => { resizeWaveformCanvas(); drawWaveformTimeline(); }).observe(wfWrap);
+        }
+
+        // ── #7 Auto-hook finder ───────────────────────────────────
+        function findBestHook(peaks, targetDuration, videoDuration) {
+          const n = peaks.length;
+          const winBuckets = Math.max(1, Math.round((targetDuration / videoDuration) * n));
+          if (winBuckets >= n) return { start: 0, end: videoDuration };
+          let bestScore = -1, bestIdx = 0;
+          for (let i = 0; i <= n - winBuckets; i++) {
+            let score = 0;
+            for (let j = i; j < i + winBuckets; j++) score += peaks[j];
+            if (score > bestScore) { bestScore = score; bestIdx = i; }
+          }
+          return {
+            start: Math.round((bestIdx / n) * videoDuration * 10) / 10,
+            end:   Math.round(((bestIdx + winBuckets) / n) * videoDuration * 10) / 10,
+          };
+        }
+
+        document.getElementById("findHookBtn")?.addEventListener("click", () => {
+          const peaks = window._bundleB_waveformPeaks;
+          const hookStatus = document.getElementById("hookStatus");
+          if (!peaks) { if (hookStatus) hookStatus.textContent = "No audio data yet."; return; }
+          const dur = editorState.source?.duration || 34;
+          // Target: current trim length clamped to 15-60 s, prefer ~30 s.
+          const existingLen = trimState.end - trimState.start;
+          const targetLen   = Math.min(60, Math.max(15, Math.min(existingLen, 30)));
+          const hook = findBestHook(peaks, targetLen, dur);
+          trimState.start = hook.start;
+          trimState.end   = hook.end;
+          // Sync the range inputs so the existing trim UI reflects the change.
+          const tsR = document.getElementById("trimStartRange");
+          const teR = document.getElementById("trimEndRange");
+          if (tsR) { tsR.value = hook.start; tsR.dispatchEvent(new Event("input", { bubbles: true })); }
+          if (teR) { teR.value = hook.end;   teR.dispatchEvent(new Event("input", { bubbles: true })); }
+          if (hookStatus) {
+            hookStatus.textContent = "🎯 Hook at " + fmtT(hook.start);
+            setTimeout(() => { hookStatus.textContent = ""; }, 3000);
+          }
+          drawWaveformTimeline();
+          try { syncCanvasPreview(); } catch (e) {}
+        });
+
+        // ── #29 Waveform visualizer element ───────────────────────
+        const wvizToggle     = document.getElementById("waveformVizToggle");
+        const wvizStyleRow   = document.getElementById("wvizStyleRow");
+        const wvizColor      = document.getElementById("wvizColor");
+        const wvizOpacity    = document.getElementById("wvizOpacity");
+        const wvizOpacityVal = document.getElementById("wvizOpacityVal");
+        const wvizHeight     = document.getElementById("wvizHeight");
+        const wvizHeightVal  = document.getElementById("wvizHeightVal");
+
+        function syncWvizUI() {
+          const wv = editorState.scene.overlays.waveformViz;
+          if (!wv) return;
+          if (wvizToggle)     wvizToggle.checked = !!wv.enabled;
+          if (wvizColor)      wvizColor.value    = wv.color || "#ffffff";
+          if (wvizOpacity) {
+            wvizOpacity.value = Math.round((wv.opacity ?? 0.8) * 100);
+            if (wvizOpacityVal) wvizOpacityVal.textContent = wvizOpacity.value + "%";
+          }
+          if (wvizHeight) {
+            wvizHeight.value = wv.height ?? 18;
+            if (wvizHeightVal) wvizHeightVal.textContent = wvizHeight.value + "%";
+          }
+          wvizStyleRow?.querySelectorAll(".wviz-style-btn").forEach((b) => {
+            b.classList.toggle("active", b.dataset.wvizStyle === (wv.style || "bars"));
+          });
+          try { syncCanvasPreview(); } catch (e) {}
+        }
+
+        wvizToggle?.addEventListener("change", () => {
+          editorState.scene.overlays.waveformViz.enabled = !!wvizToggle.checked;
+          syncWvizUI();
+        });
+        wvizStyleRow?.addEventListener("click", (e) => {
+          const btn = e.target.closest("[data-wviz-style]");
+          if (!btn) return;
+          editorState.scene.overlays.waveformViz.style = btn.dataset.wvizStyle;
+          syncWvizUI();
+        });
+        wvizColor?.addEventListener("input", () => {
+          editorState.scene.overlays.waveformViz.color = wvizColor.value;
+          try { syncCanvasPreview(); } catch (e) {}
+        });
+        wvizOpacity?.addEventListener("input", () => {
+          const v = parseInt(wvizOpacity.value, 10);
+          editorState.scene.overlays.waveformViz.opacity = v / 100;
+          if (wvizOpacityVal) wvizOpacityVal.textContent = v + "%";
+          try { syncCanvasPreview(); } catch (e) {}
+        });
+        wvizHeight?.addEventListener("input", () => {
+          const v = parseInt(wvizHeight.value, 10);
+          editorState.scene.overlays.waveformViz.height = v;
+          if (wvizHeightVal) wvizHeightVal.textContent = v + "%";
+          try { syncCanvasPreview(); } catch (e) {}
+        });
+
+        // ── #30 Per-panel audio mix ───────────────────────────────
+        const audioMixCard      = document.getElementById("audioMixCard");
+        const mainVolSlider     = document.getElementById("mainVolSlider");
+        const mainVolVal        = document.getElementById("mainVolVal");
+        const secondaryVolRow   = document.getElementById("secondaryVolRow");
+        const secondaryVolSlider = document.getElementById("secondaryVolSlider");
+        const secondaryVolVal   = document.getElementById("secondaryVolVal");
+
+        function applyAudioMix() {
+          const mix = editorState.audioMix || {};
+          const mv = typeof mix.main === "number" ? Math.max(0, Math.min(1, mix.main)) : 1;
+          const sv = typeof mix.secondary === "number" ? Math.max(0, Math.min(1, mix.secondary)) : 1;
+          if (mainVideo)     mainVideo.volume = mv;
+          const secVid = document.getElementById("secondaryVideo");
+          if (secVid) secVid.volume = sv;
+        }
+
+        function refreshAudioMixCard() {
+          if (!mainVideo?.src) { if (audioMixCard) audioMixCard.hidden = true; return; }
+          if (audioMixCard) audioMixCard.hidden = false;
+          if (!editorState.audioMix) editorState.audioMix = { main: 1, secondary: 1 };
+          if (mainVolSlider) mainVolSlider.value = String(Math.round((editorState.audioMix.main ?? 1) * 100));
+          if (mainVolVal) mainVolVal.textContent = `${mainVolSlider?.value || 100}%`;
+          if (secondaryVolSlider) secondaryVolSlider.value = String(Math.round((editorState.audioMix.secondary ?? 1) * 100));
+          if (secondaryVolVal) secondaryVolVal.textContent = `${secondaryVolSlider?.value || 100}%`;
+          const hasSecondary = typeof hasSecondaryVideoSource === "function" && hasSecondaryVideoSource()
+                            && typeof isDualVideoStackedLayout === "function" && isDualVideoStackedLayout();
+          if (secondaryVolRow) secondaryVolRow.hidden = !hasSecondary;
+        }
+
+        mainVolSlider?.addEventListener("input", () => {
+          const v = parseInt(mainVolSlider.value, 10);
+          if (!editorState.audioMix) editorState.audioMix = { main: 1, secondary: 1 };
+          editorState.audioMix.main = v / 100;
+          if (mainVolVal) mainVolVal.textContent = v + "%";
+          applyAudioMix();
+        });
+        secondaryVolSlider?.addEventListener("input", () => {
+          const v = parseInt(secondaryVolSlider.value, 10);
+          if (!editorState.audioMix) editorState.audioMix = { main: 1, secondary: 1 };
+          editorState.audioMix.secondary = v / 100;
+          if (secondaryVolVal) secondaryVolVal.textContent = v + "%";
+          applyAudioMix();
+        });
+
+        // Show/hide audio mix card on video load.
+        mainVideo?.addEventListener("loadedmetadata", () => {
+          refreshAudioMixCard();
+          applyAudioMix();
+        });
+        // Show secondary row when secondary video loads.
+        document.getElementById("secondaryVideo")?.addEventListener("loadedmetadata", refreshAudioMixCard);
+        document.addEventListener("click", () => requestAnimationFrame(refreshAudioMixCard));
+        document.addEventListener("change", () => requestAnimationFrame(refreshAudioMixCard));
+
+      })(); // end initBundleB
     </script>
   </body>
 </html>
