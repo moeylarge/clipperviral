@@ -7253,6 +7253,7 @@
       let downloaderCheckInFlight = false;
       let downloaderLastKnownReady = false;
       let downloaderLastCheckedAt = 0;
+      let downloaderLastAuthError = false;
       let activeSourceLabel = "";
       let activeCaptionClipFile = null;
       let clipLibraryObjectUrls = [];
@@ -8534,6 +8535,9 @@
         const { silent = false, force = false } = options;
         const now = Date.now();
         if (!force && now - downloaderLastCheckedAt < 30_000) {
+          if (!silent && downloaderLastAuthError && downloaderStatus) {
+            setStatus(downloaderStatus, "Sign in required to check the downloader.", "error");
+          }
           return downloaderLastKnownReady;
         }
         if (downloaderCheckInFlight) return downloaderLastKnownReady;
@@ -8546,8 +8550,10 @@
           const payload = await response.json().catch(() => ({}));
           downloaderLastCheckedAt = Date.now();
           downloaderLastKnownReady = !!payload?.ok;
+          downloaderLastAuthError = response.status === 401 || response.status === 403;
           if (downloaderStatus) {
             if (payload?.ok) {
+              downloaderLastAuthError = false;
               let label = "Downloader reachable.";
               if (typeof payload?.activeUrl === "string" && payload.activeUrl) {
                 try {
@@ -8558,6 +8564,9 @@
                 }
               }
               setStatus(downloaderStatus, label, "success");
+            } else if (downloaderLastAuthError) {
+              const detail = payload?.details || "Sign in with your allowed account to use link scanning.";
+              setStatus(downloaderStatus, `Sign in required: ${detail}`, "error");
             } else if (payload?.configured === false) {
               setStatus(downloaderStatus, "Downloader not configured.", "warning");
             } else {
@@ -8569,6 +8578,7 @@
         } catch (error) {
           downloaderLastCheckedAt = Date.now();
           downloaderLastKnownReady = false;
+          downloaderLastAuthError = false;
           if (downloaderStatus) {
             setStatus(
               downloaderStatus,
@@ -8580,6 +8590,10 @@
         } finally {
           downloaderCheckInFlight = false;
         }
+      }
+
+      function getLinkScanAuthMessage() {
+        return "Sign in to use YouTube and Kick link scanning, then retry.";
       }
 
       function setSourceSummary(message = "") {
@@ -12127,7 +12141,7 @@
             if (isKickCandidate) {
               const downloaderReady = await checkDownloaderStatus({ silent: false });
               if (!downloaderReady) {
-                setStatus(youtubeHint, "Load failed: Downloader is offline. Check downloader status and retry.", "error");
+                setStatus(youtubeHint, downloaderLastAuthError ? `Load failed: ${getLinkScanAuthMessage()}` : "Load failed: Downloader is offline. Check downloader status and retry.", "error");
                 preview.disabled = false;
                 download.disabled = false;
                 preview.textContent = originalText || "Load clip";
@@ -12174,7 +12188,7 @@
             if (isKickCandidate) {
               const downloaderReady = await checkDownloaderStatus({ silent: false });
               if (!downloaderReady) {
-                setStatus(youtubeHint, "Download failed: Downloader is offline. Check downloader status and retry.", "error");
+                setStatus(youtubeHint, downloaderLastAuthError ? `Download failed: ${getLinkScanAuthMessage()}` : "Download failed: Downloader is offline. Check downloader status and retry.", "error");
                 download.disabled = false;
                 preview.disabled = false;
                 download.textContent = originalText || "Download source";
@@ -12246,8 +12260,9 @@
             analyzeYoutubeButton.disabled = false;
             analyzeYoutubeButton.classList.remove("is-scanning");
             analyzeYoutubeButton.textContent = originalText || "Find clips";
-            setStatus(youtubeHint, "Downloader is offline. Check downloader status and retry.", "error");
-            showToast("Kick downloader is offline. Check downloader status and retry.", "error");
+            const message = downloaderLastAuthError ? getLinkScanAuthMessage() : "Downloader is offline. Check downloader status and retry.";
+            setStatus(youtubeHint, message, "error");
+            showToast(downloaderLastAuthError ? "Sign in required for Kick scanning." : "Kick downloader is offline. Check downloader status and retry.", "error");
             setScanRetryVisible(true);
             return;
           }
@@ -12280,7 +12295,12 @@
           });
           const payload = await response.json().catch(async () => ({ error: await response.text() }));
           if (requestId !== sourceScanRequestId) return;
-          if (!response.ok) throw new Error([payload?.error, payload?.details].filter(Boolean).join(" | ") || "Analysis failed.");
+          if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+              throw new Error(getLinkScanAuthMessage());
+            }
+            throw new Error([payload?.error, payload?.details].filter(Boolean).join(" | ") || "Analysis failed.");
+          }
           stopSourceTimer();
           youtubeJobId = payload.jobId || "";
           youtubeClips = payload.clips || [];
