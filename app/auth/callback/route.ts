@@ -3,6 +3,10 @@ import { createServerClient } from "@supabase/ssr";
 
 import { ensureFwtovUserForAuth } from "@/lib/auth/fwtov-user";
 
+function shouldProvisionFwtovUser() {
+  return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 function getSafeNext(next: string | null) {
   if (!next || !next.startsWith("/") || next.startsWith("//")) {
     return "/";
@@ -83,8 +87,12 @@ export async function GET(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (user) {
-    await ensureFwtovUserForAuth(user);
+  if (user && shouldProvisionFwtovUser()) {
+    try {
+      await ensureFwtovUserForAuth(user);
+    } catch (error) {
+      console.error("Failed to provision FWTOV user during auth callback", error);
+    }
   }
 
   return response;
