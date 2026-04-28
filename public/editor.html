@@ -6833,6 +6833,115 @@
       .audio-mix-row label { width: 76px; font-size: 12px; color: #444; flex-shrink: 0; }
       .audio-mix-row input[type=range] { flex: 1; }
       .audio-mix-row .vol-val { width: 38px; font-size: 11px; color: #666; text-align: right; flex-shrink: 0; }
+
+      /* ===== Bundle C: iPhone frame, Template library, Brand kit, Multi-clip ===== */
+
+      /* #11 iPhone frame */
+      .iphone-frame-controls { display: flex; flex-direction: column; gap: 10px; padding: 10px 0 2px; }
+      .iphone-model-row { display: flex; gap: 6px; }
+      .iphone-model-btn {
+        padding: 4px 11px;
+        border-radius: 999px;
+        border: 1.5px solid rgba(16,19,28,0.18);
+        background: #fff;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .iphone-model-btn.active { background: #0c1118; color: #fff; border-color: #0c1118; }
+      .iphone-color-row { display: flex; gap: 7px; align-items: center; }
+      .iphone-color-swatch {
+        width: 26px; height: 26px;
+        border-radius: 50%;
+        border: 2.5px solid transparent;
+        cursor: pointer;
+        outline: 1.5px solid rgba(16,19,28,0.12);
+      }
+      .iphone-color-swatch.active { border-color: #0c1118; outline-color: #0c1118; }
+
+      /* #20 Template library */
+      .tmpl-section-title { margin: 18px 0 8px; font-size: 12px; font-weight: 700; color: #0c1118; }
+      .tmpl-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 16px;
+      }
+      .tmpl-pill {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1.5px solid rgba(16,19,28,0.14);
+        background: #fff;
+        cursor: pointer;
+        text-align: left;
+        gap: 2px;
+      }
+      .tmpl-pill:hover { background: #f7f7f8; border-color: rgba(16,19,28,0.24); }
+      .tmpl-pill.active { border-color: #0c1118; background: rgba(16,19,28,0.05); }
+      .tmpl-pill-name { font-size: 12px; font-weight: 600; color: #0c1118; }
+      .tmpl-pill-desc { font-size: 10px; color: #888; }
+
+      /* #9 Brand kit */
+      .brand-kit-card {
+        background: rgba(16,19,28,0.04);
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin-bottom: 14px;
+      }
+      .brand-kit-title { font-size: 12px; font-weight: 700; color: #0c1118; margin-bottom: 10px; }
+      .brand-kit-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .brand-kit-row:last-child { margin-bottom: 0; }
+      .brand-kit-row label { flex: 1; font-size: 12px; color: #444; }
+      .brand-kit-row input[type=color] {
+        width: 32px; height: 28px;
+        border: 1.5px solid rgba(16,19,28,0.14);
+        border-radius: 4px; padding: 0; cursor: pointer;
+      }
+      .brand-kit-row input[type=text] {
+        flex: 2; padding: 5px 8px;
+        border: 1.5px solid rgba(16,19,28,0.16);
+        border-radius: 6px; font-size: 12px;
+      }
+      .brand-apply-btn {
+        width: 100%; margin-top: 8px; padding: 7px;
+        background: #0c1118; color: #fff;
+        border: none; border-radius: 6px;
+        font-size: 12px; font-weight: 600; cursor: pointer;
+      }
+      .brand-apply-btn:hover { background: #1e2535; }
+
+      /* #17 Multi-clip stitching */
+      .stitch-section {
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(16,19,28,0.1);
+      }
+      .stitch-title { font-size: 12px; font-weight: 700; color: #0c1118; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+      .stitch-hint { font-size: 11px; color: #888; margin: 0 0 10px; }
+      .stitch-slots { display: flex; flex-direction: column; gap: 6px; }
+      .stitch-slot {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 10px;
+        background: rgba(16,19,28,0.04);
+        border-radius: 6px;
+        border: 1.5px dashed rgba(16,19,28,0.14);
+      }
+      .stitch-slot.has-clip { border-style: solid; border-color: rgba(16,19,28,0.18); background: #fff; }
+      .stitch-slot-num { font-size: 12px; font-weight: 700; color: #888; width: 16px; flex-shrink: 0; }
+      .stitch-slot-label { font-size: 12px; color: #444; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .stitch-slot-btn { font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(16,19,28,0.2); background: #fff; cursor: pointer; flex-shrink: 0; }
+      .stitch-slot-btn:hover { background: #f0f0f0; }
+      .stitch-export-btn {
+        width: 100%; margin-top: 10px; padding: 9px;
+        background: #b7ff5a; color: #0c1118;
+        border: none; border-radius: 8px;
+        font-size: 13px; font-weight: 700; cursor: pointer;
+      }
+      .stitch-export-btn:hover { background: #c8ff76; }
+      .stitch-export-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+      .stitch-status { font-size: 11px; color: #666; margin-top: 6px; text-align: center; min-height: 14px; }
     </style>
   </head>
   <body>
@@ -6948,6 +7057,37 @@
                 <div id="secondaryClipStatus" class="status" aria-live="polite">No bottom video loaded.</div>
               </div>
             </div>
+            <!-- Bundle C #17: Multi-clip stitching -->
+            <div class="stitch-section" id="stitchSection">
+              <div class="stitch-title">
+                <span>✂️ Stitch clips</span>
+              </div>
+              <p class="stitch-hint">Queue up to 4 clips and export as one stitched MP4.</p>
+              <div class="stitch-slots" id="stitchSlots">
+                <div class="stitch-slot" data-stitch-slot="0">
+                  <span class="stitch-slot-num">1</span>
+                  <span class="stitch-slot-label" id="stitchLabel0">Empty slot</span>
+                  <label class="stitch-slot-btn">Add<input type="file" accept="video/*" hidden data-stitch-file-slot="0" /></label>
+                </div>
+                <div class="stitch-slot" data-stitch-slot="1">
+                  <span class="stitch-slot-num">2</span>
+                  <span class="stitch-slot-label" id="stitchLabel1">Empty slot</span>
+                  <label class="stitch-slot-btn">Add<input type="file" accept="video/*" hidden data-stitch-file-slot="1" /></label>
+                </div>
+                <div class="stitch-slot" data-stitch-slot="2">
+                  <span class="stitch-slot-num">3</span>
+                  <span class="stitch-slot-label" id="stitchLabel2">Empty slot</span>
+                  <label class="stitch-slot-btn">Add<input type="file" accept="video/*" hidden data-stitch-file-slot="2" /></label>
+                </div>
+                <div class="stitch-slot" data-stitch-slot="3">
+                  <span class="stitch-slot-num">4</span>
+                  <span class="stitch-slot-label" id="stitchLabel3">Empty slot</span>
+                  <label class="stitch-slot-btn">Add<input type="file" accept="video/*" hidden data-stitch-file-slot="3" /></label>
+                </div>
+              </div>
+              <button id="stitchExportBtn" class="stitch-export-btn" type="button" disabled>Export stitched MP4 ⇧</button>
+              <div id="stitchStatus" class="stitch-status" aria-live="polite"></div>
+            </div>
           </div>
         </section>
 
@@ -6984,6 +7124,33 @@
             <button class="cg-pill"        data-grade="dark"     type="button" aria-pressed="false">Dark</button>
             <button class="cg-pill"        data-grade="vintage"  type="button" aria-pressed="false">Vintage</button>
             <button class="cg-pill"        data-grade="neon"     type="button" aria-pressed="false">Neon</button>
+          </div>
+          <!-- Bundle C #20: Template library -->
+          <div class="section-title tmpl-section-title">Quick templates</div>
+          <div class="tmpl-grid" id="templateGrid" role="group" aria-label="Scene templates">
+            <button class="tmpl-pill" data-template="gaming"   type="button"><span class="tmpl-pill-name">🎮 Gaming</span><span class="tmpl-pill-desc">Dramatic · Progress bar</span></button>
+            <button class="tmpl-pill" data-template="podcast"  type="button"><span class="tmpl-pill-name">🎙️ Podcast</span><span class="tmpl-pill-desc">Half layout · Dark grade</span></button>
+            <button class="tmpl-pill" data-template="reaction" type="button"><span class="tmpl-pill-name">😂 Reaction</span><span class="tmpl-pill-desc">Reaction cam · Vivid</span></button>
+            <button class="tmpl-pill" data-template="sports"   type="button"><span class="tmpl-pill-name">⚡ Sports</span><span class="tmpl-pill-desc">Vivid · Red bar</span></button>
+            <button class="tmpl-pill" data-template="tutorial" type="button"><span class="tmpl-pill-name">📱 Tutorial</span><span class="tmpl-pill-desc">Blurred bg · iPhone</span></button>
+            <button class="tmpl-pill" data-template="music"    type="button"><span class="tmpl-pill-name">🎵 Music</span><span class="tmpl-pill-desc">Neon · Waveform</span></button>
+          </div>
+          <!-- Bundle C #9: Brand kit -->
+          <div class="brand-kit-card" id="brandKitCard">
+            <div class="brand-kit-title">🎨 Brand Kit</div>
+            <div class="brand-kit-row">
+              <label for="brandName">Channel name</label>
+              <input id="brandName" type="text" placeholder="YourChannel" maxlength="40" />
+            </div>
+            <div class="brand-kit-row">
+              <label for="brandPrimary">Primary color</label>
+              <input id="brandPrimary" type="color" value="#b7ff5a" />
+            </div>
+            <div class="brand-kit-row">
+              <label for="brandAccent">Accent color</label>
+              <input id="brandAccent" type="color" value="#ffffff" />
+            </div>
+            <button id="brandApplyBtn" class="brand-apply-btn" type="button">Apply brand to clip</button>
           </div>
           <article id="imagePanelCard" class="image-panel-card">
             <div class="image-panel-head">
@@ -7286,6 +7453,31 @@
                   <div class="wviz-row">
                     <label for="wvizHeight">Height <span id="wvizHeightVal">18%</span></label>
                     <input id="wvizHeight" type="range" min="8" max="40" step="2" value="18" />
+                  </div>
+                </div>
+              </article>
+            </details>
+            <!-- Bundle C #11: iPhone frame mockup -->
+            <details class="overlay-section" id="iPhoneFrameSection">
+              <summary>
+                <span class="overlay-section-icon">📱</span>
+                <span class="overlay-section-label">iPhone Frame</span>
+                <label class="toggle-field toggle-inline" onclick="event.stopPropagation()">
+                  <input id="iPhoneFrameToggle" type="checkbox" />
+                </label>
+              </summary>
+              <article>
+                <div class="iphone-frame-controls">
+                  <div class="iphone-model-row" id="iphoneModelRow" role="group" aria-label="iPhone model">
+                    <button class="iphone-model-btn active" data-iphone-model="15" type="button">15</button>
+                    <button class="iphone-model-btn" data-iphone-model="14" type="button">14</button>
+                    <button class="iphone-model-btn" data-iphone-model="x" type="button">X</button>
+                  </div>
+                  <div class="iphone-color-row" id="iphoneColorRow" role="group" aria-label="Frame color">
+                    <button class="iphone-color-swatch active" data-iphone-color="black"    style="background:#1a1a1c" title="Black"    type="button"></button>
+                    <button class="iphone-color-swatch"        data-iphone-color="white"    style="background:#f0eeeb" title="White"    type="button"></button>
+                    <button class="iphone-color-swatch"        data-iphone-color="gold"     style="background:#d4b877" title="Gold"     type="button"></button>
+                    <button class="iphone-color-swatch"        data-iphone-color="titanium" style="background:#8b8680" title="Titanium" type="button"></button>
                   </div>
                 </div>
               </article>
@@ -7662,6 +7854,7 @@
           overlays: {
             progressBar: { enabled: false, color: "#ffffff", height: 3, opacity: 0.9 },
             waveformViz: { enabled: false, style: "bars", color: "#ffffff", opacity: 0.8, height: 18 },
+            iPhoneFrame: { enabled: false, model: "15", color: "black" },
             kick: {
               enabled: false,
               apply: "whole",
@@ -7744,6 +7937,15 @@
         dark:     { label: "Dark",     filter: "brightness(0.75) contrast(1.3) saturate(0.8)" },
         vintage:  { label: "Vintage",  filter: "sepia(0.4) contrast(1.1) brightness(1.05) saturate(0.8)" },
         neon:     { label: "Neon",     filter: "saturate(1.8) hue-rotate(15deg) contrast(1.15)" },
+      };
+      // Bundle C #20: Template library — preset scene configurations.
+      const TEMPLATES = {
+        gaming:   { layoutKey: "small",      colorGrade: "dramatic", overlays: { progressBar: { enabled: true,  color: "#b7ff5a", height: 4, opacity: 0.9 } } },
+        podcast:  { layoutKey: "half",       colorGrade: "dark",     overlays: {} },
+        reaction: { layoutKey: "reaction",   colorGrade: "vivid",    overlays: { progressBar: { enabled: true,  color: "#ffffff", height: 3, opacity: 0.85 } } },
+        sports:   { layoutKey: "fullscreen", colorGrade: "vivid",    overlays: { progressBar: { enabled: true,  color: "#ff4444", height: 5, opacity: 1.0  } } },
+        tutorial: { layoutKey: "blurred",    colorGrade: "vintage",  overlays: { iPhoneFrame: { enabled: true,  model: "15", color: "black" } } },
+        music:    { layoutKey: "fullscreen", colorGrade: "neon",     overlays: { waveformViz: { enabled: true,  style: "mirror", color: "#b7ff5a", opacity: 0.75, height: 22 } } },
       };
       const layoutState = editorState.scene.layout;
       Object.defineProperty(layoutState, "transformsByPanel", {
@@ -9554,6 +9756,14 @@
                 color: wv.color || "#ffffff",
                 opacity: wv.opacity ?? 0.8,
                 height: wv.height ?? 18,
+              };
+            })(),
+            iPhoneFrame: (() => {
+              const iphf = state?.scene?.overlays?.iPhoneFrame || editorState.scene.overlays.iPhoneFrame || {};
+              return {
+                enabled: !!iphf.enabled,
+                model: iphf.model || "15",
+                color: iphf.color || "black",
               };
             })(),
           },
@@ -14848,6 +15058,103 @@
         ctx.restore();
       }
 
+      // Bundle C #11: roundRect path helper (browser compat < Chrome 99).
+      function _rrPath(ctx, x, y, w, h, r) {
+        r = Math.min(Math.abs(r), w / 2, h / 2);
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.arc(x + w - r, y + r, r, -Math.PI / 2, 0);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.arc(x + w - r, y + h - r, r, 0, Math.PI / 2);
+        ctx.lineTo(x + r, y + h);
+        ctx.arc(x + r, y + h - r, r, Math.PI / 2, Math.PI);
+        ctx.lineTo(x, y + r);
+        ctx.arc(x + r, y + r, r, Math.PI, -Math.PI / 2);
+        ctx.closePath();
+      }
+      function _rrRect(ctx, x, y, w, h, r) {
+        if (typeof ctx.roundRect === "function") { ctx.roundRect(x, y, w, h, r); }
+        else { _rrPath(ctx, x, y, w, h, r); }
+      }
+
+      // Bundle C #11: iPhone frame overlay — decorative phone bezel drawn as outermost layer.
+      function drawIPhoneFrame(ctx, w, h, scene) {
+        const iphf = scene?.overlays?.iPhoneFrame;
+        if (!iphf?.enabled) return;
+
+        const color = iphf.color || "black";
+        const model = String(iphf.model || "15");
+
+        const frameColor = color === "white"    ? "rgba(238,236,232,0.97)"
+                         : color === "gold"     ? "rgba(212,184,119,0.97)"
+                         : color === "titanium" ? "rgba(138,133,127,0.97)"
+                         :                        "rgba(18,18,20,0.97)"; // black
+
+        // Bezel proportions (fraction of canvas dims)
+        const bH = 0.055; // top/bottom bezel fraction of height
+        const bW = 0.04;  // left/right bezel fraction of width
+        const outerR = w * 0.09;
+        const innerR = outerR * 0.6;
+
+        const innerX = Math.round(w * bW);
+        const innerY = Math.round(h * bH);
+        const innerW = Math.round(w * (1 - bW * 2));
+        const innerH = Math.round(h * (1 - bH * 2));
+
+        ctx.save();
+
+        // ── Bezel fill: outer phone silhouette minus inner video area (evenodd hole) ──
+        ctx.beginPath();
+        _rrRect(ctx, 0, 0, w, h, outerR);           // outer — clockwise
+        _rrRect(ctx, innerX, innerY, innerW, innerH, innerR); // inner (hole) — clockwise, evenodd makes it transparent
+        ctx.fillStyle = frameColor;
+        ctx.fill("evenodd");
+
+        // ── Camera island / notch ─────────────────────────────────
+        const islandTopY = innerY * 0.30;
+        ctx.fillStyle = "rgba(0,0,0,0.95)";
+        if (model === "15") {
+          // Dynamic island: rounded pill
+          const isW = w * 0.28, isH = h * 0.028;
+          ctx.beginPath();
+          _rrRect(ctx, (w - isW) / 2, islandTopY, isW, isH, isH / 2);
+          ctx.fill();
+        } else if (model === "14" || model === "13") {
+          // Notch pill
+          const isW = w * 0.34, isH = h * 0.032;
+          ctx.beginPath();
+          _rrRect(ctx, (w - isW) / 2, islandTopY, isW, isH, isH / 2);
+          ctx.fill();
+        } else {
+          // Model X: wide notch + dot
+          ctx.fillStyle = frameColor;
+          ctx.fillRect((w - w * 0.5) / 2, 0, w * 0.5, innerY);
+          ctx.fillStyle = "rgba(0,0,0,0.85)";
+          ctx.beginPath();
+          ctx.arc(w / 2, innerY * 0.5, w * 0.04, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // ── Home indicator bar ────────────────────────────────────
+        const barW = w * 0.35, barH = Math.max(2, h * 0.006);
+        const barX = (w - barW) / 2;
+        const barY = h - (h * bH - barH) / 2 - barH;
+        ctx.fillStyle = color === "white" ? "rgba(100,100,100,0.6)" : "rgba(200,200,200,0.6)";
+        ctx.beginPath();
+        _rrRect(ctx, barX, barY, barW, barH, barH / 2);
+        ctx.fill();
+
+        // ── Side buttons ─────────────────────────────────────────
+        const btnColor = color === "white" ? "rgba(200,200,200,0.9)" : "rgba(30,30,35,0.9)";
+        ctx.fillStyle = btnColor;
+        ctx.fillRect(-1, h * 0.22, 3, h * 0.05);  // mute
+        ctx.fillRect(-1, h * 0.30, 3, h * 0.09);  // vol+
+        ctx.fillRect(-1, h * 0.41, 3, h * 0.09);  // vol-
+        ctx.fillRect(w - 2, h * 0.30, 3, h * 0.13); // power
+
+        ctx.restore();
+      }
+
       // Bundle B #29: Waveform visualizer overlay — renders a moving amplitude window synced to playback.
       function drawWaveformViz(ctx, outputWidth, outputHeight, scene) {
         const wv = scene?.overlays?.waveformViz;
@@ -14957,6 +15264,123 @@
         drawProgressBar(ctx, outputWidth, outputHeight, scene);
         // Bundle B #29: waveform visualizer overlay — above progress bar.
         drawWaveformViz(ctx, outputWidth, outputHeight, scene);
+        // Bundle C #11: iPhone frame — outermost layer, drawn last.
+        drawIPhoneFrame(ctx, outputWidth, outputHeight, scene);
+      }
+
+      // Bundle C #17: Multi-clip stitching — renders a queue of clips sequentially to one MP4.
+      async function renderMultiClipBlob(onProgress) {
+        const queue = (editorState.multiClip?.queue || []).filter(c => c && (c.objectUrl || c.url));
+        if (queue.length < 2) throw new Error("Add at least 2 clips to the stitch queue.");
+        if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+          throw new Error("This browser cannot stitch clips. Use Chrome or Edge.");
+        }
+        const mimeType = getRecorderMimeType();
+        if (!mimeType) throw new Error("Cannot export MP4. Use Chrome or Edge.");
+        const { width, height, fps } = getExportQualitySettings();
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext("2d", { alpha: false });
+        if (!ctx) throw new Error("Could not create a stitch canvas.");
+
+        const previousSrc = mainVideo.currentSrc || mainVideo.src || "";
+        const previousTime = Number(mainVideo.currentTime) || 0;
+        const previousMuted = mainVideo.muted;
+        const previousVolume = mainVideo.volume;
+        const wasPaused = mainVideo.paused;
+        const chunks = [];
+        let recorder = null;
+
+        try {
+          const firstClip = queue[0];
+          mainVideo.src = firstClip.objectUrl || firstClip.url || "";
+          mainVideo.muted = false;
+          mainVideo.volume = editorState.audioMix?.main ?? 1;
+          await waitForVideoReady(mainVideo);
+
+          // Audio: capture after the first stitch source is loaded so Chrome exposes audio tracks.
+          let audioTracks = [];
+          try {
+            if (typeof mainVideo.captureStream === "function") {
+              audioTracks = mainVideo.captureStream().getAudioTracks();
+            }
+          } catch (e) {}
+
+          const videoStream = canvas.captureStream(fps);
+          const combinedStream = new MediaStream([...videoStream.getVideoTracks(), ...audioTracks]);
+          recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 8_000_000 });
+          recorder.ondataavailable = e => { if (e.data?.size > 0) chunks.push(e.data); };
+          recorder.start(200);
+
+          const totalDuration = queue.reduce((s, c) => {
+            return s + Math.max(0.1, (c.trimEnd ?? c.duration ?? 30) - (c.trimStart ?? 0));
+          }, 0);
+          let renderedSecs = 0;
+
+          for (let qi = 0; qi < queue.length; qi++) {
+            const clip = queue[qi];
+            const nextSrc = clip.objectUrl || clip.url || "";
+            if (mainVideo.src !== nextSrc) {
+              mainVideo.src = nextSrc;
+              mainVideo.muted = false;
+              mainVideo.volume = editorState.audioMix?.main ?? 1;
+              await waitForVideoReady(mainVideo);
+            }
+
+            const clipStart = clip.trimStart ?? 0;
+            const clipEnd   = clip.trimEnd   ?? mainVideo.duration;
+            const clipDur   = Math.max(0.1, clipEnd - clipStart);
+
+            await seekVideo(mainVideo, clipStart);
+            await mainVideo.play().catch(() => {});
+
+            const startWall = performance.now();
+
+            await new Promise((resolve, reject) => {
+              const tOut = setTimeout(() => reject(new Error(`Clip ${qi + 1} render timed out`)), (clipDur + 20) * 1000);
+              function frame() {
+                const wallSecs = (performance.now() - startWall) / 1000;
+                if (wallSecs >= clipDur || mainVideo.currentTime >= clipEnd - 0.04) {
+                  clearTimeout(tOut);
+                  mainVideo.pause();
+                  resolve();
+                  return;
+                }
+                const scene = buildResolvedScene(editorState, { time: mainVideo.currentTime });
+                drawCompositionFrame(ctx, width, height, scene, { forExport: true });
+                renderedSecs += 1 / fps;
+                onProgress?.(Math.min(0.99, renderedSecs / totalDuration));
+                requestAnimationFrame(frame);
+              }
+              requestAnimationFrame(frame);
+            });
+
+            mainVideo.pause();
+            // 1-frame black gap between clips
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, width, height);
+            await new Promise(r => setTimeout(r, Math.ceil(1000 / fps)));
+          }
+
+          recorder.stop();
+          await new Promise(r => { recorder.onstop = r; });
+          return new Blob(chunks, { type: mimeType });
+        } finally {
+          try { mainVideo.pause(); } catch (e) {}
+          mainVideo.muted = previousMuted;
+          mainVideo.volume = previousVolume;
+          if (previousSrc) {
+            mainVideo.src = previousSrc;
+            mainVideo.load();
+            await waitForVideoReady(mainVideo).catch(() => {});
+            await seekVideo(mainVideo, Math.min(previousTime, Number(mainVideo.duration) || previousTime)).catch(() => {});
+            if (!wasPaused) mainVideo.play().catch(() => {});
+          } else {
+            mainVideo.removeAttribute("src");
+            mainVideo.load();
+          }
+          syncCanvasPreview();
+        }
       }
 
       async function renderFinalCompositionBlob() {
@@ -17588,6 +18012,234 @@
         document.addEventListener("change", () => requestAnimationFrame(refreshAudioMixCard));
 
       })(); // end initBundleB
+
+      // =========================================================
+      // Bundle C: iPhone frame, Template library, Brand kit,
+      //           Multi-clip stitching
+      // =========================================================
+      (function initBundleC() {
+
+        const BRAND_KIT_LS = "clipperviral.brandKit.v1";
+
+        // ── Helper: apply a layout key ────────────────────────────
+        function applyLayoutKey(key) {
+          const layout = key ? LAYOUT_REGISTRY[key] : null;
+          if (!layout) return;
+          if (layout.format !== layoutState.format) {
+            setFormat(layout.format);
+          }
+          setActiveLayout(layout.key);
+        }
+
+        // ── #11 iPhone frame ─────────────────────────────────────
+        const iphToggle   = document.getElementById("iPhoneFrameToggle");
+        const iphModelRow = document.getElementById("iphoneModelRow");
+        const iphColorRow = document.getElementById("iphoneColorRow");
+
+        function syncIphUI() {
+          const iphf = editorState.scene.overlays.iPhoneFrame;
+          if (!iphf) return;
+          if (iphToggle) iphToggle.checked = !!iphf.enabled;
+          iphModelRow?.querySelectorAll("[data-iphone-model]").forEach(b =>
+            b.classList.toggle("active", b.dataset.iphoneModel === String(iphf.model || "15")));
+          iphColorRow?.querySelectorAll("[data-iphone-color]").forEach(b =>
+            b.classList.toggle("active", b.dataset.iphoneColor === (iphf.color || "black")));
+          try { syncCanvasPreview(); } catch (e) {}
+        }
+
+        iphToggle?.addEventListener("change", () => {
+          editorState.scene.overlays.iPhoneFrame.enabled = !!iphToggle.checked;
+          syncIphUI();
+        });
+        iphModelRow?.addEventListener("click", e => {
+          const btn = e.target.closest("[data-iphone-model]");
+          if (!btn) return;
+          editorState.scene.overlays.iPhoneFrame.model = btn.dataset.iphoneModel;
+          syncIphUI();
+        });
+        iphColorRow?.addEventListener("click", e => {
+          const btn = e.target.closest("[data-iphone-color]");
+          if (!btn) return;
+          editorState.scene.overlays.iPhoneFrame.color = btn.dataset.iphoneColor;
+          syncIphUI();
+        });
+
+        // ── #20 Template library ──────────────────────────────────
+        const templateGrid = document.getElementById("templateGrid");
+
+        function applyTemplate(id) {
+          const tmpl = TEMPLATES[id];
+          if (!tmpl) return;
+          // Layout
+          if (tmpl.layoutKey) applyLayoutKey(tmpl.layoutKey);
+          // Color grade
+          if (tmpl.colorGrade !== undefined) {
+            editorState.scene.colorGrade = tmpl.colorGrade;
+            document.querySelectorAll(".cg-pill").forEach(b => {
+              const active = b.dataset.grade === tmpl.colorGrade;
+              b.classList.toggle("active", active);
+              b.setAttribute("aria-pressed", String(active));
+            });
+          }
+          // Overlays
+          const ov = tmpl.overlays || {};
+          if (ov.progressBar !== undefined) {
+            Object.assign(editorState.scene.overlays.progressBar, ov.progressBar);
+            const pbTog = document.getElementById("progressBarToggle");
+            if (pbTog) { pbTog.checked = !!ov.progressBar.enabled; pbTog.dispatchEvent(new Event("change", { bubbles: true })); }
+          }
+          if (ov.waveformViz !== undefined) {
+            Object.assign(editorState.scene.overlays.waveformViz, ov.waveformViz);
+            const wvTog = document.getElementById("waveformVizToggle");
+            if (wvTog) { wvTog.checked = !!ov.waveformViz.enabled; wvTog.dispatchEvent(new Event("change", { bubbles: true })); }
+          }
+          if (ov.iPhoneFrame !== undefined) {
+            Object.assign(editorState.scene.overlays.iPhoneFrame, ov.iPhoneFrame);
+            syncIphUI();
+          }
+          // Mark active template pill
+          templateGrid?.querySelectorAll(".tmpl-pill").forEach(b =>
+            b.classList.toggle("active", b.dataset.template === id));
+          try { syncCanvasPreview(); } catch (e) {}
+        }
+
+        templateGrid?.addEventListener("click", e => {
+          const btn = e.target.closest("[data-template]");
+          if (!btn) return;
+          applyTemplate(btn.dataset.template);
+        });
+
+        // ── #9 Brand kit ──────────────────────────────────────────
+        const brandName    = document.getElementById("brandName");
+        const brandPrimary = document.getElementById("brandPrimary");
+        const brandAccent  = document.getElementById("brandAccent");
+        const brandApply   = document.getElementById("brandApplyBtn");
+
+        function loadBrandKit() {
+          try {
+            const saved = JSON.parse(localStorage.getItem(BRAND_KIT_LS) || "{}");
+            if (brandName    && saved.name)    brandName.value    = saved.name;
+            if (brandPrimary && saved.primary) brandPrimary.value = saved.primary;
+            if (brandAccent  && saved.accent)  brandAccent.value  = saved.accent;
+          } catch (e) {}
+        }
+
+        function saveBrandKit() {
+          try {
+            localStorage.setItem(BRAND_KIT_LS, JSON.stringify({
+              name:    brandName?.value    || "",
+              primary: brandPrimary?.value || "#b7ff5a",
+              accent:  brandAccent?.value  || "#ffffff",
+            }));
+          } catch (e) {}
+        }
+
+        brandApply?.addEventListener("click", () => {
+          saveBrandKit();
+          const primary = brandPrimary?.value || "#b7ff5a";
+          const accent  = brandAccent?.value  || "#ffffff";
+          const name    = brandName?.value?.trim() || "";
+          // Apply primary → progress bar color
+          if (editorState.scene.overlays.progressBar) editorState.scene.overlays.progressBar.color = primary;
+          const pbColorEl = document.getElementById("progressBarColor");
+          if (pbColorEl) pbColorEl.value = primary;
+          // Apply accent → waveform visualizer color
+          if (editorState.scene.overlays.waveformViz) editorState.scene.overlays.waveformViz.color = accent;
+          const wvColorEl = document.getElementById("wvizColor");
+          if (wvColorEl) wvColorEl.value = accent;
+          // Apply channel name → viral header text
+          if (name) {
+            if (editorState.scene.overlays.viralHeader) editorState.scene.overlays.viralHeader.text = name;
+            const vhTextEl = document.getElementById("viralHeaderTextInput");
+            if (vhTextEl) { vhTextEl.value = name; vhTextEl.dispatchEvent(new Event("input", { bubbles: true })); }
+          }
+          try { syncCanvasPreview(); } catch (e) {}
+          if (brandApply) {
+            brandApply.textContent = "✓ Applied!";
+            setTimeout(() => { brandApply.textContent = "Apply brand to clip"; }, 2200);
+          }
+        });
+
+        [brandName, brandPrimary, brandAccent].forEach(el =>
+          el?.addEventListener("input", saveBrandKit));
+        loadBrandKit();
+
+        // ── #17 Multi-clip stitching ──────────────────────────────
+        if (!editorState.multiClip) editorState.multiClip = { queue: [null, null, null, null] };
+
+        const stitchExportBtn = document.getElementById("stitchExportBtn");
+        const stitchStatus    = document.getElementById("stitchStatus");
+
+        function refreshStitchUI() {
+          const queue = editorState.multiClip.queue;
+          const filled = queue.filter(Boolean).length;
+          if (stitchExportBtn) stitchExportBtn.disabled = filled < 2;
+          document.querySelectorAll("[data-stitch-slot]").forEach(slot => {
+            const idx = parseInt(slot.dataset.stitchSlot, 10);
+            const clip = queue[idx];
+            const lbl = document.getElementById("stitchLabel" + idx);
+            if (lbl) lbl.textContent = clip ? clip.label : "Empty slot";
+            slot.classList.toggle("has-clip", !!clip);
+          });
+        }
+
+        // Wire file inputs for each slot
+        document.querySelectorAll("[data-stitch-file-slot]").forEach(input => {
+          input.addEventListener("change", e => {
+            const idx = parseInt(input.dataset.stitchFileSlot, 10);
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const objectUrl = URL.createObjectURL(file);
+            editorState.multiClip.queue[idx] = {
+              file, objectUrl,
+              label: file.name.replace(/\.[^.]+$/, ""),
+              trimStart: 0,
+              trimEnd: null,
+              duration: null,
+            };
+            // Probe duration
+            const probe = document.createElement("video");
+            probe.src = objectUrl;
+            probe.preload = "metadata";
+            probe.addEventListener("loadedmetadata", () => {
+              const c = editorState.multiClip.queue[idx];
+              if (c) { c.duration = probe.duration; if (c.trimEnd === null) c.trimEnd = probe.duration; }
+              probe.remove();
+              refreshStitchUI();
+            }, { once: true });
+            refreshStitchUI();
+          });
+        });
+
+        stitchExportBtn?.addEventListener("click", async () => {
+          if (stitchExportBtn.disabled || stitchExportBtn.dataset.busy === "1") return;
+          stitchExportBtn.dataset.busy = "1";
+          stitchExportBtn.disabled = true;
+          if (stitchStatus) stitchStatus.textContent = "Stitching clips…";
+          try {
+            const blob = await renderMultiClipBlob(pct => {
+              if (stitchStatus) stitchStatus.textContent = `Stitching… ${Math.round(pct * 100)}%`;
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = "clipperviral-stitch.mp4"; a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+            if (stitchStatus) {
+              stitchStatus.textContent = "✓ Stitched export downloaded!";
+              setTimeout(() => { if (stitchStatus) stitchStatus.textContent = ""; }, 4000);
+            }
+          } catch (err) {
+            console.error("[BundleC stitch]", err);
+            if (stitchStatus) stitchStatus.textContent = "Error: " + (err.message || "Export failed");
+          } finally {
+            delete stitchExportBtn.dataset.busy;
+            refreshStitchUI();
+          }
+        });
+
+        refreshStitchUI();
+
+      })(); // end initBundleC
     </script>
   </body>
 </html>
