@@ -6488,6 +6488,124 @@
       }
       .shortcut-help-close:hover { background: rgba(16,19,28,0.04); }
 
+      /* ===== Bundle A: Progress bar, Color grade, Reaction cam, Virality score ===== */
+
+      /* #10 Color grade pills */
+      .cg-section-title { margin-top: 20px; }
+      .cg-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+      .cg-pill {
+        padding: 5px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(16,19,28,0.18);
+        background: #f4f5f9;
+        color: #333;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.12s;
+      }
+      .cg-pill:hover { background: #e8eaef; border-color: rgba(16,19,28,0.28); }
+      .cg-pill.active, .cg-pill[aria-pressed="true"] {
+        background: #10131c;
+        color: #fff;
+        border-color: transparent;
+      }
+
+      /* #6 Progress bar card */
+      .pb-toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0 4px;
+        font-weight: 700;
+        font-size: 13px;
+      }
+      .pb-controls { display: flex; flex-direction: column; gap: 10px; padding-top: 8px; }
+      .pb-control-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .pb-control-row input[type="color"] { width: 36px; height: 28px; padding: 2px; border-radius: 6px; border: 1px solid rgba(16,19,28,0.2); cursor: pointer; }
+      .pb-control-row input[type="range"] { flex: 1; max-width: 140px; }
+
+      /* #23 Virality score card */
+      .vs-card {
+        background: linear-gradient(135deg, #f8f9ff, #f2f5fb);
+        border: 1px solid rgba(16,19,28,0.1);
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+      }
+      .vs-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 10px;
+      }
+      .vs-ring {
+        flex: 0 0 56px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #10131c;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 0;
+        font-size: 18px;
+        font-weight: 900;
+        line-height: 1;
+      }
+      .vs-ring small { font-size: 10px; font-weight: 600; opacity: 0.65; }
+      .vs-ring.high  { background: linear-gradient(135deg, #1e7a38, #25a04a); }
+      .vs-ring.mid   { background: linear-gradient(135deg, #856404, #c49a0a); }
+      .vs-ring.low   { background: linear-gradient(135deg, #8b1111, #b91c1c); }
+      .vs-meta strong { font-size: 14px; font-weight: 900; display: block; }
+      .vs-meta p { font-size: 11px; color: #667085; margin: 2px 0 0; }
+      .vs-checklist {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .vs-checklist li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #333;
+      }
+      .vs-checklist li .vs-icon { font-size: 13px; flex: 0 0 16px; text-align: center; }
+      .vs-checklist li.pass { color: #1a7a33; }
+      .vs-checklist li.fail { color: #667085; }
+
+      /* #14 Reaction cam thumb (layout card thumbnail) */
+      .layout-card[data-layout="reaction"] .thumb {
+        background: linear-gradient(180deg, #8b5cf6 0 32%, #1c1c1e 33% 100%);
+      }
+      .layout-card[data-layout="reaction"] .thumb::before {
+        width: 86px;
+        height: 50px;
+        top: 4px;
+        left: 18px;
+        border-radius: 0;
+        background: rgba(139,92,246,0.5);
+      }
+
       /* ===== Phase 1 (vertical-only UX) ===== */
       /* Sub-step 1: panel source labels */
       .cv-panel-label {
@@ -6764,6 +6882,16 @@
             <button type="button" data-layout-filter="Multi-camera" role="tab" aria-selected="false">Multi-cam</button>
           </div>
           <div class="layout-grid" id="layoutGrid"></div>
+          <!-- Bundle A #10: Color grade presets -->
+          <div class="section-title cg-section-title">Color grade</div>
+          <div class="cg-pills" id="colorGradePills" role="group" aria-label="Color grade">
+            <button class="cg-pill active" data-grade="none"     type="button" aria-pressed="true">None</button>
+            <button class="cg-pill"        data-grade="dramatic" type="button" aria-pressed="false">Dramatic</button>
+            <button class="cg-pill"        data-grade="vivid"    type="button" aria-pressed="false">Vivid</button>
+            <button class="cg-pill"        data-grade="dark"     type="button" aria-pressed="false">Dark</button>
+            <button class="cg-pill"        data-grade="vintage"  type="button" aria-pressed="false">Vintage</button>
+            <button class="cg-pill"        data-grade="neon"     type="button" aria-pressed="false">Neon</button>
+          </div>
           <article id="imagePanelCard" class="image-panel-card">
             <div class="image-panel-head">
               <div>
@@ -6838,7 +6966,7 @@
                 <button type="button" role="menuitem" data-add-element="countdown">Countdown</button>
                 <button type="button" role="menuitem" disabled title="Coming in Wave D">Sticker <span class="menu-tag">Soon</span></button>
                 <button type="button" role="menuitem" data-add-element="watermark">Watermark</button>
-                <button type="button" role="menuitem" disabled title="Coming in Wave D">Progress Bar <span class="menu-tag">Soon</span></button>
+                <button type="button" role="menuitem" disabled title="Use the Progress Bar card below">Progress Bar <span class="menu-tag">↓</span></button>
                 <button type="button" role="menuitem" disabled title="Coming in Wave D">CTA Chip <span class="menu-tag">Soon</span></button>
               </div>
             </div>
@@ -7007,6 +7135,37 @@
               <button id="viralHeaderDeleteButton" class="primary-btn source-action secondary-action" type="button">Delete header</button>
             </article>
             </details>
+            <!-- Bundle A #6: Progress bar countdown -->
+            <details class="elements-section" data-element-section="progressBar">
+              <summary>Progress Bar</summary>
+              <article class="element-card">
+                <div class="element-card-head">
+                  <div>
+                    <strong>Countdown progress bar</strong>
+                    <p>Thin bar at the bottom counts down clip duration — keeps viewers watching.</p>
+                  </div>
+                  <span class="element-badge">Overlay</span>
+                </div>
+                <div class="pb-toggle-row">
+                  <span class="pb-toggle-label">Progress bar</span>
+                  <button id="progressBarToggle" type="button" class="toggle-btn" aria-pressed="false" data-state-label="Off">Off</button>
+                </div>
+                <div id="progressBarControls" class="pb-controls" hidden>
+                  <div class="pb-control-row">
+                    <label for="progressBarColor">Bar color</label>
+                    <input id="progressBarColor" type="color" value="#ffffff" />
+                  </div>
+                  <div class="pb-control-row">
+                    <label for="progressBarHeight">Thickness <span id="progressBarHeightVal">3px</span></label>
+                    <input id="progressBarHeight" type="range" min="2" max="10" step="1" value="3" />
+                  </div>
+                  <div class="pb-control-row">
+                    <label for="progressBarOpacity">Opacity <span id="progressBarOpacityVal">90%</span></label>
+                    <input id="progressBarOpacity" type="range" min="10" max="100" step="5" value="90" />
+                  </div>
+                </div>
+              </article>
+            </details>
             <div id="customElementSections" class="custom-element-sections" role="list"></div>
           </div>
         </section>
@@ -7127,6 +7286,19 @@
             <span>MP4 file name</span>
             <input id="exportFileNameInput" type="text" inputmode="text" autocomplete="off" placeholder="my-viral-clip" />
           </label>
+          <!-- Bundle A #23: Virality score estimator -->
+          <div id="viralityScoreCard" class="vs-card" hidden>
+            <div class="vs-header">
+              <div class="vs-ring" id="vsRing">
+                <span id="vsScore">0</span><small>/100</small>
+              </div>
+              <div class="vs-meta">
+                <strong id="vsLabel">Viral score</strong>
+                <p id="vsSublabel">Make changes to increase your score.</p>
+              </div>
+            </div>
+            <ul id="vsChecklist" class="vs-checklist"></ul>
+          </div>
           <button id="exportButton" class="export-btn" type="button">Export MP4 ⇧</button>
           <div id="exportStatus" class="status">Load a source to export.</div>
           <div id="exportProgress" class="export-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Export progress">
@@ -7278,6 +7450,7 @@
         dual: { key: "dual", label: "Dual facecam", format: "vertical", cameraMode: "dual", aspectRatio: "9:16", rendererKey: "dual", panels: ["focus", "facecamLeft", "facecamRight"], panelBoxes: { focus: { x: 0, y: 18, w: 100, h: 82 }, facecamLeft: { x: 5, y: 4, w: 43, h: 24, radius: 999 }, facecamRight: { x: 52, y: 4, w: 43, h: 24, radius: 999 } } },
         duo: { key: "duo", label: "Duo Split", format: "vertical", cameraMode: "dual", aspectRatio: "9:16", rendererKey: "duo", panels: ["focus", "facecamLeft", "facecamRight"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 61 }, facecamLeft: { x: 0, y: 61, w: 50, h: 39, radius: 0, borderWidth: "2px 1px 0 0" }, facecamRight: { x: 50, y: 61, w: 50, h: 39, radius: 0, borderWidth: "2px 0 0 1px" } } },
         half: { key: "half", label: "Half", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "half", panels: ["focus", "facecamRight"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 100 }, facecamRight: { x: 0, y: 54, w: 100, h: 46, radius: 0, borderWidth: "2px 0 0" } } },
+        reaction: { key: "reaction", label: "Reaction Cam", format: "vertical", cameraMode: "facecam", aspectRatio: "9:16", rendererKey: "reaction", panels: ["facecamLeft", "focus"], panelBoxes: { facecamLeft: { x: 0, y: 0, w: 100, h: 32, radius: 0, borderWidth: "0 0 2px 0" }, focus: { x: 0, y: 32, w: 100, h: 68, radius: 0 } } },
         "horizontal-fullscreen": { key: "horizontal-fullscreen", label: "Horizontal Fullscreen", format: "horizontal", cameraMode: "single", aspectRatio: "16:9", rendererKey: "horizontal-fullscreen", panels: ["focus"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 100, radius: 0 } } },
         "feed45-fullscreen": { key: "feed45-fullscreen", label: "Feed 4:5 Split", format: "portrait45", cameraMode: "split", aspectRatio: "4:5", rendererKey: "feed45-fullscreen", panels: ["focus", "facecamRight"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 46, radius: 0 }, facecamRight: { x: 0, y: 54, w: 100, h: 46, radius: 0, borderWidth: "0" } } },
         "square-fullscreen": { key: "square-fullscreen", label: "Square Fullscreen", format: "square", cameraMode: "single", aspectRatio: "1:1", rendererKey: "square-fullscreen", panels: ["focus"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 100, radius: 0 } } },
@@ -7337,7 +7510,9 @@
             },
             overrides: {},
           },
+          colorGrade: "none",
           overlays: {
+            progressBar: { enabled: false, color: "#ffffff", height: 3, opacity: 0.9 },
             kick: {
               enabled: false,
               apply: "whole",
@@ -7411,6 +7586,15 @@
       };
       editorState.scene.image = editorState.scene.imageSlots.imageA;
       Object.defineProperty(window, "editorState", { value: editorState });
+      // Bundle A: color grade presets applied to the canvas video layers.
+      const COLOR_GRADE_PRESETS = {
+        none:     { label: "None",     filter: "" },
+        dramatic: { label: "Dramatic", filter: "contrast(1.25) brightness(0.92) saturate(0.85)" },
+        vivid:    { label: "Vivid",    filter: "saturate(1.6) contrast(1.1)" },
+        dark:     { label: "Dark",     filter: "brightness(0.75) contrast(1.3) saturate(0.8)" },
+        vintage:  { label: "Vintage",  filter: "sepia(0.4) contrast(1.1) brightness(1.05) saturate(0.8)" },
+        neon:     { label: "Neon",     filter: "saturate(1.8) hue-rotate(15deg) contrast(1.15)" },
+      };
       const layoutState = editorState.scene.layout;
       Object.defineProperty(layoutState, "transformsByPanel", {
         get: () => layoutState.crops,
@@ -8029,6 +8213,7 @@
         dual: { category: "Multi-camera", description: "Two creator windows over the clip." },
         duo: { category: "Multi-camera", description: "Gameplay above two creator panels." },
         half: { category: "Split", description: "Large clip with lower creator panel." },
+        reaction: { category: "Facecam", description: "Reaction camera on top with gameplay below." },
         "horizontal-fullscreen": { category: "Horizontal", description: "One 16:9 fullscreen export." },
         "feed45-fullscreen": { category: "Feed", description: "Stacked top and bottom clip panels for larger 4:5 posts." },
         "square-fullscreen": { category: "Square", description: "One 1:1 fullscreen export." },
@@ -9198,9 +9383,19 @@
             panels: [...activeLayout.panels],
             crops: buildNormalizedPanelState(activeLayout, layoutStateValue.crops),
           },
+          colorGrade: state?.scene?.colorGrade || editorState.scene.colorGrade || "none",
           overlays: {
             kick: kickState,
             viralHeader: viralHeaderState,
+            progressBar: (() => {
+              const pb = state?.scene?.overlays?.progressBar || editorState.scene.overlays.progressBar || {};
+              return {
+                enabled: !!pb.enabled,
+                color: pb.color || "#ffffff",
+                height: pb.height ?? 3,
+                opacity: pb.opacity ?? 0.9,
+              };
+            })(),
           },
           image: imageState,
           images: imageStates,
@@ -14250,9 +14445,12 @@
         const scale = Math.max(scaleX, scaleY);
         const radius = panelBox.radius ? parseFloat(panelBox.radius) || 0 : parseFloat(style?.borderRadius || 0);
         const borderWidth = parseFloat(style?.borderTopWidth || 0);
+        const cgKey = scene?.colorGrade && scene.colorGrade !== "none" ? scene.colorGrade : null;
+        const colorGradeFilter = cgKey ? (COLOR_GRADE_PRESETS[cgKey]?.filter || "") : "";
+        const baseFilter = style?.filter && style.filter !== "none" ? style.filter : "";
         const drawOptions = {
           opacity: parseFloat(style?.opacity || "1"),
-          filter: style?.filter && style.filter !== "none" ? style.filter : "",
+          filter: [baseFilter, colorGradeFilter].filter(Boolean).join(" ") || "",
           radius: (Number.isFinite(radius) ? radius : 0) * scale,
         };
         const panelVideo = getPanelVideoElement(scene, panelKey);
@@ -14476,6 +14674,27 @@
         ctx.restore();
       }
 
+      // Bundle A #6: progress bar countdown rendered onto every frame.
+      function drawProgressBar(ctx, outputWidth, outputHeight, scene) {
+        const pb = scene?.overlays?.progressBar;
+        if (!pb?.enabled) return;
+        const currentTime = scene.source?.currentTime ?? 0;
+        const trimStart = scene.source?.trimStart ?? scene.timeline?.trim?.start ?? 0;
+        const trimEnd = scene.source?.trimEnd ?? scene.timeline?.trim?.end ?? (trimStart + 34);
+        const duration = Math.max(0.1, trimEnd - trimStart);
+        const elapsed = Math.max(0, currentTime - trimStart);
+        const ratio = 1 - Math.min(1, elapsed / duration);
+        const barH = Math.max(1, Math.round(pb.height || 3));
+        const y = outputHeight - barH;
+        ctx.save();
+        ctx.globalAlpha = pb.opacity ?? 0.9;
+        ctx.fillStyle = "rgba(0,0,0,0.28)";
+        ctx.fillRect(0, y, outputWidth, barH);
+        ctx.fillStyle = pb.color || "#ffffff";
+        ctx.fillRect(0, y, Math.round(outputWidth * ratio), barH);
+        ctx.restore();
+      }
+
       function drawCompositionFrame(ctx, outputWidth, outputHeight, scene, options = {}) {
         if (!scene) throw new Error("Missing resolved scene for export rendering.");
         ctx.imageSmoothingEnabled = true;
@@ -14495,6 +14714,8 @@
         if (scene.overlays?.kick?.enabled && scene.overlays?.kick?.visible !== false && scene.overlays?.kick?.themeNeon) {
           drawKickThemeAccent(ctx, outputWidth, outputHeight);
         }
+        // Bundle A #6: progress bar — drawn last so it sits on top of everything.
+        drawProgressBar(ctx, outputWidth, outputHeight, scene);
       }
 
       async function renderFinalCompositionBlob() {
@@ -16598,6 +16819,219 @@
         renderCustomElements();
         renderElementSections();
       })();
+
+      // =========================================================
+      // Bundle A: Color grade, Progress bar, Virality score
+      // =========================================================
+      (function initBundleA() {
+
+        // ── #10 Color grade ──────────────────────────────────────
+        const colorGradePills = document.getElementById("colorGradePills");
+
+        function setColorGrade(grade) {
+          const key = COLOR_GRADE_PRESETS[grade] ? grade : "none";
+          editorState.scene.colorGrade = key;
+          colorGradePills?.querySelectorAll(".cg-pill").forEach((btn) => {
+            const active = btn.dataset.grade === key;
+            btn.classList.toggle("active", active);
+            btn.setAttribute("aria-pressed", String(active));
+          });
+          try { syncCanvasPreview(); } catch (e) {}
+        }
+
+        colorGradePills?.addEventListener("click", (e) => {
+          const btn = e.target.closest(".cg-pill[data-grade]");
+          if (!btn) return;
+          setColorGrade(btn.dataset.grade);
+        });
+
+        // ── #6 Progress bar ──────────────────────────────────────
+        const pbToggle    = document.getElementById("progressBarToggle");
+        const pbControls  = document.getElementById("progressBarControls");
+        const pbColor     = document.getElementById("progressBarColor");
+        const pbHeight    = document.getElementById("progressBarHeight");
+        const pbHeightVal = document.getElementById("progressBarHeightVal");
+        const pbOpacity   = document.getElementById("progressBarOpacity");
+        const pbOpacVal   = document.getElementById("progressBarOpacityVal");
+
+        function updatePbState() {
+          const pb = editorState.scene.overlays.progressBar;
+          const on = !!pb.enabled;
+          if (pbToggle) {
+            pbToggle.setAttribute("aria-pressed", String(on));
+            pbToggle.textContent = on ? "On" : "Off";
+            pbToggle.dataset.stateLabel = on ? "On" : "Off";
+          }
+          if (pbControls) pbControls.hidden = !on;
+          try { syncCanvasPreview(); } catch (e) {}
+        }
+
+        pbToggle?.addEventListener("click", () => {
+          editorState.scene.overlays.progressBar.enabled = !editorState.scene.overlays.progressBar.enabled;
+          updatePbState();
+        });
+
+        pbColor?.addEventListener("input", () => {
+          editorState.scene.overlays.progressBar.color = pbColor.value;
+          try { syncCanvasPreview(); } catch (e) {}
+        });
+
+        pbHeight?.addEventListener("input", () => {
+          const v = Number(pbHeight.value) || 3;
+          editorState.scene.overlays.progressBar.height = v;
+          if (pbHeightVal) pbHeightVal.textContent = `${v}px`;
+          try { syncCanvasPreview(); } catch (e) {}
+        });
+
+        pbOpacity?.addEventListener("input", () => {
+          const v = Number(pbOpacity.value) / 100;
+          editorState.scene.overlays.progressBar.opacity = v;
+          if (pbOpacVal) pbOpacVal.textContent = `${pbOpacity.value}%`;
+          try { syncCanvasPreview(); } catch (e) {}
+        });
+
+        // ── #23 Virality score ───────────────────────────────────
+        const vsCard      = document.getElementById("viralityScoreCard");
+        const vsScore     = document.getElementById("vsScore");
+        const vsRing      = document.getElementById("vsRing");
+        const vsLabel     = document.getElementById("vsLabel");
+        const vsSublabel  = document.getElementById("vsSublabel");
+        const vsChecklist = document.getElementById("vsChecklist");
+
+        const VS_CHECKS = [
+          {
+            id: "captions",
+            label: "Captions turned on",
+            points: 25,
+            tip: "Turn on Captions — biggest retention boost on X",
+            pass: () => {
+              const c = editorState.scene.captions;
+              return !!c.enabled && Array.isArray(c.cues) && c.cues.length > 0;
+            },
+          },
+          {
+            id: "length",
+            label: "Clip is 15–60s",
+            points: 20,
+            tip: "Trim your clip to 15–60s — sweet spot for X/TikTok",
+            pass: () => {
+              const dur = trimState.end - trimState.start;
+              return dur >= 15 && dur <= 60;
+            },
+          },
+          {
+            id: "vertical",
+            label: "Vertical 9:16 format",
+            points: 15,
+            tip: "Switch to Vertical — fullscreen on mobile feeds",
+            pass: () => layoutState.format === "vertical",
+          },
+          {
+            id: "facecam",
+            label: "Reaction/facecam added",
+            points: 10,
+            tip: "Add a facecam layout — personality keeps viewers watching",
+            pass: () => {
+              const layout = LAYOUT_REGISTRY[layoutState.activeLayoutKey];
+              return layout?.panels?.some((p) => p.startsWith("facecam")) ?? false;
+            },
+          },
+          {
+            id: "hook",
+            label: "ViralClips header on",
+            points: 10,
+            tip: "Enable the ViralClips header — scroll-stopping text overlay",
+            pass: () => !!editorState.scene.overlays.viralHeader?.enabled,
+          },
+          {
+            id: "colorgrade",
+            label: "Color grade applied",
+            points: 10,
+            tip: "Pick a color grade — intentional look stands out in feeds",
+            pass: () => !!editorState.scene.colorGrade && editorState.scene.colorGrade !== "none",
+          },
+          {
+            id: "progressbar",
+            label: "Progress bar on",
+            points: 5,
+            tip: "Turn on the progress bar — keeps viewers watching to the end",
+            pass: () => !!editorState.scene.overlays.progressBar?.enabled,
+          },
+          {
+            id: "kick",
+            label: "Channel branding (Kick)",
+            points: 5,
+            tip: "Enable Kick overlay — drives channel follows",
+            pass: () => !!editorState.scene.overlays.kick?.enabled,
+          },
+        ];
+
+        function computeViralScore() {
+          if (!vsCard) return;
+          const hasSource = !!mainVideo?.src;
+          vsCard.hidden = !hasSource;
+          if (!hasSource) return;
+
+          let total = 0;
+          let maxTotal = 0;
+          const items = VS_CHECKS.map((check) => {
+            const passed = (() => { try { return check.pass(); } catch (e) { return false; } })();
+            if (passed) total += check.points;
+            maxTotal += check.points;
+            return { ...check, passed };
+          });
+
+          // Scale to 100
+          const score = maxTotal > 0 ? Math.round((total / maxTotal) * 100) : 0;
+          if (vsScore) vsScore.textContent = String(score);
+
+          const tier = score >= 75 ? "high" : score >= 45 ? "mid" : "low";
+          if (vsRing) { vsRing.className = `vs-ring ${tier}`; }
+          if (vsLabel) {
+            vsLabel.textContent = tier === "high" ? "🔥 This clip is ready to go viral" :
+              tier === "mid" ? "⚡ Getting there — a few tweaks left" :
+              "💤 Needs work before posting";
+          }
+          const missing = items.filter((i) => !i.passed);
+          if (vsSublabel) {
+            vsSublabel.textContent = missing.length === 0
+              ? "All checks pass — post it."
+              : `${missing.length} improvement${missing.length > 1 ? "s" : ""} could boost your score.`;
+          }
+
+          if (vsChecklist) {
+            vsChecklist.innerHTML = "";
+            items.forEach(({ label, passed, tip }) => {
+              const li = document.createElement("li");
+              li.className = passed ? "pass" : "fail";
+              li.innerHTML = `<span class="vs-icon">${passed ? "✅" : "⬜"}</span><span>${passed ? label : tip}</span>`;
+              vsChecklist.appendChild(li);
+            });
+          }
+        }
+
+        // Refresh score whenever the Export step becomes active or state changes.
+        const origSyncCanvas = typeof syncCanvasPreview === "function" ? syncCanvasPreview : null;
+        if (origSyncCanvas) {
+          // Piggyback on syncCanvasPreview via a step-change observer instead of overriding.
+          document.addEventListener("click", (e) => {
+            if (e.target?.closest?.('[data-step="export"]')) {
+              requestAnimationFrame(computeViralScore);
+            }
+          }, { capture: true });
+        }
+        // Also recompute after any state-changing input in the editor.
+        document.addEventListener("change", () => requestAnimationFrame(computeViralScore));
+        document.addEventListener("click",  () => requestAnimationFrame(computeViralScore));
+
+        // Initial paint when source loads.
+        document.getElementById("localClipInput")?.addEventListener("change", () => {
+          setTimeout(computeViralScore, 600);
+        });
+        mainVideo?.addEventListener("loadedmetadata", () => requestAnimationFrame(computeViralScore));
+        mainVideo?.addEventListener("durationchange", () => requestAnimationFrame(computeViralScore));
+
+      })(); // end initBundleA
     </script>
   </body>
 </html>
