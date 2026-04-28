@@ -1,13 +1,36 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+import { ensureFwtovUserForAuth } from "@/lib/auth/fwtov-user";
+
+function getSafeNext(next: string | null) {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) {
+    return "/";
+  }
+
+  try {
+    const parsed = new URL(next, "https://project-fwtov.local");
+    if (parsed.origin !== "https://project-fwtov.local") {
+      return "/";
+    }
+
+    if (parsed.pathname === "/auth/callback") {
+      return "/";
+    }
+
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return "/";
+  }
+}
+
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const next = requestUrl.searchParams.get("next") ?? "/";
+  const next = getSafeNext(requestUrl.searchParams.get("next"));
 
   if (!code) {
-    return NextResponse.redirect(new URL("/auth/signin", requestUrl.origin));
+    return NextResponse.redirect(new URL("/?auth=missing_code", requestUrl.origin));
   }
 
   const response = NextResponse.redirect(new URL(next, requestUrl.origin));
@@ -53,7 +76,15 @@ export async function GET(request: Request) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
-    return NextResponse.redirect(new URL("/auth/signin?error=oauth_callback_failed", requestUrl.origin));
+    return NextResponse.redirect(new URL("/?auth=callback_failed", requestUrl.origin));
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    await ensureFwtovUserForAuth(user);
   }
 
   return response;

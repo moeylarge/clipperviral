@@ -1,33 +1,23 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Clapperboard, Home, Scissors, Subtitles, WandSparkles } from "lucide-react";
-import { Inter, Sora } from "next/font/google";
+import { Fredoka, Nunito } from "next/font/google";
 
-import { SiteHeader } from "@/components/shell/site-header";
-
+import { FwtovAuthProvider } from "./_components/fwtov-auth-provider";
+import { FwtovWalletProvider } from "./_components/fwtov-wallet-provider";
 import "./globals.css";
 
-const heading = Sora({
+const heading = Fredoka({
   variable: "--font-heading",
   subsets: ["latin"],
 });
 
-const body = Inter({
+const body = Nunito({
   variable: "--font-body",
   subsets: ["latin"],
 });
 
-const navLinks = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/editor.html", label: "Editor", icon: Clapperboard },
-  { href: "/shows/youtube-ai-clips", label: "URL Clips", icon: WandSparkles },
-  { href: "/shows/caption-studio", label: "Captions", icon: Subtitles },
-  { href: "/shows/kick-template", label: "Kick Template", icon: Scissors },
-];
-
 export const metadata: Metadata = {
-  title: "ClipperViral",
-  description: "ClipperViral editor for uploads, YouTube AI clips, captions, layouts, and exports.",
+  title: "Magic Call",
+  description: "Live magical video calls with Santa Claus, the Tooth Fairy, and the Easter Bunny. Parent-started. First 45 seconds included.",
 };
 
 export default function RootLayout({
@@ -38,33 +28,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${heading.variable} ${body.variable} min-h-screen bg-background text-foreground antialiased`}>
-        <div className="app-shell">
-          <aside className="app-sidebar">
-            <div className="sidebar-brand">
-              <div className="sidebar-brand-badge">CV</div>
-              <div>
-                <p className="sidebar-brand-title">ClipperViral</p>
-                <p className="sidebar-brand-subtitle">Creator Clip Suite</p>
-              </div>
-            </div>
-            <nav className="sidebar-nav">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                return (
-                  <Link key={link.href} href={link.href} className="sidebar-link">
-                    <Icon className="h-4 w-4" />
-                    {link.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </aside>
-
-          <div className="app-main">
-            <SiteHeader />
-            <main className="app-content">{children}</main>
-          </div>
-        </div>
+        <FwtovAuthProvider>
+          <FwtovWalletProvider>{children}</FwtovWalletProvider>
+        </FwtovAuthProvider>
       </body>
     </html>
   );

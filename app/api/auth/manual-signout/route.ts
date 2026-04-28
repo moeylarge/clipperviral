@@ -11,5 +11,12 @@ export async function POST() {
     path: "/",
     maxAge: 0,
   });
+  response.cookies.set("clipperviral_ops_share_session", "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: true,
+    path: "/",
+    maxAge: 0,
+  });
   return response;
 }

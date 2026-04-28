@@ -670,6 +670,8 @@ async function downloadSourceViaProxy(options: {
   outputTemplate: string;
   workdir: string;
   audioOnly?: boolean;
+  clipStart?: number;
+  clipDuration?: number;
 }): Promise<ProxyDownloadResult> {
   const proxyUrl = getYtDlpProxyUrl();
   if (!proxyUrl) {
@@ -705,6 +707,8 @@ async function downloadSourceViaProxy(options: {
         ffmpegLocation: options.ffmpegLocation,
         outputTemplate: options.outputTemplate,
         audioOnly: Boolean(options.audioOnly),
+        clipStart: options.clipStart,
+        clipDuration: options.clipDuration,
       }),
       signal: controller.signal,
     });
@@ -1233,6 +1237,19 @@ function buildWindows(segments: WhisperSegment[], clipDuration: number, overlap:
   const step = Math.max(8, Math.round(clipDuration - overlap));
   const windows: { start: number; end: number; text: string }[] = [];
 
+  if (maxEnd > 0 && maxEnd <= clipDuration) {
+    const words = segments
+      .filter((segment) => segment.end >= 0 && segment.start <= maxEnd)
+      .map((segment) => segment.text)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (words) {
+      windows.push({ start: 0, end: maxEnd, text: words });
+      return windows;
+    }
+  }
+
   for (let start = 0; start + clipDuration <= maxEnd; start += step) {
     const end = Math.min(start + clipDuration, maxEnd);
     const words = segments
@@ -1248,6 +1265,477 @@ function buildWindows(segments: WhisperSegment[], clipDuration: number, overlap:
   return windows;
 }
 
+function buildFallbackWindows(segments: WhisperSegment[], clipDuration: number, totalDuration: number | null) {
+  const fallbackEnd = segments.length ? Math.max(0, ...segments.map((s) => s.end)) : 0;
+  const safeTotalDuration = typeof totalDuration === "number" ? totalDuration : null;
+  const maxEnd =
+    safeTotalDuration && Number.isFinite(safeTotalDuration) && safeTotalDuration > 0 ? safeTotalDuration : fallbackEnd;
+  if (!maxEnd) return [];
+
+  const unique = new Map<string, { start: number; end: number; text: string }>();
+  for (const segment of segments) {
+    const desiredDuration = Math.min(clipDuration, maxEnd);
+    const start = Math.max(0, Math.min(segment.start, maxEnd - desiredDuration));
+    const end = Math.min(maxEnd, Math.max(start + desiredDuration, segment.end));
+    const text = segments
+      .filter((item) => item.end >= start && item.start <= end)
+      .map((item) => item.text)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!text) continue;
+    const key = `${start.toFixed(2)}:${end.toFixed(2)}`;
+    if (!unique.has(key)) {
+      unique.set(key, { start, end, text });
+    }
+  }
+
+  return Array.from(unique.values());
+}
+
+type KickProbeWindow = {
+  start: number;
+  end: number;
+  text: string;
+  score: number;
+  reason: string;
+  speechWords?: number;
+  sceneChanges?: number;
+  activeAudioSeconds?: number;
+  standby?: boolean;
+};
+
+function normalizeKickWindowSet(
+  windows: Array<{ start: number; end: number; text: string; score?: number; reason?: string }>,
+  clipDuration: number,
+  maxClips: number,
+  totalDuration: number | null,
+) {
+  if (!windows.length) return [];
+  const safeClipDuration = Math.min(Math.max(Number.isFinite(clipDuration) ? clipDuration : 30, 10), 120);
+  const safeMaxClips = Math.min(Math.max(Math.floor(Number.isFinite(maxClips) ? maxClips : 5), 1), 20);
+  const configuredDefaultDuration = Number(process.env.KICK_DEFAULT_VOD_DURATION_SECONDS || "");
+  const fallbackDuration =
+    Number.isFinite(configuredDefaultDuration) && configuredDefaultDuration > safeClipDuration
+      ? configuredDefaultDuration
+      : 12 * 60 * 60;
+  const hasKnownDuration = typeof totalDuration === "number" && Number.isFinite(totalDuration) && totalDuration > safeClipDuration;
+  const unknownDurationFallback = Math.max(30 * 60, safeClipDuration * (safeMaxClips + 4));
+  const safeDuration = hasKnownDuration ? totalDuration : Math.min(fallbackDuration, unknownDurationFallback);
+  const maxStart = Math.max(0, safeDuration - safeClipDuration);
+  const minGap = Math.max(6, safeClipDuration * 0.55);
+
+  const deduped: KickProbeWindow[] = [];
+  const seen = new Set<string>();
+  for (const window of windows) {
+    const start = Math.max(0, Math.min(maxStart, Number(window.start) || 0));
+    const end = Math.min(safeDuration, Math.max(start + 0.1, Number(window.end) || start + safeClipDuration));
+    const key = `${start.toFixed(2)}:${end.toFixed(2)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push({
+      ...window,
+      start,
+      end,
+      score: Number.isFinite(window.score) ? Number(window.score) : 58,
+      reason: typeof window.reason === "string" && window.reason.trim().length ? window.reason : "Kick segment ready.",
+    });
+  }
+
+  const sorted = deduped.sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+  const spaced: KickProbeWindow[] = [];
+  for (const window of sorted) {
+    const tooClose = spaced.some((item) => Math.abs(item.start - window.start) < minGap);
+    if (!tooClose) spaced.push(window);
+    if (spaced.length >= safeMaxClips) break;
+  }
+  if (spaced.length >= safeMaxClips) return spaced;
+
+  const coverage = buildKickCoverageFallbackWindows(safeClipDuration, safeMaxClips, safeDuration, null);
+  for (const window of coverage) {
+    const key = `${window.start.toFixed(2)}:${window.end.toFixed(2)}`;
+    if (seen.has(key)) continue;
+    const tooClose = spaced.some((item) => Math.abs(item.start - window.start) < minGap);
+    if (tooClose) continue;
+    seen.add(key);
+    spaced.push(window);
+    if (spaced.length >= safeMaxClips) break;
+  }
+
+  if (spaced.length < safeMaxClips) {
+    for (const window of sorted) {
+      const key = `${window.start.toFixed(2)}:${window.end.toFixed(2)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      spaced.push(window);
+      if (spaced.length >= safeMaxClips) break;
+    }
+  }
+
+  return spaced;
+}
+
+function countSpeechWords(text: string) {
+  return (`${text || ""}`.toLowerCase().match(/[a-z0-9']+/g) || []).length;
+}
+
+function looksLikeStandbyText(text: string) {
+  const normalized = `${text || ""}`.toLowerCase();
+  return [
+    "be right back",
+    "brb",
+    "starting soon",
+    "stream starting",
+    "intermission",
+    "standby",
+    "away from keyboard",
+    "offline",
+  ].some((token) => normalized.includes(token));
+}
+
+function buildKickProbeWindows(clipDuration: number, maxClips: number, totalDuration: number | null, focusStartSeconds: number | null = null) {
+  const safeClipDuration = Math.min(Math.max(Number.isFinite(clipDuration) ? clipDuration : 30, 10), 120);
+  const safeMaxClips = Math.min(Math.max(Math.floor(Number.isFinite(maxClips) ? maxClips : 5), 1), 20);
+  const hasKnownDuration = typeof totalDuration === "number" && Number.isFinite(totalDuration) && totalDuration > safeClipDuration;
+  const configuredDefaultDuration = Number(process.env.KICK_DEFAULT_VOD_DURATION_SECONDS || "");
+  const fallbackDuration =
+    Number.isFinite(configuredDefaultDuration) && configuredDefaultDuration > safeClipDuration
+      ? configuredDefaultDuration
+      : 12 * 60 * 60;
+  const unknownDurationFallback = Math.max(30 * 60, safeClipDuration * (safeMaxClips + 4));
+  const focusSafe = typeof focusStartSeconds === "number" && Number.isFinite(focusStartSeconds) && focusStartSeconds > 0
+    ? focusStartSeconds
+    : null;
+  const unknownDurationWithFocus = focusSafe !== null
+    ? Math.max(unknownDurationFallback, focusSafe + Math.max(45 * 60, safeClipDuration * (safeMaxClips + 4)))
+    : unknownDurationFallback;
+  const safeDuration = hasKnownDuration ? totalDuration : Math.min(fallbackDuration, unknownDurationWithFocus);
+  const maxProbeCount = Math.min(Math.max(8, Number(process.env.KICK_PROBE_COUNT || 24)), 48);
+  const probeCount = Math.min(Math.max(safeMaxClips * 5, 16), maxProbeCount);
+  const maxStart = Math.max(0, safeDuration - safeClipDuration);
+  const focusStart =
+    typeof focusStartSeconds === "number" && Number.isFinite(focusStartSeconds) && focusStartSeconds > 0
+      ? Math.min(maxStart, Math.max(0, focusStartSeconds))
+      : null;
+  const focusWindowSeconds = Math.min(
+    safeDuration,
+    Math.max(safeClipDuration * 4, Number(process.env.KICK_FOCUS_WINDOW_SECONDS || 90 * 60)),
+  );
+  const firstStart = focusStart !== null
+    ? Math.max(0, Math.min(maxStart, focusStart - focusWindowSeconds / 2))
+    : hasKnownDuration
+      ? Math.min(maxStart, Math.max(safeClipDuration * 2, safeDuration * 0.05))
+      : 0;
+  const lastStart = focusStart !== null
+    ? Math.max(firstStart, Math.min(maxStart, focusStart + focusWindowSeconds / 2))
+    : hasKnownDuration
+      ? Math.max(firstStart, Math.min(maxStart, safeDuration * 0.95))
+      : Math.max(firstStart, Math.min(maxStart, safeClipDuration * (safeMaxClips + 1)));
+  const windows: { start: number; end: number; text: string }[] = [];
+
+  for (let index = 0; index < probeCount; index += 1) {
+    const ratio = probeCount === 1 ? 0 : index / Math.max(1, probeCount - 1);
+    const start = Math.min(maxStart, firstStart + (lastStart - firstStart) * ratio);
+    windows.push({
+      start,
+      end: Math.min(safeDuration, start + safeClipDuration),
+      text: `Kick probe ${index + 1}`,
+    });
+  }
+
+  return windows;
+}
+
+function buildFocusedKickManualWindows(clipDuration: number, maxClips: number, totalDuration: number | null, focusStartSeconds: number | null) {
+  if (!(typeof focusStartSeconds === "number" && Number.isFinite(focusStartSeconds) && focusStartSeconds > 0)) {
+    return [];
+  }
+  const safeClipDuration = Math.min(Math.max(Number.isFinite(clipDuration) ? clipDuration : 30, 10), 120);
+  const safeMaxClips = Math.min(Math.max(Math.floor(Number.isFinite(maxClips) ? maxClips : 5), 1), 20);
+  const hasKnownDuration = typeof totalDuration === "number" && Number.isFinite(totalDuration) && totalDuration > safeClipDuration;
+  const configuredDefaultDuration = Number(process.env.KICK_DEFAULT_VOD_DURATION_SECONDS || "");
+  const fallbackDuration =
+    Number.isFinite(configuredDefaultDuration) && configuredDefaultDuration > safeClipDuration
+      ? configuredDefaultDuration
+      : 12 * 60 * 60;
+  const unknownDurationFallback = Math.max(30 * 60, safeClipDuration * (safeMaxClips + 4));
+  const unknownDurationWithFocus = Math.max(
+    unknownDurationFallback,
+    focusStartSeconds + Math.max(45 * 60, safeClipDuration * (safeMaxClips + 4)),
+  );
+  const safeDuration = hasKnownDuration ? totalDuration : Math.min(fallbackDuration, unknownDurationWithFocus);
+  const maxStart = Math.max(0, safeDuration - safeClipDuration);
+  const centeredStart = Math.max(0, Math.min(maxStart, focusStartSeconds));
+  const windows: KickProbeWindow[] = [];
+
+  for (let index = 0; index < safeMaxClips; index += 1) {
+    const start = Math.min(maxStart, centeredStart + index * safeClipDuration);
+    const end = Math.min(safeDuration, start + safeClipDuration);
+    windows.push({
+      start,
+      end,
+      text: `Kick manual window ${index + 1}`,
+      score: Math.max(58, 72 - index * 2),
+      reason: `Manual Kick scan near ${Math.round(centeredStart / 60)} minute mark.`,
+    });
+  }
+
+  return windows;
+}
+
+function buildKickCoverageFallbackWindows(
+  clipDuration: number,
+  maxClips: number,
+  totalDuration: number | null,
+  focusStartSeconds: number | null,
+) {
+  const safeClipDuration = Math.min(Math.max(Number.isFinite(clipDuration) ? clipDuration : 30, 10), 120);
+  const safeMaxClips = Math.min(Math.max(Math.floor(Number.isFinite(maxClips) ? maxClips : 5), 1), 20);
+  const hasKnownDuration = typeof totalDuration === "number" && Number.isFinite(totalDuration) && totalDuration > safeClipDuration;
+  const configuredDefaultDuration = Number(process.env.KICK_DEFAULT_VOD_DURATION_SECONDS || "");
+  const fallbackDuration =
+    Number.isFinite(configuredDefaultDuration) && configuredDefaultDuration > safeClipDuration
+      ? configuredDefaultDuration
+      : 12 * 60 * 60;
+  const unknownDurationFallback = Math.max(30 * 60, safeClipDuration * (safeMaxClips + 4));
+  const focusSafe = typeof focusStartSeconds === "number" && Number.isFinite(focusStartSeconds) && focusStartSeconds > 0
+    ? focusStartSeconds
+    : null;
+  const unknownDurationWithFocus = focusSafe !== null
+    ? Math.max(unknownDurationFallback, focusSafe + Math.max(45 * 60, safeClipDuration * (safeMaxClips + 4)))
+    : unknownDurationFallback;
+  const safeDuration = hasKnownDuration ? totalDuration : Math.min(fallbackDuration, unknownDurationWithFocus);
+  const maxStart = Math.max(0, safeDuration - safeClipDuration);
+  const windows: KickProbeWindow[] = [];
+
+  const pushWindow = (start: number, reason: string) => {
+    const safeStart = Math.max(0, Math.min(maxStart, start));
+    const safeEnd = Math.min(safeDuration, safeStart + safeClipDuration);
+    windows.push({
+      start: safeStart,
+      end: safeEnd,
+      text: "Kick fallback window",
+      score: Math.max(52, 70 - windows.length * 2),
+      reason,
+    });
+  };
+
+  if (typeof focusStartSeconds === "number" && Number.isFinite(focusStartSeconds) && focusStartSeconds > 0) {
+    const centered = Math.max(0, Math.min(maxStart, focusStartSeconds));
+    const half = Math.floor(safeMaxClips / 2);
+    for (let index = 0; index < safeMaxClips; index += 1) {
+      const offset = (index - half) * safeClipDuration;
+      pushWindow(centered + offset, "Manual Kick fallback near selected minute.");
+    }
+    return windows;
+  }
+
+  const firstStart = Math.min(maxStart, Math.max(0, safeDuration * 0.12));
+  const lastStart = hasKnownDuration
+    ? Math.max(firstStart, Math.min(maxStart, safeDuration * 0.92))
+    : Math.max(firstStart, Math.min(maxStart, safeClipDuration * (safeMaxClips + 1)));
+  for (let index = 0; index < safeMaxClips; index += 1) {
+    const ratio = safeMaxClips <= 1 ? 0 : index / (safeMaxClips - 1);
+    const start = firstStart + (lastStart - firstStart) * ratio;
+    pushWindow(start, "Kick fallback window from distributed VOD coverage.");
+  }
+  return windows;
+}
+
+function parseSilenceSeconds(text: string) {
+  const matches = text.matchAll(/silence_duration:\s*([0-9.]+)/g);
+  let total = 0;
+  for (const match of matches) {
+    const duration = Number(match[1]);
+    if (Number.isFinite(duration) && duration > 0) total += duration;
+  }
+  return total;
+}
+
+function parseSceneScores(text: string) {
+  const matches = text.matchAll(/lavfi\.scene_score=([0-9.]+)/g);
+  const values: number[] = [];
+  for (const match of matches) {
+    const score = Number(match[1]);
+    if (Number.isFinite(score)) values.push(score);
+  }
+  return values;
+}
+
+async function scoreKickSample(ffmpegCommand: string, samplePath: string, duration: number) {
+  const sceneResult = await runCommand(
+    ffmpegCommand,
+    [
+      "-hide_banner",
+      "-i",
+      samplePath,
+      "-vf",
+      "select='gt(scene,0.025)',metadata=print",
+      "-an",
+      "-f",
+      "null",
+      "-",
+    ],
+    45_000,
+  );
+  const sceneText = `${sceneResult.ok ? sceneResult.stdout : ""}\n${sceneResult.ok ? sceneResult.stderr : ""}`;
+  const sceneMatches = sceneText.match(/lavfi\.scene_score=/g) || [];
+
+  const silenceResult = await runCommand(
+    ffmpegCommand,
+    [
+      "-hide_banner",
+      "-i",
+      samplePath,
+      "-af",
+      "silencedetect=noise=-35dB:d=1",
+      "-f",
+      "null",
+      "-",
+    ],
+    45_000,
+  );
+  const silenceText = `${silenceResult.ok ? silenceResult.stdout : ""}\n${silenceResult.ok ? silenceResult.stderr : ""}`;
+  const silenceSeconds = parseSilenceSeconds(silenceText);
+  const activeAudioSeconds = Math.max(0, duration - silenceSeconds);
+  const sceneChanges = sceneMatches.length;
+  const score = Math.max(
+    1,
+    Math.min(100, Math.round(35 + Math.min(sceneChanges, 8) * 5 + Math.min(activeAudioSeconds, duration) * 1.2)),
+  );
+  const reason =
+    sceneChanges >= 2 && activeAudioSeconds >= duration * 0.35
+      ? "Active Kick segment."
+      : sceneChanges >= 2
+        ? "Visual activity detected."
+        : activeAudioSeconds >= duration * 0.35
+          ? "Audio activity detected."
+          : "Low activity fallback.";
+
+  return { score, reason, sceneChanges, activeAudioSeconds };
+}
+
+async function buildKickActivityWindows(options: {
+  sourceUrl: string;
+  formatPref: string;
+  ffmpegLocation: string | null;
+  ffmpegCommand: string | null;
+  workdir: string;
+  clipDuration: number;
+  maxClips: number;
+  totalDuration: number | null;
+  focusStartSeconds: number | null;
+  apiKey: string;
+  language: string | null;
+}) {
+  if (!options.ffmpegCommand) {
+    return [];
+  }
+
+  const probes = buildKickProbeWindows(options.clipDuration, options.maxClips, options.totalDuration, options.focusStartSeconds);
+  const scored: KickProbeWindow[] = [];
+  const sampleDuration = Math.min(
+    Math.max(15, Number(process.env.KICK_PROBE_SAMPLE_SECONDS || 45)),
+    Math.max(10, options.clipDuration),
+  );
+  const minSpeechWords = Math.max(3, Number(process.env.KICK_MIN_SPEECH_WORDS || 5));
+  const probeFormatPref = process.env.KICK_PROBE_FORMAT || "best[height<=480]/worst";
+
+  for (const [index, probe] of probes.entries()) {
+    const sampleDir = path.join(options.workdir, `kick-probe-${index}`);
+    await fs.mkdir(sampleDir, { recursive: true });
+    const sample = await downloadSourceViaProxy({
+      sourceUrl: options.sourceUrl,
+      sourceKind: "kick",
+      formatPref: probeFormatPref || options.formatPref,
+      ffmpegLocation: options.ffmpegLocation,
+      outputTemplate: path.join(sampleDir, "source.%(ext)s"),
+      workdir: sampleDir,
+      clipStart: probe.start,
+      clipDuration: Math.min(sampleDuration, probe.end - probe.start),
+    });
+
+    if (!sample.ok) {
+      await fs.rm(sampleDir, { recursive: true, force: true });
+      continue;
+    }
+
+    try {
+      const activity = await scoreKickSample(options.ffmpegCommand, sample.sourcePath, probe.end - probe.start);
+      const transcript = await transcribeAudio(sample.sourcePath, options.apiKey, options.language).catch((error) => ({
+        ok: false as const,
+        error: error instanceof Error ? error.message : "Kick speech transcription failed.",
+      }));
+      const speechText = transcript.ok
+        ? (transcript.text || transcript.segments.map((segment) => segment.text).join(" ")).trim()
+        : "";
+      const speechWords = countSpeechWords(speechText);
+      const standby = looksLikeStandbyText(speechText);
+      const speechScore = speechWords >= minSpeechWords && !standby
+        ? localScore(speechText, probe.end - probe.start).score
+        : 0;
+      const hasStrongActivity = activity.sceneChanges >= 2 && activity.activeAudioSeconds >= sampleDuration * 0.35;
+      const score = speechScore
+        ? Math.max(activity.score, Math.min(100, speechScore + 12))
+        : hasStrongActivity && !standby
+          ? Math.max(55, Math.min(74, activity.score))
+          : Math.min(activity.score, 35);
+      const reason = speechScore
+        ? `Speech detected: ${speechText.slice(0, 96)}${speechText.length > 96 ? "..." : ""}`
+        : standby
+          ? "Standby/BRB language detected; skipped."
+          : hasStrongActivity
+            ? "High visual and audio activity detected; transcript was unclear."
+            : "No clear speech detected; skipped.";
+
+      scored.push({
+        start: probe.start,
+        end: probe.end,
+        text: speechText || `Kick activity sample ${index + 1}`,
+        score,
+        reason,
+        speechWords,
+        sceneChanges: activity.sceneChanges,
+        activeAudioSeconds: activity.activeAudioSeconds,
+        standby,
+      });
+    } finally {
+      await fs.rm(sampleDir, { recursive: true, force: true });
+    }
+  }
+
+  const speechBacked = scored
+    .filter((item) => item.score >= 50 && countSpeechWords(item.text) >= minSpeechWords && !looksLikeStandbyText(item.text))
+    .sort((a, b) => b.score - a.score);
+  if (speechBacked.length) return speechBacked;
+
+  const strictActivity = scored
+    .filter((item) => (
+      !item.standby &&
+      item.score >= 55 &&
+      Number(item.sceneChanges || 0) >= 2 &&
+      Number(item.activeAudioSeconds || 0) >= sampleDuration * 0.35
+    ))
+    .sort((a, b) => b.score - a.score);
+  if (strictActivity.length) return strictActivity;
+
+  const softActivity = scored
+    .filter((item) => (
+      !item.standby &&
+      item.score >= 35 &&
+      (
+        Number(item.sceneChanges || 0) >= 1 ||
+        Number(item.activeAudioSeconds || 0) >= sampleDuration * 0.22
+      )
+    ))
+    .sort((a, b) => b.score - a.score);
+  if (softActivity.length) return softActivity;
+
+  return scored
+    .filter((item) => !item.standby)
+    .sort((a, b) => b.score - a.score);
+}
+
 function localScore(text: string, duration: number) {
   const normalized = text.toLowerCase();
   const words = normalized.match(/[a-z0-9']+/gi) || [];
@@ -1257,6 +1745,16 @@ function localScore(text: string, duration: number) {
   const highIntent = ["reveal", "watch", "check", "must", "wait", "crazy", "important", "best", "truth", "secret", "craziest", "amazing", "insane", "big", "shocking"];
   const attention = ["you", "look", "listen", "don’t", "dont", "actually", "seriously", "crazy", "this is", "wait", "hold on", "proof", "proof"];
   const callToAction = ["sub", "comment", "like", "smash", "follow", "link", "drop", "share", "subscribe", "save"];
+  const hookLeadIns = ["watch this", "wait for it", "you won't believe", "what happens next", "here's why", "this is why", "the truth is", "i found", "i figured out", "we tested", "you need to see", "this changed"];
+  const hookConflict = ["vs", "versus", "but", "however", "instead", "wrong", "failed", "problem", "mistake", "never", "always"];
+  const hookPayoff = ["so that means", "which means", "result", "proof", "finally", "turns out", "the answer", "the reason"];
+  const openLoopPatterns = [
+    /^(wait|watch|listen|stop|look)\b/,
+    /\bwhat if\b/,
+    /\bguess what\b/,
+    /\bhere('?s| is) the\b/,
+    /\bthe (craziest|wildest|biggest)\b/,
+  ];
   const questionMarkRatio = (normalized.match(/\?/g) || []).length / Math.max(1, wordCount);
   const excitement = (normalized.match(/[!?]/g) || []).length;
   const filler = ["um", "uh", "like", "you know", "so", "actually", "i mean", "okay", "right"];
@@ -1267,7 +1765,13 @@ function localScore(text: string, duration: number) {
     highIntent.reduce((acc, token) => acc + (normalized.includes(token) ? 1 : 0), 0) +
     callToAction.reduce((acc, token) => acc + (normalized.includes(token) ? 1 : 0), 0) * 1.2 +
     attention.reduce((acc, token) => acc + (normalized.includes(token) ? 1 : 0), 0) * 0.8;
+  const hookSignals =
+    hookLeadIns.reduce((acc, token) => acc + (normalized.includes(token) ? 1 : 0), 0) * 1.6 +
+    hookConflict.reduce((acc, token) => acc + (normalized.includes(token) ? 1 : 0), 0) * 1.1 +
+    hookPayoff.reduce((acc, token) => acc + (normalized.includes(token) ? 1 : 0), 0) * 1.25 +
+    openLoopPatterns.reduce((acc, pattern) => acc + (pattern.test(normalized) ? 1 : 0), 0) * 1.8;
   score += Math.min(signal * 4, 26);
+  score += Math.min(hookSignals * 4.6, 28);
   score += Math.min(wordCount * 1.1, 24);
   score += Math.min(uniqueWords * 0.4, 10);
   score += Math.min(questionMarkRatio * 40, 9);
@@ -1276,11 +1780,74 @@ function localScore(text: string, duration: number) {
   score += Math.min(Math.max(1, duration), 30) * 0.2;
   score = Math.max(10, Math.min(100, Math.round(score)));
 
-  const top = normalized.includes("?")
-    ? "contains a hook/question + high-intent phrases"
+  const hasHook = normalized.includes("?") || hookSignals >= 1.6;
+  const top = hasHook
+    ? "strong hook language + clip-ready pacing"
     : "dialogue-heavy and clip-friendly";
 
   return { score, reason: top };
+}
+
+type SceneActivity = {
+  sceneChanges: number;
+  maxSceneScore: number;
+  sceneDensity: number;
+  sceneBoost: number;
+  reason: string;
+};
+
+async function scoreSceneActivityForWindow(
+  ffmpegCommand: string,
+  sourcePath: string,
+  start: number,
+  end: number,
+): Promise<SceneActivity | null> {
+  const safeStart = Math.max(0, Number(start) || 0);
+  const safeEnd = Math.max(safeStart + 0.2, Number(end) || safeStart + 0.2);
+  const duration = Math.max(0.2, safeEnd - safeStart);
+  const result = await runCommand(
+    ffmpegCommand,
+    [
+      "-hide_banner",
+      "-ss",
+      safeStart.toFixed(3),
+      "-to",
+      safeEnd.toFixed(3),
+      "-i",
+      sourcePath,
+      "-vf",
+      "fps=2,select='gt(scene,0.022)',metadata=print",
+      "-an",
+      "-f",
+      "null",
+      "-",
+    ],
+    45_000,
+  );
+  if (!result.ok) return null;
+  const text = `${result.stdout}\n${result.stderr}`;
+  const scores = parseSceneScores(text);
+  const sceneChanges = scores.length;
+  const maxSceneScore = scores.length ? Math.max(...scores) : 0;
+  const sceneDensity = sceneChanges / Math.max(1, duration);
+  const sceneBoost = Math.max(
+    0,
+    Math.min(
+      18,
+      Math.round(
+        Math.min(sceneChanges, 8) * 1.6 +
+        Math.min(1.0, maxSceneScore) * 7 +
+        Math.min(0.55, sceneDensity) * 18,
+      ),
+    ),
+  );
+  const reason =
+    sceneChanges >= 3
+      ? "high scene-change momentum"
+      : sceneChanges >= 1
+        ? "visual scene activity detected"
+        : "low scene activity";
+  return { sceneChanges, maxSceneScore, sceneDensity, sceneBoost, reason };
 }
 
 function rankWindowsByLocalHeuristic(windows: { start: number; end: number; text: string; }[]) {
@@ -1314,6 +1881,16 @@ function maxClipsSafe(value: string | undefined) {
   if (parsed < 1) return 1;
   if (parsed > 20) return 20;
   return Math.floor(parsed);
+}
+
+function kickStartSecondsSafe(value: unknown, minuteValue: unknown = null) {
+  const parsed = Number(value);
+  const parsedMinute = Number(minuteValue);
+  if (Number.isFinite(parsedMinute) && parsedMinute > 0) {
+    return Math.min(Math.max(parsedMinute * 60, 0), 12 * 60 * 60);
+  }
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return Math.min(Math.max(parsed, 0), 12 * 60 * 60);
 }
 
 function parseBoolean(value: unknown) {
@@ -1412,6 +1989,10 @@ export async function POST(req: NextRequest) {
     const sourceKind = detectSourceKind(sourceUrl);
     const clipDuration = clipDurationSafe(body.clipDuration as string | undefined);
     const maxClips = maxClipsSafe(body.maxClips as string | undefined);
+    const kickStartSeconds = kickStartSecondsSafe(
+      (body as { kickStartSeconds?: unknown }).kickStartSeconds,
+      (body as { kickStartMinute?: unknown }).kickStartMinute,
+    );
     const overlap = 8;
     const useAiScoring = parseBoolean(body.useAiScoring);
     const language = normalizeInputLanguage(body.language);
@@ -1458,8 +2039,9 @@ export async function POST(req: NextRequest) {
         false,
       );
       const preferProxyOnlyForYoutube = proxyConfigured && sourceKind === "youtube" && !allowLocalFallbackWhenProxyFails;
+      const preferProxyAudioAnalysis = proxyConfigured && sourceKind === "kick";
 
-      if (proxyConfigured) {
+      if (proxyConfigured && !preferProxyAudioAnalysis) {
         const proxyResult = await downloadSourceViaProxy({
           sourceUrl,
           sourceKind,
@@ -1487,7 +2069,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      if (!sourcePath) {
+      if (!sourcePath && !preferProxyAudioAnalysis) {
         if (!ytdlpCommand) {
           return NextResponse.json(
             {
@@ -1548,16 +2130,18 @@ export async function POST(req: NextRequest) {
       }
 
       const resolvedSourcePath = sourcePath;
-      if (!resolvedSourcePath) {
+      if (!resolvedSourcePath && !preferProxyAudioAnalysis) {
         return NextResponse.json({ error: "Could not resolve downloaded source path." }, { status: 500 });
       }
 
-      const sourceStats = await fs.stat(resolvedSourcePath);
-      if (!sourceStats.size) {
-        return NextResponse.json({ error: "Downloaded file is empty." }, { status: 500 });
+      if (resolvedSourcePath) {
+        const sourceStats = await fs.stat(resolvedSourcePath);
+        if (!sourceStats.size) {
+          return NextResponse.json({ error: "Downloaded file is empty." }, { status: 500 });
+        }
       }
       let duration: number | null = null;
-      if (ffmpegCommand) {
+      if (ffmpegCommand && resolvedSourcePath) {
         duration = await getDurationSeconds(ffmpegCommand, resolvedSourcePath);
         if (!duration || !Number.isFinite(duration)) {
           const normalized = await normalizeSourceForProbe(ffmpegCommand, resolvedSourcePath, workdir);
@@ -1589,10 +2173,10 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      if (!transcriptSegments.length) {
-        let audioPath: string | null = looksLikeAudioFile(resolvedSourcePath) ? resolvedSourcePath : null;
+      if (!transcriptSegments.length && !preferProxyAudioAnalysis) {
+        let audioPath: string | null = resolvedSourcePath && looksLikeAudioFile(resolvedSourcePath) ? resolvedSourcePath : null;
         let extractFailure: string | null = null;
-        if (!audioPath && ffmpegCommand) {
+        if (!audioPath && ffmpegCommand && resolvedSourcePath) {
           const candidateAudioPath = path.join(workdir, "audio_for_transcript.m4a");
           const extractResult = await runWithFallback(() => toCommandCandidates([ffmpegCommand]), [
             "-y",
@@ -1658,19 +2242,125 @@ export async function POST(req: NextRequest) {
         transcriptSegments = transcripts.segments;
       }
 
-      if (!transcriptSegments.length) {
+      if (!transcriptSegments.length && !preferProxyAudioAnalysis) {
         return NextResponse.json({ error: "No transcript text was extracted from this clip." }, { status: 400 });
       }
 
-      const windows = buildWindows(transcriptSegments, clipDuration, overlap, duration);
-      if (!windows.length) {
-        return NextResponse.json({ error: "No 30-second segments found in this video transcript." }, { status: 400 });
+      const windows = preferProxyAudioAnalysis ? [] : buildWindows(transcriptSegments, clipDuration, overlap, duration);
+      let kickUsedManualFallback = false;
+      const kickActivityWindows = preferProxyAudioAnalysis
+        ? await buildKickActivityWindows({
+            sourceUrl,
+            formatPref,
+            ffmpegLocation: ytdlpFfmpegLocation,
+            ffmpegCommand,
+            workdir,
+            clipDuration,
+            maxClips,
+            totalDuration: duration,
+            focusStartSeconds: kickStartSeconds,
+            apiKey,
+            language,
+          })
+        : [];
+      let candidateWindows = preferProxyAudioAnalysis
+        ? (kickActivityWindows.length
+          ? kickActivityWindows
+          : (() => {
+            const manualWindows = kickStartSeconds !== null
+              ? buildFocusedKickManualWindows(clipDuration, maxClips, duration, kickStartSeconds)
+              : buildKickCoverageFallbackWindows(clipDuration, maxClips, duration, kickStartSeconds);
+            kickUsedManualFallback = manualWindows.length > 0;
+            return manualWindows;
+          })())
+        : windows.length
+          ? windows
+          : buildFallbackWindows(transcriptSegments, clipDuration, duration);
+
+      if (!candidateWindows.length && sourceKind === "kick") {
+        const emergencyKickWindows = buildKickCoverageFallbackWindows(
+          clipDuration,
+          maxClips,
+          duration,
+          kickStartSeconds,
+        );
+        if (emergencyKickWindows.length) {
+          kickUsedManualFallback = true;
+          candidateWindows = emergencyKickWindows;
+        }
+      }
+      if (preferProxyAudioAnalysis && candidateWindows.length) {
+        candidateWindows = normalizeKickWindowSet(candidateWindows, clipDuration, maxClips, duration);
       }
 
-      const baseWindows = rankWindowsByLocalHeuristic(windows);
-      const limitedForReview = Math.max(1, Math.min(24, windows.length));
+      if (!candidateWindows.length) {
+        return NextResponse.json(
+          {
+            error: sourceKind === "kick"
+              ? "No usable Kick moments were found in the sampled VOD windows."
+              : "No usable clip candidates were found in this video transcript.",
+            details: sourceKind === "kick"
+              ? "The analyzer skipped silent/BRB-style samples and did not find enough speech or high audio/visual activity. Try a different VOD, a shorter VOD, or upload the video manually."
+              : undefined,
+          },
+          { status: 400 },
+        );
+      }
+
+      const baseWindows = preferProxyAudioAnalysis
+        ? candidateWindows
+            .map((window, index) => ({
+              index,
+              start: Number(window.start.toFixed(2)),
+              end: Number(window.end.toFixed(2)),
+              duration: Number((window.end - window.start).toFixed(2)),
+              score: Number((window as Partial<KickProbeWindow>).score ?? 58),
+              reason: (window as Partial<KickProbeWindow>).reason || "Kick segment ready.",
+              text: window.text,
+            }))
+            .sort((a, b) => b.score - a.score)
+        : rankWindowsByLocalHeuristic(candidateWindows);
+      const limitedForReview = Math.max(1, Math.min(24, candidateWindows.length));
       let ranked = baseWindows.slice(0, limitedForReview);
-      if (useAiScoring) {
+      if (preferProxyAudioAnalysis) {
+        ranked = ranked.map((item) => ({
+          ...item,
+          reason: item.reason || (kickUsedManualFallback ? "Manual Kick segment ready." : "Kick segment ready."),
+          score: Math.max(item.score, 58),
+        }));
+      }
+      if (!preferProxyAudioAnalysis && ffmpegCommand && resolvedSourcePath) {
+        const sceneReviewLimit = Math.max(3, Math.min(16, Number(process.env.YOUTUBE_SCENE_REVIEW_LIMIT || 10)));
+        const sceneCandidates = ranked.slice(0, sceneReviewLimit);
+        const sceneScoreByIndex = new Map<number, SceneActivity>();
+        for (const item of sceneCandidates) {
+          try {
+            const activity = await scoreSceneActivityForWindow(
+              ffmpegCommand,
+              resolvedSourcePath,
+              item.start,
+              item.end,
+            );
+            if (activity) sceneScoreByIndex.set(item.index, activity);
+          } catch {
+            // keep text-only ranking when scene analysis fails
+          }
+        }
+        ranked = ranked
+          .map((item) => {
+            const sceneActivity = sceneScoreByIndex.get(item.index);
+            if (!sceneActivity) return item;
+            const updatedScore = Math.max(1, Math.min(100, Math.round(item.score + sceneActivity.sceneBoost)));
+            const sceneReason = sceneActivity.sceneBoost >= 5 ? sceneActivity.reason : "scene check complete";
+            return {
+              ...item,
+              score: updatedScore,
+              reason: `${item.reason}; ${sceneReason}`,
+            };
+          })
+          .sort((a, b) => b.score - a.score);
+      }
+      if (useAiScoring && !preferProxyAudioAnalysis) {
         const candidatesForAi = ranked.map((item) => ({
           index: item.index,
           start: item.start,
@@ -1684,10 +2374,11 @@ export async function POST(req: NextRequest) {
             .map((item) => {
               const ai = aiScores.get(item.index);
               if (!ai) return item;
+              const blended = Math.round(item.score * 0.35 + ai.score * 0.65);
               return {
                 ...item,
-                score: ai.score,
-                reason: ai.reason,
+                score: Math.max(1, Math.min(100, blended)),
+                reason: `${ai.reason} (AI + hook/scene blend)`,
               };
             })
             .sort((a, b) => b.score - a.score);
@@ -1703,7 +2394,9 @@ export async function POST(req: NextRequest) {
 
       const jobId = registerYoutubeJob({
         sourceUrl,
-        sourcePath: resolvedSourcePath,
+        sourcePath: resolvedSourcePath || "",
+        sourceKind,
+        proxyOnly: preferProxyAudioAnalysis && !resolvedSourcePath,
         workdir,
         clipDuration,
         maxClips,

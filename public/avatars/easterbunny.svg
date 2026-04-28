@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200" fill="none">
+  <rect width="1200" height="1200" rx="72" fill="#F8FFF0"/>
+  <circle cx="225" cy="205" r="72" fill="#FFE699" fill-opacity=".44"/>
+  <circle cx="990" cy="180" r="90" fill="#FFD0E4" fill-opacity=".44"/>
+  <circle cx="980" cy="980" r="92" fill="#CBE8B1" fill-opacity=".44"/>
+  <rect x="170" y="170" width="860" height="860" rx="180" fill="#ECF9D9"/>
+  <ellipse cx="516" cy="282" rx="84" ry="182" fill="#FFF6F8"/>
+  <ellipse cx="686" cy="282" rx="84" ry="182" fill="#FFF6F8"/>
+  <ellipse cx="516" cy="286" rx="42" ry="130" fill="#FFC8D9"/>
+  <ellipse cx="686" cy="286" rx="42" ry="130" fill="#FFC8D9"/>
+  <ellipse cx="600" cy="500" rx="220" ry="242" fill="#FFF7F8"/>
+  <ellipse cx="520" cy="488" rx="24" ry="28" fill="#304362"/>
+  <ellipse cx="678" cy="488" rx="24" ry="28" fill="#304362"/>
+  <circle cx="600" cy="545" r="24" fill="#FF99B7"/>
+  <path d="M546 584C575 602 625 602 654 584" stroke="#B87662" stroke-width="18" stroke-linecap="round"/>
+  <path d="M520 540H424" stroke="#C7A9A2" stroke-width="12" stroke-linecap="round"/>
+  <path d="M520 560H412" stroke="#C7A9A2" stroke-width="12" stroke-linecap="round"/>
+  <path d="M680 540H776" stroke="#C7A9A2" stroke-width="12" stroke-linecap="round"/>
+  <path d="M680 560H788" stroke="#C7A9A2" stroke-width="12" stroke-linecap="round"/>
+  <rect x="316" y="756" width="568" height="188" rx="94" fill="#8FD36F"/>
+  <ellipse cx="470" cy="832" rx="54" ry="68" fill="#FFD86E"/>
+  <ellipse cx="600" cy="816" rx="58" ry="72" fill="#FFAFB6"/>
+  <ellipse cx="728" cy="836" rx="52" ry="66" fill="#99D3FF"/>
+  <text x="600" y="1090" text-anchor="middle" fill="#5F8A42" font-family="Verdana, sans-serif" font-size="68" font-weight="700">Easter Bunny</text>
+</svg>

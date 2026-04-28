@@ -84,12 +84,31 @@ function parseSafeSegments(result: WhisperResponse) {
     return [];
   }
 
+  const words = Array.isArray(result.words)
+    ? result.words
+        .map((w) => ({
+          word: `${w.word || ""}`.trim(),
+          start: Number(w.start),
+          end: Number(w.end),
+        }))
+        .filter((w) => w.word && Number.isFinite(w.start) && Number.isFinite(w.end))
+    : [];
+
   return result.segments
-    .map((segment) => ({
-      start: Number(segment.start),
-      end: Number(segment.end),
-      text: `${segment.text || ""}`.trim(),
-    }))
+    .map((segment) => {
+      const start = Number(segment.start);
+      const end = Number(segment.end);
+      const text = `${segment.text || ""}`.trim();
+      // Slice words that fall within this segment (inclusive on start, exclusive on end,
+      // with a small tolerance for overlap).
+      const tol = 0.05;
+      const segWords = words
+        .filter((w) => w.start >= start - tol && w.end <= end + tol)
+        .map((w) => ({ t: w.start, d: Math.max(0.02, w.end - w.start), w: w.word }));
+      return segWords.length
+        ? { start, end, text, words: segWords }
+        : { start, end, text };
+    })
     .filter((segment) => segment.text.length > 0 && Number.isFinite(segment.start) && Number.isFinite(segment.end));
 }
 
@@ -98,6 +117,10 @@ async function transcribeSingle(file: File, apiKey: string, language: string | n
   whisperForm.append("file", file, file.name || "clip");
   whisperForm.append("model", "whisper-1");
   whisperForm.append("response_format", "verbose_json");
+  // Ask Whisper for word-level timestamps so we can drive word-by-word caption
+  // highlighting. Segment timestamps remain available at the segments[] level.
+  whisperForm.append("timestamp_granularities[]", "word");
+  whisperForm.append("timestamp_granularities[]", "segment");
   if (language) {
     whisperForm.append("language", language);
   }
@@ -155,7 +178,9 @@ function isMissingAudioStreamError(message: string | null | undefined, stderr: s
 async function transcribeByChunking(file: File, apiKey: string, language: string | null) {
   const workdir = path.join(os.tmpdir(), `spotlight-caption-split-${randomUUID()}`);
   let cumulativeOffset = 0;
-  const combinedSegments: WhisperSegment[] = [];
+  const combinedSegments: Array<
+    WhisperSegment & { words?: Array<{ t: number; d: number; w: string }> }
+  > = [];
   const textParts: string[] = [];
 
   try {
@@ -264,11 +289,21 @@ async function transcribeByChunking(file: File, apiKey: string, language: string
 
       const result = response.result;
       const safeSegments = parseSafeSegments(result);
-      const offsetted = safeSegments.map((segment) => ({
-        start: segment.start + cumulativeOffset,
-        end: segment.end + cumulativeOffset,
-        text: segment.text,
-      }));
+      const offsetted = safeSegments.map((segment) => {
+        const base: WhisperSegment & { words?: Array<{ t: number; d: number; w: string }> } = {
+          start: segment.start + cumulativeOffset,
+          end: segment.end + cumulativeOffset,
+          text: segment.text,
+        };
+        if ("words" in segment && Array.isArray((segment as { words?: unknown[] }).words)) {
+          base.words = (segment as { words: Array<{ t: number; d: number; w: string }> }).words.map((w) => ({
+            t: w.t + cumulativeOffset,
+            d: w.d,
+            w: w.w,
+          }));
+        }
+        return base;
+      });
       combinedSegments.push(...offsetted);
 
       if (result.text && `${result.text}`.trim()) {
@@ -297,9 +332,16 @@ type WhisperSegment = {
   text: string;
 };
 
+type WhisperWord = {
+  word: string;
+  start: number;
+  end: number;
+};
+
 type WhisperResponse = {
   text?: string;
   segments?: WhisperSegment[];
+  words?: WhisperWord[];
 };
 
 export async function POST(req: NextRequest) {

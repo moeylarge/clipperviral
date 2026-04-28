@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kick Effects Lab | Clipper Viral</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #07080d;
+        --panel: #10131b;
+        --panel-2: #171b25;
+        --ink: #f8f9fb;
+        --muted: #aeb7c8;
+        --kick: #53fc18;
+        --kick-2: #b7ff37;
+        --pink: #d63bdc;
+        --pink-2: #e35de0;
+        --line: rgba(255, 255, 255, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background:
+          radial-gradient(circle at 14% 10%, rgba(83, 252, 24, 0.18), transparent 28%),
+          radial-gradient(circle at 88% 0%, rgba(214, 59, 220, 0.22), transparent 31%),
+          linear-gradient(180deg, #080910, #05060a 62%, #080910);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      button, input {
+        font: inherit;
+      }
+
+      .page {
+        width: min(1220px, calc(100vw - 28px));
+        margin: 0 auto;
+        padding: 24px 0 36px;
+      }
+
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .logo {
+        display: grid;
+        width: 46px;
+        height: 46px;
+        place-items: center;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--pink-2), var(--pink), #b71bd7);
+        color: white;
+        font-weight: 1000;
+        box-shadow: 0 16px 34px rgba(214, 59, 220, 0.32);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(26px, 4vw, 46px);
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+
+      .kicker {
+        margin: 0 0 4px;
+        color: var(--kick);
+        font-size: 12px;
+        font-weight: 950;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .back {
+        display: inline-flex;
+        min-height: 42px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(214, 59, 220, 0.3);
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--pink-2), var(--pink), #c423e3);
+        color: white;
+        padding: 0 16px;
+        font-size: 14px;
+        font-weight: 900;
+        text-decoration: none;
+        box-shadow: 0 16px 36px rgba(214, 59, 220, 0.28);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 18px;
+        align-items: start;
+      }
+
+      .stage {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        background: rgba(16, 19, 27, 0.82);
+        padding: 16px;
+        box-shadow: 0 28px 90px rgba(0, 0, 0, 0.32);
+      }
+
+      .preview {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        border-radius: 8px;
+        border: 1px solid rgba(83, 252, 24, 0.28);
+        background:
+          linear-gradient(130deg, rgba(33, 43, 67, 0.9), rgba(8, 11, 18, 0.9)),
+          repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 62px);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 26px 72px rgba(0, 0, 0, 0.38);
+        isolation: isolate;
+      }
+
+      .gameplay {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 72% 34%, rgba(83, 252, 24, 0.18), transparent 20%),
+          radial-gradient(circle at 24% 66%, rgba(214, 59, 220, 0.18), transparent 24%),
+          linear-gradient(125deg, #192136, #0b0d14 46%, #1b1431);
+      }
+
+      .gameplay::before {
+        content: "";
+        position: absolute;
+        inset: -20%;
+        background: repeating-linear-gradient(112deg, transparent 0 26px, rgba(83, 252, 24, 0.1) 26px 28px, transparent 28px 64px);
+        animation: pan 10s linear infinite;
+      }
+
+      .person {
+        position: absolute;
+        right: 7%;
+        bottom: 13%;
+        width: 21%;
+        aspect-ratio: 0.72;
+        border-radius: 48% 48% 18% 18%;
+        background: linear-gradient(180deg, #f8f8fb 0 22%, #242936 23% 100%);
+        box-shadow: 0 20px 55px rgba(0, 0, 0, 0.34);
+      }
+
+      .caption-hook {
+        position: absolute;
+        left: 50%;
+        top: 8%;
+        z-index: 8;
+        width: min(78%, 740px);
+        transform: translateX(-50%);
+        color: white;
+        font-size: clamp(18px, 4.8vw, 44px);
+        font-weight: 1000;
+        line-height: 0.95;
+        letter-spacing: 0;
+        text-align: center;
+        text-transform: uppercase;
+        text-shadow: 0 4px 0 #050609, 0 0 28px rgba(83, 252, 24, 0.44);
+      }
+
+      .name-tag {
+        position: absolute;
+        left: 4%;
+        bottom: 6%;
+        z-index: 9;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: min(58%, 520px);
+        min-height: 54px;
+        border: 1px solid rgba(83, 252, 24, 0.75);
+        border-radius: 8px;
+        background: rgba(2, 8, 5, 0.86);
+        padding: 8px 16px;
+        box-shadow: 0 0 0 1px rgba(83, 252, 24, 0.16), 0 0 28px rgba(83, 252, 24, 0.18);
+      }
+
+      .kick-mark {
+        color: var(--kick);
+        font-weight: 1000;
+        font-size: 28px;
+        letter-spacing: -0.08em;
+        text-shadow: 0 0 18px rgba(83, 252, 24, 0.75);
+      }
+
+      .handle {
+        color: var(--kick);
+        font-size: clamp(16px, 2.4vw, 28px);
+        font-weight: 1000;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        text-shadow: 0 0 18px rgba(83, 252, 24, 0.66);
+      }
+
+      .reaction-stamp {
+        position: absolute;
+        right: 8%;
+        top: 22%;
+        z-index: 10;
+        transform: rotate(-7deg);
+        border: 3px solid var(--pink-2);
+        border-radius: 8px;
+        background: rgba(10, 8, 14, 0.72);
+        color: white;
+        padding: 10px 16px;
+        font-size: clamp(20px, 4vw, 44px);
+        font-weight: 1000;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        text-shadow: 0 0 20px rgba(227, 93, 224, 0.68);
+        box-shadow: 0 0 34px rgba(227, 93, 224, 0.32);
+        opacity: 0;
+      }
+
+      .laser-scan {
+        position: absolute;
+        inset: 0;
+        z-index: 7;
+        pointer-events: none;
+        opacity: 0;
+      }
+
+      .laser-scan::before {
+        content: "";
+        position: absolute;
+        left: -8%;
+        top: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(180deg, transparent, var(--kick), #eaffdd, var(--kick), transparent);
+        box-shadow: 0 0 18px rgba(83, 252, 24, 0.88), 0 0 42px rgba(83, 252, 24, 0.44);
+      }
+
+      .caption-bar {
+        position: absolute;
+        left: 50%;
+        bottom: 22%;
+        z-index: 8;
+        width: min(78%, 720px);
+        min-height: 48px;
+        transform: translateX(-50%);
+        border-radius: 8px;
+        background: rgba(3, 8, 5, 0.76);
+        opacity: 0;
+        box-shadow: inset 0 -5px 0 rgba(83, 252, 24, 0.72), 0 0 26px rgba(83, 252, 24, 0.22);
+      }
+
+      .caption-bar span {
+        display: block;
+        padding: 10px 16px 14px;
+        color: white;
+        font-size: clamp(17px, 3.4vw, 36px);
+        font-weight: 1000;
+        line-height: 0.95;
+        text-align: center;
+        text-transform: uppercase;
+        text-shadow: 0 3px 0 #050609;
+      }
+
+      .safe-frame {
+        position: absolute;
+        inset: 3.5%;
+        z-index: 6;
+        border-radius: 8px;
+        border: 2px solid rgba(83, 252, 24, 0.46);
+        opacity: 0;
+        pointer-events: none;
+        box-shadow: inset 0 0 26px rgba(83, 252, 24, 0.08), 0 0 22px rgba(83, 252, 24, 0.12);
+      }
+
+      .theme-pill {
+        position: absolute;
+        left: 4%;
+        top: 5%;
+        z-index: 9;
+        min-height: 34px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(5, 6, 11, 0.72);
+        color: white;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 950;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        opacity: 0;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+      }
+
+      .face-glow {
+        position: absolute;
+        right: 5%;
+        bottom: 9%;
+        z-index: 3;
+        width: 26%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(83, 252, 24, 0.28), transparent 65%);
+        filter: blur(8px);
+        opacity: 0;
+      }
+
+      .glitch-intro {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        display: grid;
+        place-items: center;
+        background: rgba(0, 0, 0, 0.76);
+        color: var(--kick);
+        font-size: clamp(54px, 13vw, 140px);
+        font-weight: 1000;
+        letter-spacing: -0.08em;
+        text-shadow: 4px 0 var(--pink), -4px 0 #4de8ff, 0 0 34px rgba(83, 252, 24, 0.86);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .effect-hook .caption-hook { animation: hookPop 4.8s ease-in-out infinite; }
+      .effect-sweep .handle { animation: neonTextSweep 2.4s ease-in-out infinite; }
+      .effect-stamp .reaction-stamp { animation: stampPop 3.2s cubic-bezier(.2,.9,.2,1) infinite; }
+      .effect-trail .name-tag { animation: tagTrail 3.4s ease-in-out infinite; }
+      .effect-face .face-glow { opacity: 1; animation: facePulse 2.2s ease-in-out infinite; }
+      .effect-glitch .glitch-intro { animation: glitchIntro 4.5s steps(2, end) infinite; }
+      .effect-laser .laser-scan { opacity: 1; }
+      .effect-laser .laser-scan::before { animation: laserScan 2.8s ease-in-out infinite; }
+      .effect-caption-bar .caption-bar { opacity: 1; animation: captionBarPulse 2.6s ease-in-out infinite; }
+      .effect-safe-frame .safe-frame { opacity: 1; animation: safeFrameBreath 3.1s ease-in-out infinite; }
+      .effect-theme-pack .theme-pill { opacity: 1; }
+      .effect-theme-pack .preview, .preview.effect-theme-pack {
+        border-color: rgba(214, 59, 220, 0.6);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 26px 72px rgba(214, 59, 220, 0.24);
+      }
+      .effect-theme-pack .theme-pill { animation: themeShift 4.2s ease-in-out infinite; }
+
+      .controls {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        background: rgba(16, 19, 27, 0.9);
+        padding: 14px;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+      }
+
+      .controls h2 {
+        margin: 0 0 4px;
+        font-size: 22px;
+        letter-spacing: -0.03em;
+      }
+
+      .controls p {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .effect-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .effect-button {
+        display: grid;
+        gap: 4px;
+        width: 100%;
+        min-height: 58px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+        color: var(--ink);
+        padding: 10px 12px;
+        text-align: left;
+        cursor: pointer;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+      }
+
+      .effect-button strong {
+        font-size: 14px;
+        font-weight: 950;
+      }
+
+      .effect-button span {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .effect-button.active {
+        border-color: rgba(83, 252, 24, 0.68);
+        background: linear-gradient(135deg, rgba(83, 252, 24, 0.22), rgba(214, 59, 220, 0.16));
+        box-shadow: 0 0 0 3px rgba(83, 252, 24, 0.08), 0 18px 36px rgba(83, 252, 24, 0.12);
+      }
+
+      .copy-box {
+        margin-top: 12px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .copy-box label {
+        display: grid;
+        gap: 5px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .copy-box input {
+        min-height: 42px;
+        border: 1px solid rgba(83, 252, 24, 0.3);
+        border-radius: 8px;
+        background: #080b10;
+        color: var(--ink);
+        padding: 10px 12px;
+        font-weight: 850;
+        outline: none;
+      }
+
+      .copy-box input:focus {
+        border-color: var(--kick);
+        box-shadow: 0 0 0 4px rgba(83, 252, 24, 0.12);
+      }
+
+      @keyframes pan {
+        to { transform: translate3d(10%, 0, 0); }
+      }
+
+      @keyframes hookPop {
+        0%, 100% { transform: translateX(-50%) scale(1); }
+        8%, 16% { transform: translateX(-50%) scale(1.045); color: var(--kick-2); }
+        22% { transform: translateX(-50%) scale(1); color: white; }
+      }
+
+      @keyframes neonTextSweep {
+        0%, 100% {
+          color: var(--kick);
+          text-shadow: 0 0 14px rgba(83, 252, 24, 0.58), 0 0 28px rgba(83, 252, 24, 0.26);
+        }
+        38% {
+          color: #eaffdd;
+          text-shadow: 0 0 8px rgba(255, 255, 255, 0.92), 0 0 24px rgba(83, 252, 24, 0.9), 0 0 44px rgba(83, 252, 24, 0.5);
+        }
+        54% {
+          color: var(--kick-2);
+          text-shadow: 0 0 18px rgba(183, 255, 55, 0.88), 0 0 40px rgba(83, 252, 24, 0.52);
+        }
+      }
+
+      @keyframes stampPop {
+        0%, 42%, 100% { opacity: 0; transform: rotate(-7deg) scale(0.74); }
+        52%, 76% { opacity: 1; transform: rotate(-7deg) scale(1); }
+        58% { transform: rotate(-4deg) scale(1.08); }
+      }
+
+      @keyframes tagTrail {
+        0%, 100% { box-shadow: 0 0 0 1px rgba(83, 252, 24, 0.16), 0 0 22px rgba(83, 252, 24, 0.16); }
+        50% { box-shadow: -18px 0 28px rgba(83, 252, 24, 0.28), 18px 0 28px rgba(214, 59, 220, 0.22), 0 0 38px rgba(83, 252, 24, 0.26); }
+      }
+
+      @keyframes facePulse {
+        0%, 100% { transform: scale(0.94); opacity: 0.48; }
+        50% { transform: scale(1.08); opacity: 1; }
+      }
+
+      @keyframes glitchIntro {
+        0%, 8% { opacity: 1; clip-path: inset(0 0 0 0); transform: translate(0, 0); }
+        9% { transform: translate(7px, -4px); clip-path: inset(18% 0 42% 0); }
+        11% { transform: translate(-6px, 4px); clip-path: inset(54% 0 12% 0); }
+        14% { opacity: 1; transform: translate(0, 0); clip-path: inset(0 0 0 0); }
+        18%, 100% { opacity: 0; }
+      }
+
+      @keyframes laserScan {
+        0%, 18% { transform: translateX(0); opacity: 0; }
+        28% { opacity: 1; }
+        72% { opacity: 1; }
+        86%, 100% { transform: translateX(118vw); opacity: 0; }
+      }
+
+      @keyframes captionBarPulse {
+        0%, 100% { box-shadow: inset 0 -5px 0 rgba(83, 252, 24, 0.72), 0 0 22px rgba(83, 252, 24, 0.16); }
+        50% { box-shadow: inset 0 -7px 0 rgba(83, 252, 24, 0.94), 0 0 34px rgba(83, 252, 24, 0.32); }
+      }
+
+      @keyframes safeFrameBreath {
+        0%, 100% { transform: scale(1); border-color: rgba(83, 252, 24, 0.38); }
+        50% { transform: scale(0.988); border-color: rgba(83, 252, 24, 0.78); }
+      }
+
+      @keyframes themeShift {
+        0%, 100% {
+          color: var(--kick);
+          border-color: rgba(83, 252, 24, 0.42);
+          box-shadow: 0 0 24px rgba(83, 252, 24, 0.18);
+        }
+        45% {
+          color: #ff65ef;
+          border-color: rgba(227, 93, 224, 0.52);
+          box-shadow: 0 0 28px rgba(227, 93, 224, 0.2);
+        }
+      }
+
+      @media (max-width: 860px) {
+        .top {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .controls {
+          order: -1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="top">
+        <div class="brand">
+          <div class="logo">CV</div>
+          <div>
+            <p class="kicker">Private preview lab</p>
+            <h1>Kick Effects Lab</h1>
+          </div>
+        </div>
+        <a class="back" href="/editor.html">Back to editor</a>
+      </header>
+
+      <section class="grid">
+        <div class="stage">
+          <div id="preview" class="preview effect-hook effect-sweep effect-stamp effect-trail effect-face effect-glitch effect-laser effect-caption-bar effect-safe-frame effect-theme-pack">
+            <div class="gameplay"></div>
+            <div class="safe-frame"></div>
+            <div class="laser-scan"></div>
+            <div class="theme-pill">Glitch Green Pack</div>
+            <div class="face-glow"></div>
+            <div class="person"></div>
+            <div id="hookText" class="caption-hook">Wait for the reaction</div>
+            <div class="caption-bar"><span>He did not expect that</span></div>
+            <div class="reaction-stamp">No way</div>
+            <div class="name-tag">
+              <div class="kick-mark">KICK</div>
+              <div id="handleText" class="handle">KICK.COM/EDMATTHEWS</div>
+            </div>
+            <div class="glitch-intro">KICK</div>
+          </div>
+        </div>
+
+        <aside class="controls">
+          <h2>Test effects</h2>
+          <p>Toggle each idea on and off. This page is separate from the live editor.</p>
+          <div class="effect-list">
+            <button class="effect-button active" data-effect="effect-hook" type="button">
+              <strong>1. Auto Hook Overlay</strong>
+              <span>Top text that pops to drive retention.</span>
+            </button>
+            <button class="effect-button active" data-effect="effect-sweep" type="button">
+              <strong>3. Neon Font Sweep</strong>
+              <span>Green font glow sweeps across the handle.</span>
+            </button>
+            <button class="effect-button active" data-effect="effect-stamp" type="button">
+              <strong>4. Reaction Stamp</strong>
+              <span>Meme-style pop stamp for the moment.</span>
+            </button>
+            <button class="effect-button active" data-effect="effect-trail" type="button">
+              <strong>8. Name Tag Glow Trail</strong>
+              <span>Moving glow energy around the handle.</span>
+            </button>
+            <button class="effect-button active" data-effect="effect-face" type="button">
+              <strong>12. Facecam Spotlight Glow</strong>
+              <span>Pulse glow behind the creator position.</span>
+            </button>
+            <button class="effect-button active" data-effect="effect-glitch" type="button">
+              <strong>13. Kick Logo Glitch Intro</strong>
+              <span>Quick Kick intro flash before the clip settles.</span>
+            </button>
+            <button class="effect-button active" data-effect="effect-laser" type="button">
+              <strong>14. Green Laser Scan Line</strong>
+              <span>Fast neon scan line across the clip.</span>
+            </button>
+            <button class="effect-button active" data-effect="effect-caption-bar" type="button">
+              <strong>16. Caption Highlight Bar</strong>
+              <span>Neon underline surface behind captions.</span>
+            </button>
+            <button class="effect-button active" data-effect="effect-safe-frame" type="button">
+              <strong>17. Animated Safe-Zone Frame</strong>
+              <span>Subtle breathing frame for structure.</span>
+            </button>
+            <button class="effect-button active" data-effect="effect-theme-pack" type="button">
+              <strong>19. Theme Pack Selector</strong>
+              <span>Preview a branded theme-pack treatment.</span>
+            </button>
+          </div>
+
+          <div class="copy-box">
+            <label>
+              Hook text
+              <input id="hookInput" type="text" value="Wait for the reaction" maxlength="52" />
+            </label>
+            <label>
+              Handle
+              <input id="handleInput" type="text" value="kick.com/edmatthews" maxlength="36" />
+            </label>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const preview = document.getElementById("preview");
+      const hookInput = document.getElementById("hookInput");
+      const handleInput = document.getElementById("handleInput");
+      const hookText = document.getElementById("hookText");
+      const handleText = document.getElementById("handleText");
+
+      document.querySelectorAll("[data-effect]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const effect = button.dataset.effect;
+          const active = !button.classList.contains("active");
+          button.classList.toggle("active", active);
+          preview.classList.toggle(effect, active);
+        });
+      });
+
+      hookInput.addEventListener("input", () => {
+        hookText.textContent = hookInput.value.trim() || "Wait for the reaction";
+      });
+
+      handleInput.addEventListener("input", () => {
+        const value = handleInput.value.trim() || "kick.com/creator";
+        handleText.textContent = value.toUpperCase();
+      });
+    </script>
+  </body>
+</html>

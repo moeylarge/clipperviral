@@ -1,11 +1,40 @@
 create extension if not exists pgcrypto with schema extensions;
 
-create type if not exists spotlight_show_status as enum ('upcoming', 'live', 'ended', 'cancelled');
-create type if not exists spotlight_queue_entry_status as enum ('queued', 'called', 'on_stage', 'completed', 'disqualified');
-create type if not exists spotlight_round_status as enum ('waiting', 'live', 'ended');
-create type if not exists spotlight_vote_choice as enum ('keep', 'swap');
-create type if not exists spotlight_result_outcome as enum ('spotlight_held', 'spotlight_passed');
-create type if not exists spotlight_ranking_tier as enum ('bronze', 'silver', 'gold', 'elite');
+do $$ begin
+  create type spotlight_show_status as enum ('upcoming', 'live', 'ended', 'cancelled');
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$ begin
+  create type spotlight_queue_entry_status as enum ('queued', 'called', 'on_stage', 'completed', 'disqualified');
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$ begin
+  create type spotlight_round_status as enum ('waiting', 'live', 'ended');
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$ begin
+  create type spotlight_vote_choice as enum ('keep', 'swap');
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$ begin
+  create type spotlight_result_outcome as enum ('spotlight_held', 'spotlight_passed');
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$ begin
+  create type spotlight_ranking_tier as enum ('bronze', 'silver', 'gold', 'elite');
+exception
+  when duplicate_object then null;
+end $$;
 
 create table if not exists public.users (
   id uuid primary key default extensions.gen_random_uuid(),

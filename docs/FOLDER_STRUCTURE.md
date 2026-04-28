@@ -1,0 +1,23 @@
+# Folder Structure (MVP)
+
+- `app/page.tsx` - landing experience (hero + personas + footer)
+- `app/session/[id]/page.tsx` - live session screen
+- `app/session/[id]/end/page.tsx` - post-call summary screen
+- `app/_components/homepage-client.tsx` - landing interactions and session start
+- `app/_components/session-page-client.tsx` - live timer/billing overlays and controls
+- `app/api/personas/route.ts` - persona config API
+- `app/api/sessions/create/route.ts` - create isolated session
+- `app/api/sessions/[id]/route.ts` - session snapshot
+- `app/api/sessions/[id]/heartbeat/route.ts` - heartbeat, transcript updates, billing transitions
+- `app/api/sessions/[id]/end/route.ts` - end and finalize session
+- `app/api/sessions/[id]/transcript/route.ts` - transcript retrieval
+- `app/api/billing/top-up/route.ts` - credit top-up endpoint
+- `app/api/billing/balance/route.ts` - user balance endpoint
+- `app/api/webhooks/stripe/route.ts` - Stripe webhook stub
+- `lib/personas.ts` - shared persona template configs
+- `lib/session/types.ts` - session domain types
+- `lib/session/store.ts` - isolated session orchestrator + billing truth (MVP in-memory)
+- `lib/redis/client.ts` - Redis config adapter scaffold
+- `supabase/migrations/20260414220000_face2face_core.sql` - durable schema
+- `scripts/load-test-isolated-sessions.mjs` - parallel isolated session load runner
+- `docs/CANONICAL_BUILD_SPEC.md` - merged non-overlapping product/architecture contract

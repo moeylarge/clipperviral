@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200" fill="none">
+  <rect width="1200" height="1200" rx="72" fill="#FFF5EA"/>
+  <circle cx="240" cy="200" r="64" fill="#FFD78D" fill-opacity=".45"/>
+  <circle cx="980" cy="160" r="78" fill="#FFC5D5" fill-opacity=".42"/>
+  <circle cx="980" cy="980" r="92" fill="#CBE2FF" fill-opacity=".45"/>
+  <rect x="180" y="180" width="840" height="840" rx="180" fill="#FFE2D4"/>
+  <ellipse cx="600" cy="470" rx="220" ry="238" fill="#FFE6CF"/>
+  <path d="M350 360C405 214 560 157 708 211C748 225 782 249 811 280L848 319L337 345L350 360Z" fill="#D63D38"/>
+  <path d="M300 360H860C882 360 900 378 900 400V432H300V360Z" fill="#FFF8F0"/>
+  <circle cx="822" cy="275" r="46" fill="#FFF9F4"/>
+  <ellipse cx="520" cy="485" rx="26" ry="30" fill="#2C3557"/>
+  <ellipse cx="678" cy="485" rx="26" ry="30" fill="#2C3557"/>
+  <path d="M520 598C566 629 632 629 680 598" stroke="#B76451" stroke-width="24" stroke-linecap="round"/>
+  <path d="M440 582C482 619 532 638 600 638C668 638 718 619 760 582" fill="#F5F5F5"/>
+  <path d="M428 578C462 724 532 798 600 798C668 798 738 724 772 578H428Z" fill="#FFFDFC"/>
+  <path d="M424 578C424 542 448 516 484 516H716C752 516 776 542 776 578H424Z" fill="#F5F5F5"/>
+  <rect x="304" y="770" width="592" height="196" rx="88" fill="#D63D38"/>
+  <rect x="292" y="758" width="616" height="44" rx="22" fill="#FFF8F0"/>
+  <text x="600" y="1090" text-anchor="middle" fill="#9C5A34" font-family="Verdana, sans-serif" font-size="70" font-weight="700">Santa Claus</text>
+</svg>

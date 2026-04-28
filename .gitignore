@@ -22,6 +22,29 @@ pnpm-debug.log*
 .env
 .env.local
 .env*.local
+.env.bak
+.env.*.local
+.tmp-*
 
 # vercel
 .vercel
+
+# local tooling and proof artifacts
+.claude/
+.playwright-mcp/
+.verification/
+.agents/
+test-results/
+tmp/
+*.tsbuildinfo
+skills-lock.json
+supabase/.temp/
+HANDOFF_*.md
+PRODUCT_HANDOFF.md
+SESSION_SUMMARY_*.md
+*_CHECKLIST.md
+TECHNICAL_HANDOFF.md
+sotl-*.png
+burn-*.png
+playwright-*.png
+019d*

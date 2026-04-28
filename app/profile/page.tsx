@@ -1,66 +1,83 @@
 import Link from "next/link";
-import { BarChart3, Clapperboard, ShieldCheck, UserCircle2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { getManualSessionEmail } from "@/lib/auth/manual-session";
+import { getCurrentProfile } from "@/lib/data/spotlight";
 
-export default function ProfilePage() {
+import { ProfileSettingsClient, type ProfileSettingsInitialData } from "./profile-settings-client";
+
+async function getProfileData(): Promise<ProfileSettingsInitialData> {
+  const manualEmail = await getManualSessionEmail();
+  let profileData: Awaited<ReturnType<typeof getCurrentProfile>> | null = null;
+
+  try {
+    profileData = await getCurrentProfile();
+  } catch {
+    profileData = null;
+  }
+
+  const user = profileData?.user ?? null;
+  const profile = profileData?.profile ?? null;
+  const handle = user?.handle || "";
+  const handleLooksLikeEmail = handle.includes("@");
+
+  return {
+    fullName: user?.display_name || "",
+    email: manualEmail || (handleLooksLikeEmail ? handle : ""),
+    username: handleLooksLikeEmail ? "" : handle,
+    bio: profile?.bio || "",
+    avatarUrl: profile?.avatar_url || "",
+    storageMode: "browser",
+  };
+}
+
+export default async function ProfilePage() {
+  const profile = await getProfileData();
+
   return (
-    <div className="page-stack">
-      <section className="surface-panel-strong p-6 md:p-7">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="section-kicker">Account</p>
-            <h1 className="mt-2 text-3xl md:text-4xl">Profile</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Session access and workspace shortcuts.</p>
-          </div>
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-border bg-white">
-            <UserCircle2 className="h-8 w-8 text-muted-foreground" />
-          </div>
-        </div>
-      </section>
+    <>
+      <style>{`
+        body {
+          background: #fafafa;
+        }
 
-      <section className="data-grid">
-        <article className="metric-card">
-          <p className="metric-label">Account health</p>
-          <p className="metric-value inline-flex items-center gap-2 text-lg">
-            <ShieldCheck className="h-5 w-5 text-emerald-500" />
-            Verified
-          </p>
-        </article>
-        <article className="metric-card">
-          <p className="metric-label">Primary tool</p>
-          <p className="metric-value">Editor</p>
-        </article>
-        <article className="metric-card">
-          <p className="metric-label">Sources</p>
-          <p className="metric-value">Upload + URL</p>
-        </article>
-        <article className="metric-card">
-          <p className="metric-label">Output</p>
-          <p className="metric-value">Export</p>
-        </article>
-      </section>
+        .app-shell {
+          display: block !important;
+          min-height: 100vh;
+        }
 
-      <section className="surface-panel p-5">
-        <h2 className="inline-flex items-center gap-2 text-xl">
-          <BarChart3 className="h-5 w-5 text-muted-foreground" />
-          Workspace activity
-        </h2>
-        <div className="mt-4 rounded-lg border border-border bg-muted/40 p-5">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="font-semibold text-foreground">Open the editor to create your next clip.</p>
-              <p className="mt-1 text-sm text-muted-foreground">Export history will appear here once connected storage is available.</p>
+        .app-sidebar,
+        .topbar {
+          display: none !important;
+        }
+
+        .app-main,
+        .app-content {
+          min-height: 100vh;
+        }
+
+        .app-content {
+          max-width: none !important;
+          padding: 0 !important;
+        }
+      `}</style>
+      <main className="min-h-screen bg-[#fafafa] text-[#1d1d1f]">
+        <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-3xl font-semibold tracking-tight text-[#1d1d1f]">Settings</h1>
+              <p className="text-sm text-[#6e6e73]">Manage your profile and account preferences.</p>
             </div>
-            <Button asChild variant="cta">
-              <Link href="/editor.html">
-                <Clapperboard className="mr-2 h-4 w-4" />
-                Open editor
-              </Link>
-            </Button>
+            <Link
+              href="/"
+              prefetch={false}
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-black/[0.08] bg-white px-4 text-sm font-medium text-[#1d1d1f] transition hover:bg-[#f5f5f7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c423e3]/40"
+            >
+              Back to editor
+            </Link>
           </div>
+          <ProfileSettingsClient initialData={profile} />
         </div>
-      </section>
-    </div>
+      </main>
+    </>
   );
 }

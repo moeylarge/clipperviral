@@ -18,6 +18,8 @@ type YoutubeJob = {
   jobId: string;
   sourceUrl: string;
   sourcePath: string;
+  sourceKind?: string;
+  proxyOnly?: boolean;
   workdir: string;
   createdAt: number;
   clipDuration: number;
