@@ -1,7 +1,9 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { AtSign, Camera, Check, FileText, Mail, Pencil, ShieldCheck, UserRound, X } from "lucide-react";
+import { AtSign, Camera, Check, FileText, LogOut, Mail, Pencil, ShieldCheck, UserRound, X } from "lucide-react";
+
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 export type ProfileSettingsInitialData = {
   fullName: string;
@@ -70,6 +72,7 @@ export function ProfileSettingsClient({ initialData }: { initialData: ProfileSet
   const [savedProfile, setSavedProfile] = useState<ProfileFormState>(initialProfile);
   const [draft, setDraft] = useState<ProfileFormState>(initialProfile);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [status, setStatus] = useState("Profile details are saved on this browser for now.");
   const [toastVisible, setToastVisible] = useState(false);
 
@@ -154,6 +157,19 @@ export function ProfileSettingsClient({ initialData }: { initialData: ProfileSet
     setDraft((current) => ({ ...current, avatarUrl: "" }));
     setIsEditing(true);
     setStatus("Profile photo removed from the draft. Save changes to keep it.");
+  }
+
+  async function handleSignOutAndReauth() {
+    setIsSigningOut(true);
+    setStatus("Signing out so you can reconnect Google...");
+
+    try {
+      const supabase = createBrowserSupabaseClient();
+      await supabase.auth.signOut();
+      await fetch("/api/auth/manual-signout", { method: "POST" }).catch(() => null);
+    } finally {
+      window.location.href = "/auth/signin?next=/editor.html";
+    }
   }
 
   const setupItems: Array<{ label: string; done: boolean }> = [
@@ -364,7 +380,23 @@ export function ProfileSettingsClient({ initialData }: { initialData: ProfileSet
 
         {/* Account section */}
         <section className="rounded-2xl border border-black/[0.06] bg-white p-5 sm:p-6">
-          <h2 className="mb-4 text-base font-semibold tracking-tight text-[#1d1d1f]">Account</h2>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-base font-semibold tracking-tight text-[#1d1d1f]">Account</h2>
+              <p className="mt-1 text-sm leading-6 text-[#6e6e73]">
+                Reconnect Google if link scanning says your session is not allowed.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleSignOutAndReauth}
+              disabled={isSigningOut}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-black/[0.08] bg-white px-4 text-sm font-semibold text-[#1d1d1f] transition hover:bg-[#f5f5f7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c423e3]/40 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <LogOut className="h-4 w-4" />
+              {isSigningOut ? "Signing out..." : "Sign out and reconnect"}
+            </button>
+          </div>
           <div className="grid gap-1">
             <SettingsRow
               icon={<ShieldCheck className="h-4 w-4" />}
@@ -374,7 +406,7 @@ export function ProfileSettingsClient({ initialData }: { initialData: ProfileSet
             <SettingsRow
               icon={<UserRound className="h-4 w-4" />}
               label="Sign-in"
-              value="Google OAuth and billing settings will be added later."
+              value={savedProfile.email ? `Current profile email: ${savedProfile.email}` : "Use Google OAuth for YouTube and Kick scanning."}
             />
             <SettingsRow
               icon={<Pencil className="h-4 w-4" />}
