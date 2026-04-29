@@ -6942,16 +6942,99 @@
       .stitch-export-btn:hover { background: #c8ff76; }
       .stitch-export-btn:disabled { opacity: 0.4; cursor: not-allowed; }
       .stitch-status { font-size: 11px; color: #666; margin-top: 6px; text-align: center; min-height: 14px; }
+
+      /* ── Wave D: UX cleanup ──────────────────────────────────────── */
+
+      /* Settings summary strip */
+      .settings-strip {
+        display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+        padding: 5px 16px; background: rgba(183,255,90,0.06);
+        border-bottom: 1px solid rgba(183,255,90,0.14);
+        font-size: 11px; color: #b7ff5a; font-weight: 600;
+        min-height: 30px; flex-shrink: 0; overflow: hidden;
+      }
+      .settings-strip-pill {
+        background: rgba(183,255,90,0.13); border-radius: 4px;
+        padding: 2px 8px; color: #4a7800; font-size: 10px; font-weight: 700;
+        white-space: nowrap; flex-shrink: 0; letter-spacing: 0.03em;
+        text-transform: capitalize;
+      }
+
+      /* Step completion dots */
+      .tool-btn { position: relative; }
+      .tool-btn .step-done-dot {
+        display: none; position: absolute; top: 4px; right: 4px;
+        width: 7px; height: 7px; border-radius: 50%;
+        background: #b7ff5a; box-shadow: 0 0 5px rgba(183,255,90,0.9);
+        pointer-events: none;
+      }
+      .tool-btn.step-done .step-done-dot { display: block; }
+
+      /* Element section group labels */
+      .element-group-label {
+        font-size: 10px; font-weight: 800; letter-spacing: 0.09em;
+        color: #999; text-transform: uppercase;
+        padding: 12px 0 5px; margin: 0;
+        border-top: 1px solid rgba(16,19,28,0.08);
+      }
+
+      /* Brand kit collapsible */
+      .brand-kit-card-details { margin: 0; }
+      .brand-kit-card-details > summary {
+        display: flex; align-items: center; justify-content: space-between;
+        cursor: pointer; padding: 10px 12px;
+        font-weight: 700; font-size: 13px; color: #222;
+        background: #f7f9fa; border-radius: 8px; border: 1px solid rgba(16,19,28,0.1);
+        list-style: none; user-select: none;
+      }
+      .brand-kit-card-details > summary::-webkit-details-marker { display: none; }
+      .brand-kit-card-details > summary::after {
+        content: "›"; font-size: 18px; color: #aaa;
+        transition: transform 0.18s; line-height: 1;
+      }
+      .brand-kit-card-details[open] > summary::after { transform: rotate(90deg); }
+      .brand-kit-card-details > .brand-kit-inner { padding: 10px 0 0; }
+
+      /* Flash highlight animation */
+      @keyframes waved-flash {
+        0%   { box-shadow: 0 0 0 0 rgba(183,255,90,0.0); outline: 2px solid rgba(183,255,90,0); }
+        30%  { box-shadow: 0 0 0 6px rgba(183,255,90,0.55); outline: 2px solid rgba(183,255,90,0.85); }
+        100% { box-shadow: 0 0 0 0 rgba(183,255,90,0.0); outline: 2px solid rgba(183,255,90,0); }
+      }
+      .waved-flash-anim { animation: waved-flash 0.6s ease-out both; border-radius: 8px; }
+
+      /* Export pre-flight card */
+      .preflight-card {
+        background: rgba(183,255,90,0.07); border: 1px solid rgba(183,255,90,0.28);
+        border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;
+      }
+      .preflight-card-title {
+        font-weight: 800; font-size: 10px; letter-spacing: 0.07em;
+        text-transform: uppercase; color: #5a8400; margin-bottom: 6px;
+      }
+      .preflight-row { display: flex; gap: 6px; flex-wrap: wrap; }
+      .preflight-tag {
+        background: rgba(183,255,90,0.18); border-radius: 4px;
+        padding: 2px 8px; font-size: 11px; font-weight: 600; color: #3a5c00;
+      }
+
+      /* Empty state guidance */
+      .panel-empty-state {
+        text-align: center; padding: 22px 16px;
+        color: #bbb; font-size: 12px; line-height: 1.7;
+      }
+      .panel-empty-state-icon { font-size: 28px; margin-bottom: 6px; display: block; }
+      .panel-empty-state strong { display: block; color: #777; font-size: 13px; margin-bottom: 4px; }
     </style>
   </head>
   <body>
     <div id="toastStack" class="toast-stack" aria-live="polite" aria-atomic="false"></div>
     <div id="onboardingBackdrop" class="onboarding-backdrop" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle" aria-hidden="true">
       <div class="onboarding-card">
-        <span class="onboarding-step-number" id="onboardingStepNumber">Step 1 of 3</span>
+        <span class="onboarding-step-number" id="onboardingStepNumber">Step 1 of 5</span>
         <h2 id="onboardingTitle">Welcome to ClipperViral</h2>
         <p id="onboardingBody">Paste a YouTube or Kick link in the Source panel — we’ll rank the strongest moments so you can clip the best parts fast.</p>
-        <div class="onboarding-dots" id="onboardingDots" aria-hidden="true"><span class="active"></span><span></span><span></span></div>
+        <div class="onboarding-dots" id="onboardingDots" aria-hidden="true"><span class="active"></span><span></span><span></span><span></span><span></span></div>
         <div class="onboarding-actions">
           <button type="button" class="skip-btn" id="onboardingSkip">Skip</button>
           <div class="nav-btns">
@@ -6968,6 +7051,9 @@
           <div><dt><kbd>Space</kbd></dt><dd>Play / pause</dd></div>
           <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Seek 5 seconds</dd></div>
           <div><dt><kbd>E</kbd></dt><dd>Export MP4</dd></div>
+          <div><dt><kbd>H</kbd></dt><dd>Find hook (auto-trim)</dd></div>
+          <div><dt><kbd>G</kbd></dt><dd>Cycle color grade</dd></div>
+          <div><dt><kbd>1</kbd>–<kbd>6</kbd></dt><dd>Jump to step (Source → Clips)</dd></div>
           <div><dt><kbd>?</kbd></dt><dd>Show this help</dd></div>
           <div><dt><kbd>Esc</kbd></dt><dd>Close this help</dd></div>
         </dl>
@@ -6978,12 +7064,12 @@
       <aside class="rail" aria-label="Editor tools">
         <div class="logo">CV</div>
         <nav class="tool-nav">
-          <button class="tool-btn active" data-step="source" data-step-number="1" aria-current="step"><span class="icon">+</span><span>Source</span></button>
-          <button class="tool-btn" data-step="layouts" data-step-number="2"><span class="icon">▣</span><span>Layouts</span></button>
-          <button class="tool-btn" data-step="elements" data-step-number="3"><span class="icon">◇</span><span>Elements</span></button>
-          <button class="tool-btn" data-step="captions" data-step-number="4"><span class="icon">▤</span><span>Captions</span></button>
-          <button class="tool-btn" data-step="export" data-step-number="5"><span class="icon">⇧</span><span>Export</span></button>
-          <button class="tool-btn" data-step="clips" data-step-number="6"><span class="icon">▥</span><span>Clips</span></button>
+          <button class="tool-btn active" data-step="source" data-step-number="1" aria-current="step"><span class="icon">+</span><span>Source</span><span class="step-done-dot" aria-hidden="true"></span></button>
+          <button class="tool-btn" data-step="layouts" data-step-number="2"><span class="icon">▣</span><span>Layouts</span><span class="step-done-dot" aria-hidden="true"></span></button>
+          <button class="tool-btn" data-step="elements" data-step-number="3"><span class="icon">◇</span><span>Elements</span><span class="step-done-dot" aria-hidden="true"></span></button>
+          <button class="tool-btn" data-step="captions" data-step-number="4"><span class="icon">▤</span><span>Captions</span><span class="step-done-dot" aria-hidden="true"></span></button>
+          <button class="tool-btn" data-step="export" data-step-number="5"><span class="icon">⇧</span><span>Export</span><span class="step-done-dot" aria-hidden="true"></span></button>
+          <button class="tool-btn" data-step="clips" data-step-number="6"><span class="icon">▥</span><span>Clips</span><span class="step-done-dot" aria-hidden="true"></span></button>
         </nav>
         <div class="rail-spacer"></div>
         <div class="rail-account" aria-label="Account">
@@ -7118,40 +7204,42 @@
           <!-- Bundle A #10: Color grade presets -->
           <div class="section-title cg-section-title">Color grade</div>
           <div class="cg-pills" id="colorGradePills" role="group" aria-label="Color grade">
-            <button class="cg-pill active" data-grade="none"     type="button" aria-pressed="true">None</button>
-            <button class="cg-pill"        data-grade="dramatic" type="button" aria-pressed="false">Dramatic</button>
-            <button class="cg-pill"        data-grade="vivid"    type="button" aria-pressed="false">Vivid</button>
-            <button class="cg-pill"        data-grade="dark"     type="button" aria-pressed="false">Dark</button>
-            <button class="cg-pill"        data-grade="vintage"  type="button" aria-pressed="false">Vintage</button>
-            <button class="cg-pill"        data-grade="neon"     type="button" aria-pressed="false">Neon</button>
+            <button class="cg-pill active" data-grade="none"     type="button" aria-pressed="true"  data-tooltip="No color grade applied">None</button>
+            <button class="cg-pill"        data-grade="dramatic" type="button" aria-pressed="false" data-tooltip="High-contrast cinematic look">Dramatic</button>
+            <button class="cg-pill"        data-grade="vivid"    type="button" aria-pressed="false" data-tooltip="Punchy saturated colours">Vivid</button>
+            <button class="cg-pill"        data-grade="dark"     type="button" aria-pressed="false" data-tooltip="Moody dark tones">Dark</button>
+            <button class="cg-pill"        data-grade="vintage"  type="button" aria-pressed="false" data-tooltip="Warm retro film look">Vintage</button>
+            <button class="cg-pill"        data-grade="neon"     type="button" aria-pressed="false" data-tooltip="Electric neon glow">Neon</button>
           </div>
           <!-- Bundle C #20: Template library -->
           <div class="section-title tmpl-section-title">Quick templates</div>
           <div class="tmpl-grid" id="templateGrid" role="group" aria-label="Scene templates">
-            <button class="tmpl-pill" data-template="gaming"   type="button"><span class="tmpl-pill-name">🎮 Gaming</span><span class="tmpl-pill-desc">Dramatic · Progress bar</span></button>
-            <button class="tmpl-pill" data-template="podcast"  type="button"><span class="tmpl-pill-name">🎙️ Podcast</span><span class="tmpl-pill-desc">Half layout · Dark grade</span></button>
-            <button class="tmpl-pill" data-template="reaction" type="button"><span class="tmpl-pill-name">😂 Reaction</span><span class="tmpl-pill-desc">Reaction cam · Vivid</span></button>
-            <button class="tmpl-pill" data-template="sports"   type="button"><span class="tmpl-pill-name">⚡ Sports</span><span class="tmpl-pill-desc">Vivid · Red bar</span></button>
-            <button class="tmpl-pill" data-template="tutorial" type="button"><span class="tmpl-pill-name">📱 Tutorial</span><span class="tmpl-pill-desc">Blurred bg · iPhone</span></button>
-            <button class="tmpl-pill" data-template="music"    type="button"><span class="tmpl-pill-name">🎵 Music</span><span class="tmpl-pill-desc">Neon · Waveform</span></button>
+            <button class="tmpl-pill" data-template="gaming"   type="button" data-tooltip="Small facecam · Dramatic grade · Progress bar"><span class="tmpl-pill-name">🎮 Gaming</span><span class="tmpl-pill-desc">Dramatic · Progress bar</span></button>
+            <button class="tmpl-pill" data-template="podcast"  type="button" data-tooltip="Half layout · Dark colour grade"><span class="tmpl-pill-name">🎙️ Podcast</span><span class="tmpl-pill-desc">Half layout · Dark grade</span></button>
+            <button class="tmpl-pill" data-template="reaction" type="button" data-tooltip="Reaction cam layout · Vivid colours"><span class="tmpl-pill-name">😂 Reaction</span><span class="tmpl-pill-desc">Reaction cam · Vivid</span></button>
+            <button class="tmpl-pill" data-template="sports"   type="button" data-tooltip="Fullscreen · Vivid grade · Red countdown bar"><span class="tmpl-pill-name">⚡ Sports</span><span class="tmpl-pill-desc">Vivid · Red bar</span></button>
+            <button class="tmpl-pill" data-template="tutorial" type="button" data-tooltip="Blurred background · iPhone frame overlay"><span class="tmpl-pill-name">📱 Tutorial</span><span class="tmpl-pill-desc">Blurred bg · iPhone</span></button>
+            <button class="tmpl-pill" data-template="music"    type="button" data-tooltip="Fullscreen · Neon grade · Mirror waveform"><span class="tmpl-pill-name">🎵 Music</span><span class="tmpl-pill-desc">Neon · Waveform</span></button>
           </div>
-          <!-- Bundle C #9: Brand kit -->
-          <div class="brand-kit-card" id="brandKitCard">
-            <div class="brand-kit-title">🎨 Brand Kit</div>
-            <div class="brand-kit-row">
-              <label for="brandName">Channel name</label>
-              <input id="brandName" type="text" placeholder="YourChannel" maxlength="40" />
+          <!-- Bundle C #9: Brand kit (Wave D: collapsible) -->
+          <details class="brand-kit-card-details" id="brandKitCard">
+            <summary>🎨 Brand Kit</summary>
+            <div class="brand-kit-inner brand-kit-card">
+              <div class="brand-kit-row">
+                <label for="brandName">Channel name</label>
+                <input id="brandName" type="text" placeholder="YourChannel" maxlength="40" />
+              </div>
+              <div class="brand-kit-row">
+                <label for="brandPrimary">Primary color</label>
+                <input id="brandPrimary" type="color" value="#b7ff5a" />
+              </div>
+              <div class="brand-kit-row">
+                <label for="brandAccent">Accent color</label>
+                <input id="brandAccent" type="color" value="#ffffff" />
+              </div>
+              <button id="brandApplyBtn" class="brand-apply-btn" type="button" data-tooltip="Applies your channel name + colours across all overlays">Apply brand to clip</button>
             </div>
-            <div class="brand-kit-row">
-              <label for="brandPrimary">Primary color</label>
-              <input id="brandPrimary" type="color" value="#b7ff5a" />
-            </div>
-            <div class="brand-kit-row">
-              <label for="brandAccent">Accent color</label>
-              <input id="brandAccent" type="color" value="#ffffff" />
-            </div>
-            <button id="brandApplyBtn" class="brand-apply-btn" type="button">Apply brand to clip</button>
-          </div>
+          </details>
           <article id="imagePanelCard" class="image-panel-card">
             <div class="image-panel-head">
               <div>
@@ -7218,6 +7306,12 @@
             </div>
           </div>
           <div class="element-list">
+            <!-- Wave D: empty state (shown when nothing is active) -->
+            <div id="elementsEmptyState" class="panel-empty-state" hidden>
+              <span class="panel-empty-state-icon">◇</span>
+              <strong>No elements active yet</strong>
+              Use "+ Add element" to add a lower-third or header, then scroll down to enable overlays.
+            </div>
             <div class="add-element-row">
               <button id="addElementCta" class="add-element-cta" type="button" aria-haspopup="menu" aria-expanded="false">+ Add element</button>
               <div id="addElementMenu" class="add-element-menu" role="menu" aria-label="Add element">
@@ -7395,6 +7489,8 @@
               <button id="viralHeaderDeleteButton" class="primary-btn source-action secondary-action" type="button">Delete header</button>
             </article>
             </details>
+            <!-- Wave D: group label -->
+            <div class="element-group-label" aria-hidden="true">Overlays</div>
             <!-- Bundle A #6: Progress bar countdown -->
             <details class="elements-section" data-element-section="progressBar">
               <summary>Progress Bar</summary>
@@ -7431,7 +7527,7 @@
               <summary>
                 <span class="overlay-section-icon">📊</span>
                 <span class="overlay-section-label">Waveform Visualizer</span>
-                <label class="toggle-field toggle-inline" onclick="event.stopPropagation()">
+                <label class="toggle-field toggle-inline" onclick="event.stopPropagation()" data-tooltip="Render audio amplitude bars on the video">
                   <input id="waveformVizToggle" type="checkbox" />
                 </label>
               </summary>
@@ -7457,12 +7553,14 @@
                 </div>
               </article>
             </details>
+            <!-- Wave D: group label -->
+            <div class="element-group-label" aria-hidden="true">Frames &amp; FX</div>
             <!-- Bundle C #11: iPhone frame mockup -->
             <details class="overlay-section" id="iPhoneFrameSection">
               <summary>
                 <span class="overlay-section-icon">📱</span>
                 <span class="overlay-section-label">iPhone Frame</span>
-                <label class="toggle-field toggle-inline" onclick="event.stopPropagation()">
+                <label class="toggle-field toggle-inline" onclick="event.stopPropagation()" data-tooltip="Wrap your video in a realistic iPhone bezel">
                   <input id="iPhoneFrameToggle" type="checkbox" />
                 </label>
               </summary>
@@ -7615,6 +7713,8 @@
             </div>
             <ul id="vsChecklist" class="vs-checklist"></ul>
           </div>
+          <!-- Wave D: pre-flight summary card -->
+          <div id="preflightCard" class="preflight-card" hidden></div>
           <button id="exportButton" class="export-btn" type="button">Export MP4 ⇧</button>
           <div id="exportStatus" class="status">Load a source to export.</div>
           <div id="exportProgress" class="export-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Export progress">
@@ -7652,6 +7752,8 @@
           <div class="undo-group" hidden><button type="button" disabled>↶ Undo</button><button type="button" disabled>↷</button></div>
           <div class="select-group"><select id="platformSelect" aria-label="Preview format"><option>TikTok preview</option><option>YouTube Shorts preview</option><option>Reels preview</option><option>YouTube horizontal</option><option>Instagram feed 4:5</option><option>X square 1:1</option></select></div>
         </header>
+        <!-- Wave D: active settings summary strip -->
+        <div id="settingsStrip" class="settings-strip" aria-live="polite" aria-label="Current scene settings"></div>
 
         <section class="stage-row">
           <div class="canvas-column">
@@ -7727,7 +7829,7 @@
             <div id="trimSummary" class="trim-summary">Trim: full clip</div>
             <!-- Bundle B #7: Auto-hook finder -->
             <div class="find-hook-row">
-              <button id="findHookBtn" class="find-hook-btn" type="button" disabled>🎯 Find hook</button>
+              <button id="findHookBtn" class="find-hook-btn" type="button" disabled data-tooltip="Auto-detect the loudest, most engaging 15–30s moment (press H)">🎯 Find hook</button>
               <span id="hookStatus"></span>
             </div>
           </div>
@@ -7736,12 +7838,12 @@
             <div class="audio-mix-title">🔊 Audio Mix</div>
             <div class="audio-mix-row">
               <label for="mainVolSlider">Main clip</label>
-              <input id="mainVolSlider" type="range" min="0" max="100" step="5" value="100" />
+              <input id="mainVolSlider" type="range" min="0" max="100" step="5" value="100" data-tooltip="Volume of the primary video in the export" />
               <span class="vol-val" id="mainVolVal">100%</span>
             </div>
             <div class="audio-mix-row" id="secondaryVolRow" hidden>
               <label for="secondaryVolSlider">Facecam</label>
-              <input id="secondaryVolSlider" type="range" min="0" max="100" step="5" value="100" />
+              <input id="secondaryVolSlider" type="range" min="0" max="100" step="5" value="100" data-tooltip="Volume of the secondary / facecam video in the export" />
               <span class="vol-val" id="secondaryVolVal">100%</span>
             </div>
           </div>
@@ -18240,6 +18342,239 @@
         refreshStitchUI();
 
       })(); // end initBundleC
+
+      // ════════════════════════════════════════════════════════════════
+      // Wave D — UX cleanup (CSS + small JS patches)
+      // Features: guided tour ×5, settings strip, step dots, group
+      //   labels, tooltip wiring, collapsible brand kit, empty states,
+      //   flash animation, export pre-flight, extended shortcuts
+      // ════════════════════════════════════════════════════════════════
+      (function initWaveD() {
+
+        // ── 1. Extend onboarding from 3 → 5 steps ───────────────────
+        try {
+          if (typeof ONBOARDING_STEPS !== "undefined" && ONBOARDING_STEPS.length === 3) {
+            ONBOARDING_STEPS.push(
+              {
+                title: "Color grades & quick templates",
+                body: "In the Layouts panel, pick a Color grade (Dramatic, Vivid, Neon…) or apply a full scene template in one click — Gaming, Podcast, Music, and more.",
+              },
+              {
+                title: "Waveform, iPhone frame & audio mix",
+                body: "Elements panel: toggle the Waveform Visualizer or iPhone Frame overlay. Use Audio Mix in the timeline to independently balance your main clip and facecam volume.",
+              }
+            );
+          }
+        } catch (e) { console.warn("[WaveD] onboarding extend:", e); }
+
+        // ── 2. Step completion dots ──────────────────────────────────
+        function isSourceDone() {
+          try {
+            const v = document.getElementById("mainVideo");
+            return !!(v && v.src && v.src !== location.href && v.readyState >= 1);
+          } catch { return false; }
+        }
+        function isLayoutDone() {
+          try { return !!(layoutState?.activeLayoutKey && LAYOUT_REGISTRY[layoutState.activeLayoutKey]); } catch { return false; }
+        }
+        function isElementsDone() {
+          try {
+            const overlays = editorState.scene?.overlays || {};
+            return !!(Object.values(overlays).some(v => v && v.enabled) || kickState?.enabled || viralHeaderState?.enabled);
+          } catch { return false; }
+        }
+        function isCaptionsDone() {
+          try { return !!(editorState.scene?.captions?.cues?.length || captionState?.cues?.length); } catch { return false; }
+        }
+        function isExportDone() {
+          try { return !!localStorage.getItem("clipperviral:last-export-ts"); } catch { return false; }
+        }
+        function isClipsDone() {
+          try {
+            const list = document.getElementById("clipLibraryList");
+            return !!(list && list.children.length > 0 && !list.querySelector(".clip-library-empty"));
+          } catch { return false; }
+        }
+        const STEP_DONE_FNS = {
+          source: isSourceDone, layouts: isLayoutDone,
+          elements: isElementsDone, captions: isCaptionsDone,
+          export: isExportDone, clips: isClipsDone,
+        };
+
+        function refreshStepDots() {
+          try {
+            document.querySelectorAll(".tool-btn[data-step]").forEach(btn => {
+              const fn = STEP_DONE_FNS[btn.dataset.step];
+              btn.classList.toggle("step-done", fn ? fn() : false);
+            });
+          } catch {}
+        }
+        refreshStepDots();
+        setInterval(refreshStepDots, 3000);
+
+        // ── 3. Settings summary strip ────────────────────────────────
+        const settingsStrip = document.getElementById("settingsStrip");
+        function escapeWaveDHtml(value) {
+          return String(value ?? "").replace(/[&<>"']/g, ch => (
+            { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+          ));
+        }
+        function fmt(s) {
+          if (s == null || isNaN(s)) return "--:--";
+          const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+          return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+        }
+        function buildStrip() {
+          if (!settingsStrip) return;
+          try {
+            const formatLabel = { vertical: "9:16", horizontal: "16:9", portrait45: "4:5", square: "1:1" }[layoutState.format] || "9:16";
+            const layoutKey = layoutState.activeLayoutKey;
+            const layout = layoutKey ? (LAYOUT_REGISTRY[layoutKey]?.label || layoutKey) : null;
+            const grade = editorState.scene?.colorGrade && editorState.scene.colorGrade !== "none" ? editorState.scene.colorGrade : null;
+            const overlayState = editorState.scene?.overlays || {};
+            const activeOverlayNames = new Set(Object.entries(overlayState)
+              .filter(([, v]) => v?.enabled)
+              .map(([key]) => key));
+            if (kickState?.enabled) activeOverlayNames.add("kick");
+            if (viralHeaderState?.enabled) activeOverlayNames.add("viralHeader");
+            const overlayCount = activeOverlayNames.size;
+            const trimStart = typeof trimState.start === "number" ? trimState.start : null;
+            const trimEnd   = typeof trimState.end   === "number" ? trimState.end   : null;
+
+            const pills = [];
+            pills.push(formatLabel);
+            if (layout) pills.push(layout);
+            if (grade) pills.push(grade);
+            if (overlayCount) pills.push(`${overlayCount} overlay${overlayCount > 1 ? "s" : ""}`);
+            if (trimStart != null && trimEnd != null) pills.push(`${fmt(trimStart)}–${fmt(trimEnd)}`);
+
+            settingsStrip.innerHTML = pills.map(t =>
+              `<span class="settings-strip-pill">${escapeWaveDHtml(t)}</span>`
+            ).join("");
+          } catch {}
+        }
+        buildStrip();
+        setInterval(buildStrip, 2000);
+
+        // ── 4. Flash animation helper ────────────────────────────────
+        window.flashElement = function flashElement(el) {
+          if (!el) return;
+          el.classList.remove("waved-flash-anim");
+          void el.offsetWidth; // force reflow
+          el.classList.add("waved-flash-anim");
+          el.addEventListener("animationend", () => el.classList.remove("waved-flash-anim"), { once: true });
+        };
+
+        // Wire flash onto template picks
+        document.querySelectorAll(".tmpl-pill").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const grid = document.getElementById("templateGrid");
+            if (grid) window.flashElement(grid);
+          });
+        });
+
+        // Wire flash onto brand kit apply
+        const brandApplyBtn = document.getElementById("brandApplyBtn");
+        if (brandApplyBtn) {
+          brandApplyBtn.addEventListener("click", () => {
+            const card = brandApplyBtn.closest(".brand-kit-card-details") || brandApplyBtn.closest(".brand-kit-card");
+            if (card) window.flashElement(card);
+          });
+        }
+
+        // ── 5. Export pre-flight summary ─────────────────────────────
+        const exportBtn    = document.getElementById("exportButton");
+        const preflightCard = document.getElementById("preflightCard");
+        if (exportBtn && preflightCard) {
+          exportBtn.addEventListener("click", () => {
+            try {
+              const formatLabel = { vertical: "9:16", horizontal: "16:9", portrait45: "4:5", square: "1:1" }[layoutState.format] || "9:16";
+              const grade = editorState.scene?.colorGrade && editorState.scene.colorGrade !== "none" ? editorState.scene.colorGrade : null;
+              const overlayEntries = editorState.scene?.overlays
+                ? Object.entries(editorState.scene.overlays).filter(([, v]) => v?.enabled)
+                    .map(([k]) => k === "viralHeader" ? "Viral Header" : k.replace(/([A-Z])/g, " $1").trim())
+                : [];
+              const overlays = [...new Set([
+                ...overlayEntries,
+                kickState?.enabled ? "Kick" : null,
+                viralHeaderState?.enabled ? "Viral Header" : null,
+              ].filter(Boolean))];
+              const trimStart = typeof trimState.start === "number" ? trimState.start : null;
+              const trimEnd   = typeof trimState.end   === "number" ? trimState.end   : null;
+              const dur = (trimEnd != null && trimStart != null) ? Math.round(trimEnd - trimStart) : null;
+
+              const tags = [
+                formatLabel,
+                grade,
+                ...overlays,
+                dur != null ? `${fmt(trimStart)}–${fmt(trimEnd)} (${dur}s)` : null,
+              ].filter(Boolean);
+
+              preflightCard.innerHTML = `<div class="preflight-card-title">⇧ Exporting scene</div>` +
+                `<div class="preflight-row">${tags.map(t => `<span class="preflight-tag">${escapeWaveDHtml(t)}</span>`).join("")}</div>`;
+              preflightCard.hidden = false;
+
+              // stamp export for step dot
+              try { localStorage.setItem("clipperviral:last-export-ts", Date.now()); } catch {}
+              refreshStepDots();
+            } catch {}
+          }, true /* capture — fires before export handler */);
+        }
+
+        // ── 6. Extended keyboard shortcuts (H, G, 1-6) ──────────────
+        document.addEventListener("keydown", (e) => {
+          if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable) return;
+          if (e.altKey || e.ctrlKey || e.metaKey) return;
+          // check if onboarding/shortcut modals are open
+          const obOpen = document.getElementById("onboardingBackdrop")?.dataset.active === "true";
+          const scOpen = document.getElementById("shortcutHelpBackdrop")?.dataset.active === "true";
+          if (obOpen || scOpen) return;
+
+          // 1–6 → jump to step
+          if (e.key >= "1" && e.key <= "6") {
+            const stepNames = ["source", "layouts", "elements", "captions", "export", "clips"];
+            const btn = document.querySelector(`.tool-btn[data-step="${stepNames[parseInt(e.key) - 1]}"]`);
+            if (btn) { e.preventDefault(); btn.click(); }
+            return;
+          }
+          // H → find hook
+          if (e.key === "h" || e.key === "H") {
+            const hookBtn = document.getElementById("findHookBtn");
+            if (hookBtn && !hookBtn.disabled) { e.preventDefault(); hookBtn.click(); }
+            return;
+          }
+          // G → cycle color grade
+          if (e.key === "g" || e.key === "G") {
+            const pills = Array.from(document.querySelectorAll(".cg-pill"));
+            if (!pills.length) return;
+            const activeIdx = pills.findIndex(p => p.classList.contains("active"));
+            const nextIdx = (activeIdx + 1) % pills.length;
+            e.preventDefault();
+            pills[nextIdx].click();
+            window.flashElement(document.getElementById("colorGradePills"));
+            return;
+          }
+        });
+
+        // ── 7. Elements panel empty state ────────────────────────────
+        const elementsEmptyState = document.getElementById("elementsEmptyState");
+        function refreshEmptyState() {
+          if (!elementsEmptyState) return;
+          try {
+            const overlayActive = editorState.scene?.overlays && Object.values(editorState.scene.overlays).some(v => v?.enabled);
+            const kickActive    = !!(kickState?.enabled);
+            const headerActive  = !!(viralHeaderState?.enabled);
+            // Check if any custom element sections have content
+            const customSections = document.getElementById("customElementSections");
+            const hasCustom = customSections && customSections.children.length > 0;
+            const anyActive = overlayActive || kickActive || headerActive || hasCustom;
+            elementsEmptyState.hidden = anyActive;
+          } catch {}
+        }
+        refreshEmptyState();
+        setInterval(refreshEmptyState, 2500);
+
+      })(); // end initWaveD
     </script>
   </body>
 </html>
