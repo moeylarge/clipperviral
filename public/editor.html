@@ -4355,7 +4355,8 @@
         max-height: 100vh;
         min-height: 0;
         overflow: hidden;
-        grid-template-rows: auto minmax(0, 1fr) 186px;
+        /* 4 rows: topbar | settings-strip | stage (flex) | timeline */
+        grid-template-rows: auto auto minmax(0, 1fr) 186px;
       }
 
       .stage-row {
@@ -4364,6 +4365,7 @@
         align-items: start;
         gap: clamp(20px, 3vw, 46px);
         min-height: 0;
+        overflow: hidden;
         padding: 12px 32px 8px;
       }
 
@@ -4390,13 +4392,14 @@
         max-width: 700px;
       }
 
+      /* +30px offset vs original to account for settings-strip row */
       .editor-canvas[data-format="portrait45"] {
-        width: min(520px, calc((100vh - 320px) * 0.84), 100%);
+        width: min(520px, calc((100vh - 350px) * 0.84), 100%);
         max-width: 520px;
       }
 
       .editor-canvas[data-format="square"] {
-        width: min(560px, calc(100vh - 360px), 100%);
+        width: min(560px, calc(100vh - 390px), 100%);
         max-width: 560px;
       }
 
@@ -4436,13 +4439,13 @@
       }
 
       .side-preview[data-format="portrait45"] {
-        width: min(520px, calc((100vh - 320px) * 0.84), 100%);
+        width: min(520px, calc((100vh - 350px) * 0.84), 100%);
         aspect-ratio: 4 / 5;
         border-radius: 14px;
       }
 
       .side-preview[data-format="square"] {
-        width: min(560px, calc(100vh - 360px), 100%);
+        width: min(560px, calc(100vh - 390px), 100%);
         aspect-ratio: 1 / 1;
         border-radius: 14px;
       }
