@@ -11171,7 +11171,7 @@
         return IMAGE_SLOT_KEYS.map((slotKey) => getImageSlotState(slotKey));
       }
 
-      function getSharedImagePanel() {
+      function getActiveImagePanel() {
         const activeSlot = getActiveImageSlotKey();
         const activeImage = getImageSlotState(activeSlot);
         if (activeImage?.panel) return activeImage.panel;
@@ -11179,12 +11179,12 @@
         return enabledImage?.panel || "right";
       }
 
-      function setSharedImagePanel(panel) {
+      function setActiveImagePanel(panel, slotKey = getActiveImageSlotKey()) {
         const activeLayout = getActiveLayout();
-        const compatiblePanel = getCompatibleImagePanel(activeLayout, panel || "right");
-        IMAGE_SLOT_KEYS.forEach((slotKey) => {
-          getImageSlotState(slotKey).panel = compatiblePanel;
-        });
+        const imageState = getImageSlotState(slotKey);
+        const preferredPanel = panel || imageState.panel || getDefaultImagePanelForSlot(activeLayout, slotKey);
+        const compatiblePanel = getCompatibleImagePanel(activeLayout, preferredPanel);
+        imageState.panel = compatiblePanel;
         editorState.scene.image = getImageSlotState();
         return compatiblePanel;
       }
@@ -11731,19 +11731,19 @@
         if (panel === "focus") return "top/focus";
         if (panel === "right") return "bottom/right";
         if (panel === "left") return "left";
+        if (panel === "topBar") return "top bar";
+        if (panel === "bottomBar") return "bottom bar";
         return panel || "panel";
       }
 
       function getImageSlotSummaryText() {
-        const enabledCount = getImageSlots().filter((imageState) => imageState.enabled && imageState.file).length;
-        const areaText = `Image area: ${getPanelLabel(getSharedImagePanel())}`;
         return IMAGE_SLOT_KEYS.map((slotKey) => {
           const imageState = getImageSlotState(slotKey);
           const label = IMAGE_SLOT_LABELS[slotKey];
           return imageState.enabled && imageState.file
-            ? `${label}: ready`
-            : `${label}: empty`;
-        }).concat(enabledCount > 1 ? ["PNGs split evenly"] : []).concat([areaText]).join(" · ");
+            ? `${label}: ready in ${getPanelLabel(imageState.panel)}`
+            : `${label}: empty · ${getPanelLabel(imageState.panel)}`;
+        }).join(" · ");
       }
 
       function getImageLayoutMessage() {
@@ -11753,7 +11753,7 @@
         const panelSize = getImagePanelOutputSize(layout, imageState.panel);
         const sizeText = panelSize ? `${panelSize.width} x ${panelSize.height}` : "";
         const enabledCount = getImageSlots().filter((slot) => slot.enabled && slot.file).length;
-        const splitText = enabledCount > 1 ? " Both PNGs share this image area and split it evenly." : "";
+        const splitText = enabledCount > 1 ? " PNG A and PNG B can use separate image areas." : "";
         if (!imageState.enabled) {
           return sizeText ? `${IMAGE_SLOT_LABELS[activeSlot]} empty. Current panel: ${sizeText}px.` : `${IMAGE_SLOT_LABELS[activeSlot]} empty. Upload a PNG.`;
         }
@@ -11779,7 +11779,7 @@
           button.classList.toggle("active", isActive);
           button.setAttribute("aria-selected", String(isActive));
         });
-        if (imagePanelSelect) imagePanelSelect.value = getSharedImagePanel();
+        if (imagePanelSelect) imagePanelSelect.value = getActiveImagePanel();
         if (imageFitSelect) imageFitSelect.value = imageState.fit;
         if (imageRotationSelect) imageRotationSelect.value = String([0, 90, 180, 270].includes(Number(imageState.rotation)) ? Number(imageState.rotation) : 0);
         if (imageZoomInput) imageZoomInput.value = String(clamp(imageState.zoom ?? 1, IMAGE_ZOOM_MIN, IMAGE_ZOOM_MAX));
@@ -11821,7 +11821,7 @@
         const imageElement = imagePanelElements[activeSlot];
         imageElement.onload = () => {
           const activeLayout = getActiveLayout();
-          const selectedPanel = setSharedImagePanel(imageState.panel || getSharedImagePanel() || getDefaultImagePanelForSlot(activeLayout, activeSlot));
+          const selectedPanel = setActiveImagePanel(imageState.panel || getActiveImagePanel() || getDefaultImagePanelForSlot(activeLayout, activeSlot), activeSlot);
           imageState.enabled = true;
           imageState.file = file;
           imageState.panel = selectedPanel;
@@ -11847,7 +11847,7 @@
       function updateImagePanelState(patch = {}) {
         const imageState = getImageSlotState();
         if (Object.prototype.hasOwnProperty.call(patch, "panel")) {
-          const nextPanel = setSharedImagePanel(patch.panel);
+          const nextPanel = setActiveImagePanel(patch.panel);
           patch = { ...patch, panel: nextPanel };
         }
         Object.assign(imageState, patch);
@@ -11870,7 +11870,6 @@
         const imageState = getImageSlotState(activeSlot);
         imageState.enabled = false;
         imageState.file = null;
-        imageState.panel = getSharedImagePanel();
         imageState.fit = "cover";
         imageState.rotation = 0;
         imageState.zoom = 1;
