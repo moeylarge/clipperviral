@@ -844,6 +844,8 @@
       .layout-card[data-layout="square-fullscreen"] .thumb::before { display: none; }
       .layout-card[data-layout="feed45-full-frame"] .thumb { background: linear-gradient(160deg, #70d9ec 0 28%, #eef6f0 36%, #415837 58%, #0d1615 100%); }
       .layout-card[data-layout="feed45-full-frame"] .thumb::before { display: none; }
+      .layout-card[data-layout="feed45-zoom-full-frame"] .thumb { background: radial-gradient(circle at 54% 42%, #eef6f0 0 16%, #70d9ec 17% 36%, #415837 56%, #0d1615 100%); }
+      .layout-card[data-layout="feed45-zoom-full-frame"] .thumb::before { display: none; }
       .layout-card[data-layout="feed45-landscape-frame"] .thumb { background: linear-gradient(180deg, #070707 0 27.5%, #70d9ec 27.5% 72.5%, #070707 72.5% 100%); }
       .layout-card[data-layout="feed45-landscape-frame"] .thumb::before { display: none; }
       .layout-card[data-layout="feed45-animated-frame"] .thumb { background: linear-gradient(180deg, #1a0505 0 27.5%, #70d9ec 27.5% 72.5%, #1a0505 72.5% 100%); position: relative; }
@@ -8969,6 +8971,7 @@
         "horizontal-fullscreen": { key: "horizontal-fullscreen", label: "Horizontal Fullscreen", format: "horizontal", cameraMode: "single", aspectRatio: "16:9", rendererKey: "horizontal-fullscreen", panels: ["focus"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 100, radius: 0 } } },
         "feed45-fullscreen": { key: "feed45-fullscreen", label: "Feed 4:5 Split", format: "portrait45", cameraMode: "split", aspectRatio: "4:5", rendererKey: "feed45-fullscreen", panels: ["focus", "facecamRight"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 46, radius: 0 }, facecamRight: { x: 0, y: 54, w: 100, h: 46, radius: 0, borderWidth: "0" } } },
         "feed45-full-frame": { key: "feed45-full-frame", label: "4:5 Full Frame", format: "portrait45", cameraMode: "single", aspectRatio: "4:5", rendererKey: "feed45-full-frame", panels: ["focus"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 100, radius: 0 } } },
+        "feed45-zoom-full-frame": { key: "feed45-zoom-full-frame", label: "4:5 Zoom Full Frame", format: "portrait45", cameraMode: "single", aspectRatio: "4:5", rendererKey: "feed45-zoom-full-frame", panels: ["focus"], videoZoom: 1.24, panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 100, radius: 0 } } },
         "feed45-landscape-frame": { key: "feed45-landscape-frame", label: "4:5 Landscape Frame", format: "portrait45", cameraMode: "single", aspectRatio: "4:5", rendererKey: "feed45-landscape-frame", panels: ["topBar", "focus", "bottomBar"], panelBoxes: { topBar: { x: 0, y: 0, w: 100, h: 27.5, radius: 0 }, focus: { x: 0, y: 27.5, w: 100, h: 45, radius: 0 }, bottomBar: { x: 0, y: 72.5, w: 100, h: 27.5, radius: 0 } } },
         "feed45-animated-frame": { key: "feed45-animated-frame", label: "4:5 Animated Frame", format: "portrait45", cameraMode: "single", aspectRatio: "4:5", rendererKey: "feed45-animated-frame", panels: ["topBar", "focus", "bottomBar"], panelBoxes: { topBar: { x: 0, y: 0, w: 100, h: 27.5, radius: 0 }, focus: { x: 0, y: 27.5, w: 100, h: 45, radius: 0 }, bottomBar: { x: 0, y: 72.5, w: 100, h: 27.5, radius: 0 } } },
         "square-fullscreen": { key: "square-fullscreen", label: "Square Fullscreen", format: "square", cameraMode: "single", aspectRatio: "1:1", rendererKey: "square-fullscreen", panels: ["focus"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 100, radius: 0 } } },
@@ -10166,6 +10169,7 @@
         "horizontal-fullscreen": { category: "Horizontal", description: "One 16:9 fullscreen export." },
         "feed45-fullscreen": { category: "Feed", description: "Stacked top and bottom clip panels for larger 4:5 posts." },
         "feed45-full-frame": { category: "Feed", description: "One natural video fills the full 4:5 frame with no black bars." },
+        "feed45-zoom-full-frame": { category: "Feed", description: "One full-frame 4:5 crop with extra zoom for a larger subject." },
         "feed45-landscape-frame": { category: "Feed", description: "16:9 landscape clip centered in a 4:5 frame with black branding bars." },
         "feed45-animated-frame": { category: "Feed", description: "16:9 landscape clip in a 4:5 frame with animated ember art bars." },
         "square-fullscreen": { category: "Square", description: "One 1:1 fullscreen export." },
@@ -11411,6 +11415,7 @@
             rendererKey: activeLayout.rendererKey,
             cameraMode: activeLayout.cameraMode,
             aspectRatio: activeLayout.aspectRatio,
+            videoZoom: clamp(activeLayout.videoZoom ?? 1, 1, 2),
             panels: [...activeLayout.panels],
             panelBoxes: activeLayout.panelBoxes || null,
             crops: buildNormalizedPanelState(activeLayout, layoutStateValue.crops),
@@ -17342,10 +17347,12 @@
           regionW = video.videoWidth;
           regionH = video.videoHeight;
         }
-        // Cover-fit the region into the dest box.
+        // Cover-fit the region into the dest box. Optional videoZoom punches in
+        // from the center while preserving the output panel size.
         const scale = Math.max(box.w / regionW, box.h / regionH);
-        const sourceWidth = box.w / scale;
-        const sourceHeight = box.h / scale;
+        const videoZoom = clamp(options.videoZoom ?? 1, 1, 2);
+        const sourceWidth = Math.min(regionW, box.w / scale / videoZoom);
+        const sourceHeight = Math.min(regionH, box.h / scale / videoZoom);
         const sx = regionX + (regionW - sourceWidth) / 2;
         const sy = regionY + (regionH - sourceHeight) / 2;
         ctx.save();
@@ -17545,7 +17552,8 @@
               if (interp) sourceCrop = interp;
             } catch (e) {}
           }
-          drawVideoCover(ctx, panelVideo, rect, { ...drawOptions, sourceCrop });
+          const videoZoom = panelKey === "focus" ? scene?.layout?.videoZoom : 1;
+          drawVideoCover(ctx, panelVideo, rect, { ...drawOptions, sourceCrop, videoZoom });
         } else {
           drawPlaceholderPanel(ctx, panelKey, rect, drawOptions);
         }
