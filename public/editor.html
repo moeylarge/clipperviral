@@ -8275,6 +8275,19 @@
                       </select>
                     </label>
                   </div>
+                  <div class="element-slider-grid" style="margin-top:10px;">
+                    <label>Thickness <output id="splitFrameThicknessOutput" for="splitFrameThickness">4px</output><input id="splitFrameThickness" type="range" min="1" max="30" step="1" value="4" /></label>
+                    <label>Glow <output id="splitFrameGlowOutput" for="splitFrameGlow">14px</output><input id="splitFrameGlow" type="range" min="0" max="50" step="1" value="14" /></label>
+                  </div>
+                  <div class="section-title" style="margin-top:10px;">Position</div>
+                  <div class="element-slider-grid">
+                    <label>Line 1 X <output id="splitFrameX1Output" for="splitFrameX1">33%</output><input id="splitFrameX1" type="range" min="0" max="100" step="0.5" value="33.3" /></label>
+                    <label>Line 2 X <output id="splitFrameX2Output" for="splitFrameX2">67%</output><input id="splitFrameX2" type="range" min="0" max="100" step="0.5" value="66.7" /></label>
+                    <label>Line 3 X <output id="splitFrameX3Output" for="splitFrameX3">75%</output><input id="splitFrameX3" type="range" min="0" max="100" step="0.5" value="75" /></label>
+                    <label>Top <output id="splitFrameTopOutput" for="splitFrameTop">0%</output><input id="splitFrameTop" type="range" min="0" max="100" step="0.5" value="0" /></label>
+                    <label>Bottom <output id="splitFrameBottomOutput" for="splitFrameBottom">100%</output><input id="splitFrameBottom" type="range" min="0" max="100" step="0.5" value="100" /></label>
+                  </div>
+                  <div class="element-hint">Move each divider to match the actual clip panels. Top/Bottom trims keep lines out of bars or branding.</div>
                 </div>
               </article>
             </details>
@@ -9158,6 +9171,13 @@
               enabled: false,
               color: "cyan",
               panels: 3,
+              thicknessPx: 4,
+              glowPx: 14,
+              x1Pct: 33.333,
+              x2Pct: 66.667,
+              x3Pct: 75,
+              topPct: 0,
+              bottomPct: 100,
             },
             subscribePulse: {
               enabled: false,
@@ -11576,6 +11596,13 @@
                 enabled: !!sf.enabled,
                 color: validColors.includes(sf.color) ? sf.color : "cyan",
                 panels: clamp(Math.round(sf.panels ?? 3), 2, 4),
+                thicknessPx: clamp(Number(sf.thicknessPx ?? 4), 1, 30),
+                glowPx: clamp(Number(sf.glowPx ?? 14), 0, 50),
+                x1Pct: clamp(Number(sf.x1Pct ?? 33.333), 0, 100),
+                x2Pct: clamp(Number(sf.x2Pct ?? 66.667), 0, 100),
+                x3Pct: clamp(Number(sf.x3Pct ?? 75), 0, 100),
+                topPct: clamp(Number(sf.topPct ?? 0), 0, 100),
+                bottomPct: clamp(Number(sf.bottomPct ?? 100), 0, 100),
               };
             })(),
             subscribePulse: (() => {
@@ -18759,15 +18786,27 @@
         const c = HUD_COLORS_T10[sf.color] || HUD_COLORS_T10.cyan;
         const panels = clamp(Math.round(sf.panels ?? 3), 2, 4);
         const pulse = 0.8 + 0.2 * Math.sin(t * 1.8);
+        const positions = [
+          clamp(Number(sf.x1Pct ?? 100 / panels), 0, 100),
+          clamp(Number(sf.x2Pct ?? (200 / panels)), 0, 100),
+          clamp(Number(sf.x3Pct ?? 75), 0, 100),
+        ];
+        const topPct = clamp(Number(sf.topPct ?? 0), 0, 100);
+        const bottomPct = clamp(Number(sf.bottomPct ?? 100), 0, 100);
+        const y1 = h * (Math.min(topPct, bottomPct) / 100);
+        const y2 = h * (Math.max(topPct, bottomPct) / 100);
+        const thickness = clamp(Number(sf.thicknessPx ?? 4), 1, 30);
+        const glow = clamp(Number(sf.glowPx ?? 14), 0, 50);
         ctx.save();
         ctx.strokeStyle = c.glow;
-        ctx.lineWidth = Math.max(2, h * 0.004);
-        ctx.shadowBlur = 14 * pulse;
+        ctx.lineWidth = thickness;
+        ctx.lineCap = "round";
+        ctx.shadowBlur = glow * pulse;
         ctx.shadowColor = c.glow;
         for (let i = 1; i < panels; i++) {
-          const x = w * (i / panels);
+          const x = w * (positions[i - 1] / 100);
           ctx.beginPath();
-          ctx.moveTo(x, 0); ctx.lineTo(x, h);
+          ctx.moveTo(x, y1); ctx.lineTo(x, y2);
           ctx.stroke();
         }
         ctx.restore();
@@ -22908,15 +22947,49 @@
         }
         // 6) Split Frame
         {
+          const fmtPct = (value) => `${Math.round(Number(value) || 0)}%`;
+          const fmtPx = (value) => `${Math.round(Number(value) || 0)}px`;
+          const setSfRange = (id, value, formatter = fmtPct) => {
+            _t10Set(id, value);
+            const out = document.getElementById(`${id}Output`);
+            if (out) out.value = formatter(value);
+          };
+          const updateSfPositionRows = (sf) => {
+            const rows = [
+              ["splitFrameX1", sf.panels >= 2],
+              ["splitFrameX2", sf.panels >= 3],
+              ["splitFrameX3", sf.panels >= 4],
+            ];
+            rows.forEach(([id, show]) => {
+              const input = document.getElementById(id);
+              const label = input?.closest("label");
+              if (label) label.style.display = show ? "" : "none";
+            });
+          };
           function sync() {
             const sf = editorState.scene.overlays.splitFrame; if (!sf) return;
             _t10ApplyToggleUi(document.getElementById("splitFrameToggle"), document.getElementById("splitFrameControls"), sf.enabled);
             _t10Set("splitFramePanels", sf.panels); _t10Set("splitFrameColor", sf.color);
+            setSfRange("splitFrameThickness", sf.thicknessPx ?? 4, fmtPx);
+            setSfRange("splitFrameGlow", sf.glowPx ?? 14, fmtPx);
+            setSfRange("splitFrameX1", sf.x1Pct ?? 33.333);
+            setSfRange("splitFrameX2", sf.x2Pct ?? 66.667);
+            setSfRange("splitFrameX3", sf.x3Pct ?? 75);
+            setSfRange("splitFrameTop", sf.topPct ?? 0);
+            setSfRange("splitFrameBottom", sf.bottomPct ?? 100);
+            updateSfPositionRows(sf);
             try { syncCanvasPreview(); } catch (e) {}
           }
           _t10WireToggle("splitFrameToggle", "splitFrameControls", "splitFrame", sync);
           _t10On("splitFramePanels", "change", () => { editorState.scene.overlays.splitFrame.panels = clamp(Math.round(Number(document.getElementById("splitFramePanels").value)||3), 2, 4); sync(); });
           _t10On("splitFrameColor", "change", () => { editorState.scene.overlays.splitFrame.color = document.getElementById("splitFrameColor").value || "cyan"; sync(); });
+          _t10On("splitFrameThickness", "input", () => { editorState.scene.overlays.splitFrame.thicknessPx = clamp(Number(document.getElementById("splitFrameThickness").value)||4, 1, 30); sync(); });
+          _t10On("splitFrameGlow", "input", () => { editorState.scene.overlays.splitFrame.glowPx = clamp(Number(document.getElementById("splitFrameGlow").value)||14, 0, 50); sync(); });
+          _t10On("splitFrameX1", "input", () => { editorState.scene.overlays.splitFrame.x1Pct = clamp(Number(document.getElementById("splitFrameX1").value)||0, 0, 100); sync(); });
+          _t10On("splitFrameX2", "input", () => { editorState.scene.overlays.splitFrame.x2Pct = clamp(Number(document.getElementById("splitFrameX2").value)||0, 0, 100); sync(); });
+          _t10On("splitFrameX3", "input", () => { editorState.scene.overlays.splitFrame.x3Pct = clamp(Number(document.getElementById("splitFrameX3").value)||0, 0, 100); sync(); });
+          _t10On("splitFrameTop", "input", () => { editorState.scene.overlays.splitFrame.topPct = clamp(Number(document.getElementById("splitFrameTop").value)||0, 0, 100); sync(); });
+          _t10On("splitFrameBottom", "input", () => { editorState.scene.overlays.splitFrame.bottomPct = clamp(Number(document.getElementById("splitFrameBottom").value)||0, 0, 100); sync(); });
         }
         // 7) Subscribe Pulse
         {
