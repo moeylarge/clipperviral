@@ -9367,8 +9367,7 @@
       ];
       // Full Kick Clipping Program streamer roster, scraped from #creator-commands-rates
       // (May 2026) + #2026-overlays bot posts. Rates are per 100K views. The `asset` path
-      // is auto-computed per-streamer. When a PNG is missing on disk, the renderer falls back
-      // to a programmatic KICK + URL bar so every streamer in the dropdown is usable.
+      // is auto-computed per-streamer. Kick Program Mode must only render official PNG assets.
       const KICK_STREAMERS = [
         // $60/100K
         { id: "mostvaluablepromotions", name: "Mostvaluablepromotions", rate: 60 },
@@ -9617,6 +9616,13 @@
         { id: "blame", name: "Blame", rate: 40 },
 
       ].map((s) => ({ ...s, asset: `/brand/kick/streamers/${s.id}.png` }));
+      const KICK_STREAMER_ASSET_IDS = new Set([
+        "ryangarcia",
+      ]);
+      const KICK_STREAMERS_WITH_ASSETS = KICK_STREAMERS.filter((streamer) => KICK_STREAMER_ASSET_IDS.has(streamer.id));
+      function hasKickStreamerAsset(streamerId) {
+        return KICK_STREAMER_ASSET_IDS.has(streamerId);
+      }
       const KICK_PROGRAM_FORMATS = ["auto", "horizontal", "square", "vertical45", "split", "fullscreen"];
       const KICK_PROGRAM_NATIVE_RATIO = 108 / 1082;
       const _kickStreamerImageCache = new Map();
@@ -11463,7 +11469,7 @@
             kick: kickState,
             kickProgram: (() => {
               const kp = state?.scene?.overlays?.kickProgram || editorState.scene.overlays.kickProgram || {};
-              const validStreamerIds = KICK_STREAMERS.map((streamer) => streamer.id);
+              const validStreamerIds = KICK_STREAMERS_WITH_ASSETS.map((streamer) => streamer.id);
               const rawCustomY = Number(kp.customYOffsetPct);
               return {
                 enabled: !!kp.enabled,
@@ -14809,7 +14815,7 @@
       function updateKickProgramControls() {
         if (!kickProgramToggle) return;
         populateKickProgramStreamerSelect();
-        if (!getKickStreamer(kickProgramState.streamerId)) kickProgramState.streamerId = "";
+        if (!getKickStreamer(kickProgramState.streamerId) || !hasKickStreamerAsset(kickProgramState.streamerId)) kickProgramState.streamerId = "";
         kickProgramState.format = KICK_PROGRAM_FORMATS.includes(kickProgramState.format) ? kickProgramState.format : "auto";
         kickProgramState.barWidthPct = clamp(Number(kickProgramState.barWidthPct) || 1.0, 0.5, 1);
         kickProgramState.barOpacity = clamp(Number.isFinite(Number(kickProgramState.barOpacity)) ? Number(kickProgramState.barOpacity) : 1, 0, 1);
@@ -14846,7 +14852,7 @@
           kickProgramStatus.textContent = kickProgramState.enabled
             ? streamer
               ? `Kick Program overlay active for ${streamer.name} (${formatLabel}). ClipperViral tag is reduced and moved above the bar.`
-              : "Choose a streamer overlay PNG to render the Kick Program bar."
+              : "Choose a streamer with an official PNG overlay to render the Kick Program bar."
             : "Compliance overlay required by Kick Clipping Program. Auto-positions per official guide. Full-screen 9:16 sits 25% above bottom to avoid TikTok captions.";
         }
         updateViralHeaderControls();
@@ -16144,17 +16150,18 @@
         if (!kickProgramStreamerSelect) return;
         const q = String(filterText || "").trim().toLowerCase();
         const currentValue = kickProgramStreamerSelect.value || kickProgramState?.streamerId || "";
+        const availableStreamers = KICK_STREAMERS_WITH_ASSETS;
         const matches = !q
-          ? KICK_STREAMERS
-          : KICK_STREAMERS.filter((s) =>
+          ? availableStreamers
+          : availableStreamers.filter((s) =>
               s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
             );
         kickProgramStreamerSelect.innerHTML = "";
         const placeholder = document.createElement("option");
         placeholder.value = "";
         placeholder.textContent = matches.length
-          ? `Select streamer overlay (${matches.length}${q ? " match" + (matches.length === 1 ? "" : "es") : ""})`
-          : "No streamers match";
+          ? `Select official overlay (${matches.length}${q ? " match" + (matches.length === 1 ? "" : "es") : ""})`
+          : "No official overlay matches";
         kickProgramStreamerSelect.appendChild(placeholder);
         matches.forEach((streamer) => {
           const option = document.createElement("option");
@@ -16220,7 +16227,9 @@
       if (kickProgramToggle) {
         kickProgramToggle.addEventListener("click", () => {
           kickProgramState.enabled = !kickProgramState.enabled;
-          if (kickProgramState.enabled && !kickProgramState.streamerId) kickProgramState.streamerId = "jiggy";
+          if (kickProgramState.enabled && !hasKickStreamerAsset(kickProgramState.streamerId)) {
+            kickProgramState.streamerId = KICK_STREAMERS_WITH_ASSETS[0]?.id || "";
+          }
           applyKickProgramWatermarkMode(kickProgramState.enabled);
           updateKickProgramControls();
           keepMobilePreviewFirst();
@@ -16241,7 +16250,7 @@
           e.preventDefault();
           const q = kickProgramStreamerSearch.value.trim().toLowerCase();
           if (!q) return;
-          const matches = KICK_STREAMERS.filter((s) =>
+          const matches = KICK_STREAMERS_WITH_ASSETS.filter((s) =>
             s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
           );
           if (matches.length >= 1 && kickProgramStreamerSelect) {
@@ -19431,38 +19440,15 @@
       function drawKickProgramOverlay(ctx, w, h, sceneOrOverlay) {
         const kp = sceneOrOverlay?.overlays?.kickProgram || sceneOrOverlay;
         if (!kp?.enabled || !kp.streamerId) return;
+        if (!hasKickStreamerAsset(kp.streamerId)) return;
         const img = loadKickStreamerImage(kp.streamerId);
         const imgReady = !!(img && img.complete && img.naturalWidth);
+        if (!imgReady) return;
         const box = getKickProgramOverlayBox(w, h, kp, sceneOrOverlay?.layout || getActiveLayout());
         ctx.save();
         ctx.globalAlpha = clamp(Number.isFinite(Number(kp.barOpacity)) ? Number(kp.barOpacity) : 1, 0, 1);
-        if (imgReady) {
-          // Official per-streamer overlay PNG is on disk — render as-is.
-          ctx.drawImage(img, box.x, box.y, box.w, box.h);
-        } else {
-          // Fallback bar so the dropdown is usable before all 67 streamer PNGs are downloaded.
-          // Renders a black bar with Kick green "KICK" wordmark + "KICK.COM/{handle}" in white.
-          const streamer = getKickStreamer(kp.streamerId);
-          const handle = (streamer?.id || "streamer").toUpperCase();
-          ctx.fillStyle = "#000000";
-          ctx.fillRect(box.x, box.y, box.w, box.h);
-          ctx.beginPath();
-          ctx.rect(box.x, box.y, box.w, box.h);
-          ctx.clip();
-          const padX = box.w * 0.03;
-          const midY = box.y + box.h / 2;
-          ctx.textBaseline = "middle";
-          // Left side: KICK wordmark (chunky/bold, Kick green)
-          ctx.fillStyle = "#53FC18";
-          ctx.font = `900 ${Math.round(box.h * 0.62)}px "Press Start 2P", "Arial Black", Impact, sans-serif`;
-          ctx.textAlign = "left";
-          ctx.fillText("KICK", box.x + padX, midY);
-          // Right side: KICK.COM/{HANDLE} (white, condensed bold)
-          ctx.fillStyle = "#FFFFFF";
-          ctx.font = `800 ${Math.round(box.h * 0.55)}px "Bebas Neue", "Arial Black", Impact, sans-serif`;
-          ctx.textAlign = "right";
-          ctx.fillText(`KICK.COM/${handle}`, box.x + box.w - padX, midY);
-        }
+        // Official per-streamer overlay PNG is on disk — render as-is.
+        ctx.drawImage(img, box.x, box.y, box.w, box.h);
         ctx.restore();
       }
 
