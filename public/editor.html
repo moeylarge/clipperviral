@@ -8063,6 +8063,9 @@
                         <option value="neon-glow">🌈 Neon Glow</option>
                         <option value="subtitle-bar">⬛ Subtitle Bar</option>
                         <option value="big-hook">📣 Big Hook (XXL)</option>
+                        <option value="fire-edges-text">🔥 Fire Edges (around text)</option>
+                        <option value="spotlight-text">🎥 Spotlight (around text)</option>
+                        <option value="comic-pop-text">💢 Comic Pop (around text)</option>
                       </select>
                     </label>
                   </div>
@@ -11684,7 +11687,7 @@
             })(),
             customText: (() => {
               const ct = state?.scene?.overlays?.customText || editorState.scene.overlays.customText || {};
-              const validStyles = ["bold-white-stroke", "yellow-highlight", "news-banner", "comic-burst", "quote-card", "neon-glow", "subtitle-bar", "big-hook"];
+              const validStyles = ["bold-white-stroke", "yellow-highlight", "news-banner", "comic-burst", "quote-card", "neon-glow", "subtitle-bar", "big-hook", "fire-edges-text", "spotlight-text", "comic-pop-text"];
               const validPositions = ["top", "upper-third", "center", "lower-third", "bottom", "custom"];
               const validDurations = ["always", "first3", "first5", "last3", "custom"];
               const validAnimations = ["none", "pop", "typewriter", "shake", "fade", "slide-up"];
@@ -18078,6 +18081,45 @@
         "of-demon-swarm":       { src: "/brand/effects/of-demon-swarm.mp4",       label: "😈 OF Demon Swarm" },
       };
 
+      const CUSTOM_TEXT_EFFECT_STYLES = {
+        "fire-edges-text": { src: "/brand/effects/fire-edges.mp4" },
+        "spotlight-text": { src: "/brand/effects/spotlight.mp4" },
+        "comic-pop-text": { src: "/brand/effects/comic-pop.mp4" },
+      };
+      const customTextEffectVideoPool = new Map();
+
+      function getCustomTextEffectVideo(styleId) {
+        const def = CUSTOM_TEXT_EFFECT_STYLES[styleId];
+        if (!def || typeof document === "undefined") return null;
+        let video = customTextEffectVideoPool.get(styleId);
+        if (!video) {
+          video = document.createElement("video");
+          video.muted = true;
+          video.loop = true;
+          video.playsInline = true;
+          video.preload = "auto";
+          video.style.display = "none";
+          video.setAttribute("aria-hidden", "true");
+          video.src = def.src;
+          document.body?.appendChild(video);
+          customTextEffectVideoPool.set(styleId, video);
+        } else if (video.getAttribute("src") !== def.src) {
+          video.src = def.src;
+          video.load();
+        }
+        return video;
+      }
+
+      function pauseInactiveCustomTextEffectVideos(activeStyleId = "", reset = false) {
+        customTextEffectVideoPool.forEach((video, styleId) => {
+          if (styleId === activeStyleId) return;
+          if (!video.paused) video.pause();
+          if (reset) {
+            try { video.currentTime = 0; } catch (e) {}
+          }
+        });
+      }
+
       function drawEffectOverlay(ctx, outputWidth, outputHeight, scene) {
         const fx = scene?.overlays?.effectOverlay;
         if (!fx?.enabled || fx.effect === "none") return;
@@ -18356,9 +18398,15 @@
       function drawCustomTextOverlay(ctx, outputWidth, outputHeight, scene) {
         if (ctx.canvas === compositionCanvas) window.__customTextOverlayBox = null;
         const customText = scene?.overlays?.customText;
-        if (!customText?.enabled) return;
+        if (!customText?.enabled) {
+          pauseInactiveCustomTextEffectVideos("", true);
+          return;
+        }
         const timing = getCustomTextTiming(customText, scene, scene?.source?.currentTime || 0);
-        if (!timing) return;
+        if (!timing) {
+          pauseInactiveCustomTextEffectVideos("", true);
+          return;
+        }
         let text = `${customText.text || ""}`.trim();
         if (!text) text = "HE THREW HER OFF THE BOAT";
         if (customText.animation === "typewriter") {
@@ -18368,6 +18416,7 @@
         const fontStack = `"Inter","Helvetica Neue",Helvetica,Arial,sans-serif`;
         const fontWeight = customText.style === "quote-card" ? 700 : 900;
         const lineHeight = Math.round(fontSize * 1.12);
+        const isEffectTextStyle = !!CUSTOM_TEXT_EFFECT_STYLES[customText.style];
         const maxWidth = outputWidth * (customText.style === "big-hook" ? 0.92 : 0.82);
         const anchor = getCustomTextAnchor(customText, outputWidth, outputHeight);
         ctx.save();
@@ -18379,10 +18428,11 @@
         ctx.lineJoin = "round";
         ctx.miterLimit = 2;
         const style = customText.style || "bold-white-stroke";
-        const renderText = style === "bold-white-stroke" || style === "big-hook" ? text.toUpperCase() : text;
+        const renderText = style === "bold-white-stroke" || style === "big-hook" || isEffectTextStyle ? text.toUpperCase() : text;
         const lines = wrapCustomTextLines(ctx, renderText, maxWidth);
         if (!lines.length) {
           ctx.restore();
+          pauseInactiveCustomTextEffectVideos("", true);
           return;
         }
         const block = measureCustomTextBlock(ctx, lines, lineHeight);
@@ -18398,7 +18448,35 @@
           ctx.shadowBlur = Math.max(8, fontSize * 0.22);
           ctx.shadowOffsetY = Math.max(2, fontSize * 0.06);
         }
-        if (style === "yellow-highlight") {
+        if (isEffectTextStyle) {
+          const textPadX = Math.max(12, block.width * 0.18);
+          const textPadY = Math.max(16, block.height * 0.65);
+          const effectX = -block.width / 2 - textPadX;
+          const effectY = -block.height / 2 - textPadY;
+          const effectW = block.width + textPadX * 2;
+          const effectH = block.height + textPadY * 2;
+          const vid = getCustomTextEffectVideo(style);
+          pauseInactiveCustomTextEffectVideos(style);
+          if (vid) {
+            if (vid.paused) vid.play().catch(() => {});
+            if (vid.readyState >= 2 && vid.videoWidth) {
+              ctx.save();
+              const prevComp = ctx.globalCompositeOperation;
+              ctx.globalCompositeOperation = "screen";
+              ctx.shadowBlur = 0;
+              ctx.shadowOffsetY = 0;
+              ctx.drawImage(vid, effectX, effectY, effectW, effectH);
+              ctx.globalCompositeOperation = prevComp;
+              ctx.restore();
+            }
+          }
+          if (customText.shadow) {
+            ctx.shadowColor = "rgba(0,0,0,0.65)";
+            ctx.shadowBlur = Math.max(8, fontSize * 0.22);
+            ctx.shadowOffsetY = Math.max(2, fontSize * 0.06);
+          }
+          drawCustomTextLines(ctx, lines, 0, topY, lineHeight, "#ffffff", "#050505", Math.max(4, fontSize * 0.07));
+        } else if (style === "yellow-highlight") {
           ctx.shadowBlur = customText.shadow ? ctx.shadowBlur : 0;
           ctx.fillStyle = "#ffd400";
           ctx.beginPath();
@@ -20202,6 +20280,19 @@
             _fxExport.playbackRate = clamp(_fxState.speed ?? 1.0, 0.25, 2.0);
             await _fxExport.play().catch(() => {});
           }
+        }
+        /* Ensure effect-wrapped custom text videos are ready for export. */
+        const _ctExport = editorState.scene.overlays.customText;
+        if (_ctExport?.enabled && CUSTOM_TEXT_EFFECT_STYLES[_ctExport.style]) {
+          const _ctVid = getCustomTextEffectVideo(_ctExport.style);
+          if (_ctVid) {
+            _ctVid.currentTime = 0;
+            if (await prepareOptionalOverlayVideo(_ctVid, `custom text effect ${_ctExport.style}`)) {
+              await _ctVid.play().catch(() => {});
+            }
+          }
+        } else {
+          pauseInactiveCustomTextEffectVideos();
         }
         /* Lower-third and pre-roll are now rendered fully via canvas — no video preload needed. */
         updateKickOverlay();
