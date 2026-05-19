@@ -3927,6 +3927,33 @@
         color: rgba(255,255,255,0.54);
       }
 
+      #customTextControls textarea,
+      #customTextControls select,
+      #customTextControls input[type="text"],
+      #customTextControls input[type="number"],
+      #customTextControls input[type="color"] {
+        color: #111 !important;
+        background: #fff !important;
+        border: 1px solid #d0d0d0 !important;
+        border-radius: 6px !important;
+        padding: 8px 10px !important;
+        font-size: 14px !important;
+      }
+
+      #customTextControls textarea {
+        min-height: 60px;
+        resize: vertical;
+        font-family: inherit;
+      }
+
+      #customTextControls select {
+        appearance: auto;
+      }
+
+      #customTextControls label {
+        color: #111 !important;
+      }
+
       .elements-panel .element-status {
         border-color: rgba(255,255,255,0.10);
         background: rgba(255,255,255,0.08);
