@@ -5627,6 +5627,26 @@
         color: #252832;
       }
 
+      .elements-panel .range-fields textarea,
+      .elements-panel .range-fields select,
+      .elements-panel .field-stack textarea,
+      .elements-panel .field-stack select,
+      .elements-panel .range-fields input:not([type="range"]),
+      .elements-panel .field-stack input:not([type="range"]) {
+        color: #111 !important;
+        background: #fff !important;
+        border: 1px solid #d0d0d0 !important;
+        border-radius: 6px !important;
+      }
+
+      .elements-panel .range-fields textarea::placeholder,
+      .elements-panel .field-stack textarea::placeholder,
+      .elements-panel .range-fields input::placeholder,
+      .elements-panel .field-stack input::placeholder {
+        color: #6b7280 !important;
+        opacity: 1;
+      }
+
       .elements-panel .segmented {
         background: rgba(214, 59, 220, 0.10);
         border-color: var(--soft-pink-border);
