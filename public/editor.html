@@ -3193,6 +3193,8 @@
       }
 
       .range-fields input,
+      .range-fields select,
+      .range-fields textarea,
       .field-stack input,
       .field-stack select,
       .field-stack textarea {
@@ -3204,7 +3206,9 @@
         opacity: 0.55;
       }
 
-      .range-fields input {
+      .range-fields input,
+      .range-fields select,
+      .range-fields textarea {
         width: 100%;
         border: 1px solid #cfd4e4;
         border-radius: 8px;
@@ -3901,6 +3905,8 @@
 
       .elements-panel .toggle-field,
       .elements-panel .range-fields input,
+      .elements-panel .range-fields select,
+      .elements-panel .range-fields textarea,
       .elements-panel .field-stack input,
       .elements-panel .element-slider-grid label {
         border-color: rgba(255,255,255,0.12);
@@ -3909,11 +3915,14 @@
       }
 
       .elements-panel .range-fields input,
+      .elements-panel .range-fields select,
+      .elements-panel .range-fields textarea,
       .elements-panel .field-stack input {
         color: #fff;
       }
 
       .elements-panel .range-fields input::placeholder,
+      .elements-panel .range-fields textarea::placeholder,
       .elements-panel .field-stack input::placeholder {
         color: rgba(255,255,255,0.54);
       }
@@ -7975,6 +7984,88 @@
                 </div>
               </article>
             </details>
+            <!-- Custom Text Overlay -->
+            <details class="elements-section" data-element-section="customText">
+              <summary>Custom Text Overlay ✦</summary>
+              <article class="element-card">
+                <div class="element-card-head">
+                  <div>
+                    <strong>Hook text / meme overlay</strong>
+                    <p>Write your own caption on the clip — 8 viral styles, fully positioned.</p>
+                  </div>
+                  <span class="element-badge">TXT</span>
+                </div>
+                <div class="pb-toggle-row">
+                  <span class="pb-toggle-label">Text overlay</span>
+                  <button id="customTextToggle" type="button" class="toggle-btn" aria-pressed="false" data-state-label="Off">Off</button>
+                </div>
+                <div id="customTextControls" hidden>
+                  <div class="range-fields" style="margin-top:10px;">
+                    <label>Text
+                      <textarea id="customTextInput" maxlength="180" rows="2" placeholder="HE THREW HER OFF THE BOAT 💀"></textarea>
+                    </label>
+                  </div>
+                  <div class="range-fields" style="margin-top:8px;">
+                    <label>Style
+                      <select id="customTextStyle">
+                        <option value="bold-white-stroke">⚪ Bold White + Black Stroke (TikTok classic)</option>
+                        <option value="yellow-highlight">🟡 Yellow Highlighter</option>
+                        <option value="news-banner">🔴 Breaking News Bar</option>
+                        <option value="comic-burst">💥 Comic Burst</option>
+                        <option value="quote-card">💬 Quote Card</option>
+                        <option value="neon-glow">🌈 Neon Glow</option>
+                        <option value="subtitle-bar">⬛ Subtitle Bar</option>
+                        <option value="big-hook">📣 Big Hook (XXL)</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="range-fields" style="margin-top:8px;">
+                    <label>Position
+                      <select id="customTextPosition">
+                        <option value="top">Top</option>
+                        <option value="upper-third">Upper third</option>
+                        <option value="center">Center</option>
+                        <option value="lower-third">Lower third</option>
+                        <option value="bottom">Bottom</option>
+                        <option value="custom">Custom (drag in preview)</option>
+                      </select>
+                    </label>
+                    <label>Duration
+                      <select id="customTextDuration">
+                        <option value="always">Whole clip</option>
+                        <option value="first3">First 3 seconds (hook)</option>
+                        <option value="first5">First 5 seconds</option>
+                        <option value="last3">Last 3 seconds (outro)</option>
+                        <option value="custom">Custom range</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="element-slider-grid" style="margin-top:8px;">
+                    <label>Size <output id="customTextSizeOutput" for="customTextSize">100%</output><input id="customTextSize" type="range" min="0.5" max="2" step="0.05" value="1.0" /></label>
+                    <label>Opacity <output id="customTextOpacityOutput" for="customTextOpacity">100%</output><input id="customTextOpacity" type="range" min="0.3" max="1" step="0.05" value="1.0" /></label>
+                  </div>
+                  <div class="range-fields" style="margin-top:8px;">
+                    <label>Animation
+                      <select id="customTextAnimation">
+                        <option value="none">None</option>
+                        <option value="pop">Pop in</option>
+                        <option value="typewriter">Typewriter</option>
+                        <option value="shake">Shake</option>
+                        <option value="fade">Fade in</option>
+                        <option value="slide-up">Slide up</option>
+                      </select>
+                    </label>
+                    <label>Text Color
+                      <input id="customTextColor" type="color" value="#ffffff" />
+                    </label>
+                  </div>
+                  <div class="pb-toggle-row" style="margin-top:8px;">
+                    <span class="pb-toggle-label">Drop shadow</span>
+                    <button id="customTextShadowToggle" type="button" class="toggle-btn" aria-pressed="true" data-state-label="On">On</button>
+                  </div>
+                </div>
+              </article>
+            </details>
             <!-- Pre-Roll Title Card -->
             <details class="elements-section" data-element-section="preRollTitle">
               <summary>Pre-Roll Title Card ✦</summary>
@@ -9147,6 +9238,22 @@
               name: "VIRALCLIPS",
               subtitle: "@VIRALCLIPS",
               duration: "always",
+            },
+            customText: {
+              enabled: false,
+              text: "",
+              style: "bold-white-stroke",
+              position: "top",
+              customX: 0.5,
+              customY: 0.5,
+              duration: "always",
+              durationInSec: 0,
+              durationOutSec: 5,
+              size: 1.0,
+              opacity: 1.0,
+              animation: "none",
+              color: "#ffffff",
+              shadow: true,
             },
             preRollTitle: {
               enabled: false,
@@ -11528,6 +11635,30 @@
                 duration: validDur.includes(lt.duration) ? lt.duration : "always",
               };
             })(),
+            customText: (() => {
+              const ct = state?.scene?.overlays?.customText || editorState.scene.overlays.customText || {};
+              const validStyles = ["bold-white-stroke", "yellow-highlight", "news-banner", "comic-burst", "quote-card", "neon-glow", "subtitle-bar", "big-hook"];
+              const validPositions = ["top", "upper-third", "center", "lower-third", "bottom", "custom"];
+              const validDurations = ["always", "first3", "first5", "last3", "custom"];
+              const validAnimations = ["none", "pop", "typewriter", "shake", "fade", "slide-up"];
+              const color = /^#[0-9a-f]{6}$/i.test(`${ct.color || ""}`) ? ct.color : "#ffffff";
+              return {
+                enabled: !!ct.enabled,
+                text: `${ct.text || ""}`.slice(0, 180),
+                style: validStyles.includes(ct.style) ? ct.style : "bold-white-stroke",
+                position: validPositions.includes(ct.position) ? ct.position : "top",
+                customX: clamp(Number(ct.customX ?? 0.5), 0, 1),
+                customY: clamp(Number(ct.customY ?? 0.5), 0, 1),
+                duration: validDurations.includes(ct.duration) ? ct.duration : "always",
+                durationInSec: clamp(Number(ct.durationInSec ?? 0), 0, 3600),
+                durationOutSec: clamp(Number(ct.durationOutSec ?? 5), 0, 3600),
+                size: clamp(Number(ct.size ?? 1.0), 0.5, 2),
+                opacity: clamp(Number(ct.opacity ?? 1.0), 0.3, 1),
+                animation: validAnimations.includes(ct.animation) ? ct.animation : "none",
+                color,
+                shadow: ct.shadow !== false,
+              };
+            })(),
             preRollTitle: (() => {
               const pr = state?.scene?.overlays?.preRollTitle || editorState.scene.overlays.preRollTitle || {};
               const validStyles = ["cinematic", "tech", "movie-slide", "tech-brackets"];
@@ -12144,6 +12275,7 @@
       ];
       const KICK_PROGRAM_PERSISTENT_FIELDS = ["enabled", "streamerId", "format", "barWidthPct", "barOpacity", "customYOffsetPct"];
       const VIRAL_HEADER_PERSISTENT_FIELDS = ["text", "x", "y", "width", "fontSize", "opacity", "rotation", "textAlign", "showInPreview", "includeInExport", "animMode", "driftCycleSec"];
+      const CUSTOM_TEXT_PERSISTENT_FIELDS = ["enabled", "text", "style", "position", "customX", "customY", "duration", "durationInSec", "durationOutSec", "size", "opacity", "animation", "color", "shadow"];
       const VIRAL_HEADER_DEFAULTS = Object.freeze({
         text: "CLIPPERVIRAL",
         x: -1,
@@ -12220,6 +12352,12 @@
             kickProgramState[field] = saved.kickProgram[field];
           });
         }
+        if (saved.customText && typeof saved.customText === "object" && editorState.scene.overlays.customText) {
+          CUSTOM_TEXT_PERSISTENT_FIELDS.forEach((field) => {
+            if (saved.customText[field] === undefined) return;
+            editorState.scene.overlays.customText[field] = saved.customText[field];
+          });
+        }
       }
 
       function readElementSections() {
@@ -12275,7 +12413,10 @@
             KICK_PROGRAM_PERSISTENT_FIELDS.forEach((field) => { kickProgram[field] = kickProgramState[field]; });
             const viralHeader = {};
             VIRAL_HEADER_PERSISTENT_FIELDS.forEach((field) => { viralHeader[field] = viralHeaderState[field]; });
-            localStorage.setItem(ELEMENT_SETTINGS_STORAGE_KEY, JSON.stringify({ kick, kickProgram, viralHeader }));
+            const customText = {};
+            const customTextState = editorState.scene.overlays.customText || {};
+            CUSTOM_TEXT_PERSISTENT_FIELDS.forEach((field) => { customText[field] = customTextState[field]; });
+            localStorage.setItem(ELEMENT_SETTINGS_STORAGE_KEY, JSON.stringify({ kick, kickProgram, viralHeader, customText }));
           } catch {}
         });
       }
@@ -18062,6 +18203,232 @@
         ctx.restore();
       }
 
+      function getCustomTextTiming(customText, scene, currentTime) {
+        const t = Number(currentTime) || 0;
+        const duration = Number(scene?.source?.duration) || 0;
+        let start = 0;
+        let end = Number.POSITIVE_INFINITY;
+        if (customText.duration === "first3") end = 3;
+        else if (customText.duration === "first5") end = 5;
+        else if (customText.duration === "last3") {
+          if (duration <= 0) return null;
+          start = Math.max(0, duration - 3);
+          end = duration;
+        } else if (customText.duration === "custom") {
+          start = Math.max(0, Number(customText.durationInSec) || 0);
+          end = Math.max(start, Number(customText.durationOutSec) || start);
+        }
+        if (t < start || t > end) return null;
+        return { t, start, end, localT: Math.max(0, t - start) };
+      }
+
+      function getCustomTextAnchor(customText, outputWidth, outputHeight) {
+        const x = customText.position === "custom" ? clamp(Number(customText.customX) || 0.5, 0, 1) * outputWidth : outputWidth / 2;
+        const yMap = {
+          top: 0.08,
+          "upper-third": 0.25,
+          center: 0.5,
+          "lower-third": 0.7,
+          bottom: 0.92,
+        };
+        const y = customText.position === "custom"
+          ? clamp(Number(customText.customY) || 0.5, 0, 1) * outputHeight
+          : outputHeight * (yMap[customText.position] ?? 0.08);
+        return { x, y };
+      }
+
+      function getCustomTextFontSize(customText, outputHeight) {
+        const size = clamp(Number(customText.size) || 1, 0.5, 2);
+        if (customText.style === "big-hook") return Math.round(clamp(outputHeight * 0.13 * size, 54, 150));
+        if (customText.style === "subtitle-bar") return Math.round(clamp(outputHeight * 0.045 * size, 24, 72));
+        if (customText.style === "news-banner") return Math.round(clamp(outputHeight * 0.045 * size, 24, 76));
+        return Math.round(clamp(outputHeight * 0.062 * size, 30, 104));
+      }
+
+      function wrapCustomTextLines(ctx, text, maxWidth) {
+        const words = `${text || ""}`.trim().split(/\s+/).filter(Boolean);
+        if (!words.length) return [];
+        const lines = [];
+        let line = "";
+        words.forEach((word) => {
+          const test = line ? `${line} ${word}` : word;
+          if (line && ctx.measureText(test).width > maxWidth) {
+            lines.push(line);
+            line = word;
+          } else {
+            line = test;
+          }
+        });
+        if (line) lines.push(line);
+        return lines.slice(0, 4);
+      }
+
+      function measureCustomTextBlock(ctx, lines, lineHeight) {
+        const width = lines.reduce((max, line) => Math.max(max, ctx.measureText(line).width), 0);
+        return { width, height: lines.length * lineHeight };
+      }
+
+      function applyCustomTextAnimation(ctx, customText, timing, anchor) {
+        const localT = timing.localT;
+        let alpha = 1;
+        let scale = 1;
+        let offsetY = 0;
+        let offsetX = 0;
+        if (customText.animation === "pop") {
+          const p = clamp(localT / 0.3, 0, 1);
+          scale = p < 0.72 ? (p / 0.72) * 1.1 : 1.1 - ((p - 0.72) / 0.28) * 0.1;
+        } else if (customText.animation === "fade") {
+          alpha = clamp(localT / 0.4, 0, 1);
+        } else if (customText.animation === "slide-up") {
+          const p = clamp(localT / 0.4, 0, 1);
+          offsetY = 40 * (1 - (1 - Math.pow(1 - p, 3)));
+          alpha = p;
+        } else if (customText.animation === "shake") {
+          const step = Math.floor(localT * 30);
+          offsetX = Math.sin(step * 12.9898) * 2;
+          offsetY = Math.cos(step * 78.233) * 2;
+        }
+        ctx.translate(anchor.x + offsetX, anchor.y + offsetY);
+        ctx.scale(scale, scale);
+        ctx.globalAlpha *= alpha;
+      }
+
+      function drawCustomTextLines(ctx, lines, centerX, topY, lineHeight, fillStyle, strokeStyle, strokeWidth) {
+        lines.forEach((line, idx) => {
+          const y = topY + idx * lineHeight + lineHeight / 2;
+          if (strokeStyle && strokeWidth > 0) {
+            ctx.lineWidth = strokeWidth;
+            ctx.strokeStyle = strokeStyle;
+            ctx.strokeText(line, centerX, y);
+          }
+          ctx.fillStyle = fillStyle;
+          ctx.fillText(line, centerX, y);
+        });
+      }
+
+      function drawCustomTextOverlay(ctx, outputWidth, outputHeight, scene) {
+        if (ctx.canvas === compositionCanvas) window.__customTextOverlayBox = null;
+        const customText = scene?.overlays?.customText;
+        if (!customText?.enabled) return;
+        const timing = getCustomTextTiming(customText, scene, scene?.source?.currentTime || 0);
+        if (!timing) return;
+        let text = `${customText.text || ""}`.trim();
+        if (!text) text = "HE THREW HER OFF THE BOAT";
+        if (customText.animation === "typewriter") {
+          text = text.slice(0, Math.max(1, Math.ceil(timing.localT / 0.05)));
+        }
+        const fontSize = getCustomTextFontSize(customText, outputHeight);
+        const fontStack = `"Inter","Helvetica Neue",Helvetica,Arial,sans-serif`;
+        const fontWeight = customText.style === "quote-card" ? 700 : 900;
+        const lineHeight = Math.round(fontSize * 1.12);
+        const maxWidth = outputWidth * (customText.style === "big-hook" ? 0.92 : 0.82);
+        const anchor = getCustomTextAnchor(customText, outputWidth, outputHeight);
+        ctx.save();
+        ctx.globalAlpha = clamp(Number(customText.opacity) || 1, 0.3, 1);
+        applyCustomTextAnimation(ctx, customText, timing, anchor);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = `${fontWeight} ${fontSize}px ${fontStack}`;
+        ctx.lineJoin = "round";
+        ctx.miterLimit = 2;
+        const style = customText.style || "bold-white-stroke";
+        const renderText = style === "bold-white-stroke" || style === "big-hook" ? text.toUpperCase() : text;
+        const lines = wrapCustomTextLines(ctx, renderText, maxWidth);
+        if (!lines.length) {
+          ctx.restore();
+          return;
+        }
+        const block = measureCustomTextBlock(ctx, lines, lineHeight);
+        const padX = Math.max(12, fontSize * 0.28);
+        const padY = Math.max(8, fontSize * 0.18);
+        const boxW = Math.min(outputWidth * 0.94, block.width + padX * 2);
+        const boxH = block.height + padY * 2;
+        const topY = -block.height / 2;
+        const boxX = -boxW / 2;
+        const boxY = -boxH / 2;
+        if (customText.shadow) {
+          ctx.shadowColor = "rgba(0,0,0,0.55)";
+          ctx.shadowBlur = Math.max(8, fontSize * 0.22);
+          ctx.shadowOffsetY = Math.max(2, fontSize * 0.06);
+        }
+        if (style === "yellow-highlight") {
+          ctx.shadowBlur = customText.shadow ? ctx.shadowBlur : 0;
+          ctx.fillStyle = "#ffd400";
+          ctx.beginPath();
+          _rrRect(ctx, boxX, boxY, boxW, boxH, Math.max(6, fontSize * 0.14));
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          drawCustomTextLines(ctx, lines, 0, topY, lineHeight, "#080808", null, 0);
+        } else if (style === "news-banner") {
+          const stripH = Math.max(boxH, outputHeight * 0.09);
+          const y = -stripH / 2;
+          ctx.fillStyle = "#cc0000";
+          ctx.fillRect(-outputWidth / 2, y, outputWidth, stripH);
+          ctx.shadowBlur = 0;
+          const newsLines = wrapCustomTextLines(ctx, text.toUpperCase().startsWith("BREAKING") ? text.toUpperCase() : `BREAKING ${text.toUpperCase()}`, outputWidth * 0.9);
+          drawCustomTextLines(ctx, newsLines, 0, -newsLines.length * lineHeight / 2, lineHeight, "#ffffff", null, 0);
+        } else if (style === "comic-burst") {
+          const radiusX = boxW * 0.6;
+          const radiusY = boxH * 0.9;
+          ctx.beginPath();
+          for (let i = 0; i < 24; i += 1) {
+            const a = -Math.PI / 2 + (Math.PI * 2 * i / 24);
+            const spike = i % 2 === 0 ? 1 : 0.72;
+            const x = Math.cos(a) * radiusX * spike;
+            const y = Math.sin(a) * radiusY * spike;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.fillStyle = "#ffd400";
+          ctx.strokeStyle = "#050505";
+          ctx.lineWidth = Math.max(5, fontSize * 0.1);
+          ctx.fill();
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+          drawCustomTextLines(ctx, lines.map((line) => line.toUpperCase()), 0, topY, lineHeight, "#101010", "#ffffff", Math.max(2, fontSize * 0.045));
+        } else if (style === "quote-card") {
+          ctx.fillStyle = "rgba(0,0,0,0.65)";
+          ctx.beginPath();
+          _rrRect(ctx, boxX, boxY, boxW, boxH, Math.max(8, fontSize * 0.16));
+          ctx.fill();
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(boxX + padX * 0.55, boxY + padY, 4, boxH - padY * 2);
+          ctx.shadowBlur = 0;
+          drawCustomTextLines(ctx, lines, padX * 0.25, topY, lineHeight, "#ffffff", null, 0);
+        } else if (style === "neon-glow") {
+          ctx.shadowOffsetY = 0;
+          ["#00f5ff", "#ff2cf4", "#00f5ff"].forEach((glow, idx) => {
+            ctx.shadowColor = glow;
+            ctx.shadowBlur = fontSize * (0.32 - idx * 0.07);
+            drawCustomTextLines(ctx, lines, 0, topY, lineHeight, customText.color || "#ffffff", null, 0);
+          });
+          ctx.shadowBlur = 0;
+          drawCustomTextLines(ctx, lines, 0, topY, lineHeight, customText.color || "#ffffff", null, 0);
+        } else if (style === "subtitle-bar") {
+          const stripH = Math.max(boxH, outputHeight * 0.085);
+          ctx.fillStyle = "#000000";
+          ctx.fillRect(-outputWidth / 2, -stripH / 2, outputWidth, stripH);
+          ctx.shadowBlur = 0;
+          drawCustomTextLines(ctx, lines, 0, -block.height / 2, lineHeight, "#ffffff", null, 0);
+        } else {
+          const strokeW = style === "big-hook" ? Math.max(7, fontSize * 0.08) : Math.max(4, fontSize * 0.07);
+          const fill = style === "big-hook" ? (customText.color || "#ffffff") : "#ffffff";
+          drawCustomTextLines(ctx, lines, 0, topY, lineHeight, fill, "#050505", strokeW);
+        }
+        if (ctx.canvas === compositionCanvas) {
+          window.__customTextOverlayBox = {
+            x: anchor.x + boxX,
+            y: anchor.y + boxY,
+            w: boxW,
+            h: boxH,
+            outputWidth,
+            outputHeight,
+          };
+        }
+        ctx.restore();
+      }
+
       // Pre-Roll Title Card — bold cinematic intro, hand-coded canvas (no SeedDance).
       function drawPreRollTitle(ctx, outputWidth, outputHeight, scene, currentTime) {
         const pr = scene?.overlays?.preRollTitle;
@@ -19584,6 +19951,7 @@
         drawFlameLogo(ctx, outputWidth, outputHeight, scene, scene.source.currentTime || 0);
         drawSubscribePulse(ctx, outputWidth, outputHeight, scene, scene.source.currentTime || 0);
         drawLowerThird(ctx, outputWidth, outputHeight, scene, scene.source.currentTime || 0);
+        drawCustomTextOverlay(ctx, outputWidth, outputHeight, scene);
         drawPreRollTitle(ctx, outputWidth, outputHeight, scene, scene.source.currentTime || 0);
         drawKillBurst(ctx, outputWidth, outputHeight, scene, scene.source.currentTime || 0);
         drawVictoryCard(ctx, outputWidth, outputHeight, scene, scene.source.currentTime || 0);
@@ -19970,6 +20338,7 @@
       updateKickOverlay();
       updateKickProgramControls();
       updateViralHeaderControls();
+      try { window._syncCustomTextUI?.(); } catch (e) {}
       updateCaptionOverlay();
       checkDownloaderStatus({ silent: true }).catch(() => {});
       requestAnimationFrame(applyCropState);
@@ -22767,6 +23136,135 @@
             editorState.scene.overlays.lowerThird.duration = ltDur.value || "always";
             syncLowerThird();
           });
+        }
+
+        // ── Custom Text Overlay ──────────────────────────────────
+        {
+          const ctToggle = document.getElementById("customTextToggle");
+          const ctControls = document.getElementById("customTextControls");
+          const ctInput = document.getElementById("customTextInput");
+          const ctStyle = document.getElementById("customTextStyle");
+          const ctPosition = document.getElementById("customTextPosition");
+          const ctDuration = document.getElementById("customTextDuration");
+          const ctSize = document.getElementById("customTextSize");
+          const ctSizeOut = document.getElementById("customTextSizeOutput");
+          const ctOpacity = document.getElementById("customTextOpacity");
+          const ctOpacityOut = document.getElementById("customTextOpacityOutput");
+          const ctAnimation = document.getElementById("customTextAnimation");
+          const ctColor = document.getElementById("customTextColor");
+          const ctShadow = document.getElementById("customTextShadowToggle");
+
+          function syncCustomText() {
+            const ct = editorState.scene.overlays.customText;
+            if (!ct) return;
+            if (ctToggle) {
+              ctToggle.setAttribute("aria-pressed", String(!!ct.enabled));
+              ctToggle.dataset.stateLabel = ct.enabled ? "On" : "Off";
+              ctToggle.textContent = ct.enabled ? "On" : "Off";
+            }
+            if (ctControls) ctControls.hidden = !ct.enabled;
+            if (ctInput) ctInput.value = ct.text || "";
+            if (ctStyle) ctStyle.value = ct.style || "bold-white-stroke";
+            if (ctPosition) ctPosition.value = ct.position || "top";
+            if (ctDuration) ctDuration.value = ct.duration || "always";
+            if (ctSize) ctSize.value = String(ct.size ?? 1);
+            if (ctSizeOut) ctSizeOut.value = `${Math.round((ct.size ?? 1) * 100)}%`;
+            if (ctOpacity) ctOpacity.value = String(ct.opacity ?? 1);
+            if (ctOpacityOut) ctOpacityOut.value = `${Math.round((ct.opacity ?? 1) * 100)}%`;
+            if (ctAnimation) ctAnimation.value = ct.animation || "none";
+            if (ctColor) ctColor.value = /^#[0-9a-f]{6}$/i.test(`${ct.color || ""}`) ? ct.color : "#ffffff";
+            if (ctShadow) {
+              ctShadow.setAttribute("aria-pressed", String(ct.shadow !== false));
+              ctShadow.dataset.stateLabel = ct.shadow === false ? "Off" : "On";
+              ctShadow.textContent = ct.shadow === false ? "Off" : "On";
+            }
+            try { syncCanvasPreview(); } catch (e) {}
+            persistElementSettings();
+          }
+
+          if (ctToggle) ctToggle.addEventListener("click", () => {
+            editorState.scene.overlays.customText.enabled = !editorState.scene.overlays.customText.enabled;
+            syncCustomText();
+          });
+          if (ctInput) ctInput.addEventListener("input", () => {
+            editorState.scene.overlays.customText.text = ctInput.value || "";
+            syncCustomText();
+          });
+          if (ctStyle) ctStyle.addEventListener("change", () => {
+            editorState.scene.overlays.customText.style = ctStyle.value || "bold-white-stroke";
+            syncCustomText();
+          });
+          if (ctPosition) ctPosition.addEventListener("change", () => {
+            editorState.scene.overlays.customText.position = ctPosition.value || "top";
+            syncCustomText();
+          });
+          if (ctDuration) ctDuration.addEventListener("change", () => {
+            editorState.scene.overlays.customText.duration = ctDuration.value || "always";
+            syncCustomText();
+          });
+          if (ctSize) {
+            const handle = () => {
+              editorState.scene.overlays.customText.size = clamp(Number(ctSize.value) || 1, 0.5, 2);
+              syncCustomText();
+            };
+            ctSize.addEventListener("input", handle);
+            ctSize.addEventListener("change", handle);
+          }
+          if (ctOpacity) {
+            const handle = () => {
+              editorState.scene.overlays.customText.opacity = clamp(Number(ctOpacity.value) || 1, 0.3, 1);
+              syncCustomText();
+            };
+            ctOpacity.addEventListener("input", handle);
+            ctOpacity.addEventListener("change", handle);
+          }
+          if (ctAnimation) ctAnimation.addEventListener("change", () => {
+            editorState.scene.overlays.customText.animation = ctAnimation.value || "none";
+            syncCustomText();
+          });
+          if (ctColor) ctColor.addEventListener("input", () => {
+            editorState.scene.overlays.customText.color = ctColor.value || "#ffffff";
+            syncCustomText();
+          });
+          if (ctShadow) ctShadow.addEventListener("click", () => {
+            editorState.scene.overlays.customText.shadow = editorState.scene.overlays.customText.shadow === false;
+            syncCustomText();
+          });
+
+          if (editorCanvas && compositionCanvas) {
+            editorCanvas.addEventListener("pointerdown", (event) => {
+              const ct = editorState.scene.overlays.customText;
+              const box = window.__customTextOverlayBox;
+              if (!ct?.enabled || ct.position !== "custom" || !box) return;
+              const rect = compositionCanvas.getBoundingClientRect();
+              if (!rect.width || !rect.height) return;
+              const x = ((event.clientX - rect.left) / rect.width) * box.outputWidth;
+              const y = ((event.clientY - rect.top) / rect.height) * box.outputHeight;
+              if (x < box.x || x > box.x + box.w || y < box.y || y > box.y + box.h) return;
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              editorCanvas.setPointerCapture(event.pointerId);
+              const move = (moveEvent) => {
+                const mx = clamp((moveEvent.clientX - rect.left) / Math.max(1, rect.width), 0, 1);
+                const my = clamp((moveEvent.clientY - rect.top) / Math.max(1, rect.height), 0, 1);
+                editorState.scene.overlays.customText.customX = mx;
+                editorState.scene.overlays.customText.customY = my;
+                try { syncCanvasPreview(); } catch (e) {}
+                persistElementSettings();
+              };
+              const up = () => {
+                try { editorCanvas.releasePointerCapture(event.pointerId); } catch (e) {}
+                editorCanvas.removeEventListener("pointermove", move);
+                editorCanvas.removeEventListener("pointerup", up);
+                editorCanvas.removeEventListener("pointercancel", up);
+              };
+              editorCanvas.addEventListener("pointermove", move);
+              editorCanvas.addEventListener("pointerup", up);
+              editorCanvas.addEventListener("pointercancel", up);
+            }, true);
+          }
+
+          window._syncCustomTextUI = syncCustomText;
         }
 
         // ── Pre-Roll Title Card ──────────────────────────────────
