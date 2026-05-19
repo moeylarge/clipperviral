@@ -8066,6 +8066,13 @@
                         <option value="fire-edges-text">🔥 Fire Edges (around text)</option>
                         <option value="spotlight-text">🎥 Spotlight (around text)</option>
                         <option value="comic-pop-text">💢 Comic Pop (around text)</option>
+                        <option value="cop-lights-text">🚨 Cop Lights (around text)</option>
+                        <option value="fireworks-text">🎆 Fireworks (around text)</option>
+                        <option value="of-demon-pulse-text">😈 OF Demon Pulse (around text)</option>
+                        <option value="of-demon-inferno-text">🔥 OF Demon Inferno (around text)</option>
+                        <option value="confetti-pop-text">🎊 Confetti Pop (around text)</option>
+                        <option value="cash-toss-text">💵 Cash Toss (around text)</option>
+                        <option value="kiss-marks-text">💋 Kiss Marks (around text)</option>
                       </select>
                     </label>
                   </div>
@@ -11687,7 +11694,7 @@
             })(),
             customText: (() => {
               const ct = state?.scene?.overlays?.customText || editorState.scene.overlays.customText || {};
-              const validStyles = ["bold-white-stroke", "yellow-highlight", "news-banner", "comic-burst", "quote-card", "neon-glow", "subtitle-bar", "big-hook", "fire-edges-text", "spotlight-text", "comic-pop-text"];
+              const validStyles = ["bold-white-stroke", "yellow-highlight", "news-banner", "comic-burst", "quote-card", "neon-glow", "subtitle-bar", "big-hook", "fire-edges-text", "spotlight-text", "comic-pop-text", "cop-lights-text", "fireworks-text", "of-demon-pulse-text", "of-demon-inferno-text", "confetti-pop-text", "cash-toss-text", "kiss-marks-text"];
               const validPositions = ["top", "upper-third", "center", "lower-third", "bottom", "custom"];
               const validDurations = ["always", "first3", "first5", "last3", "custom"];
               const validAnimations = ["none", "pop", "typewriter", "shake", "fade", "slide-up"];
@@ -18085,6 +18092,13 @@
         "fire-edges-text": { src: "/brand/effects/fire-edges.mp4" },
         "spotlight-text": { src: "/brand/effects/spotlight.mp4" },
         "comic-pop-text": { src: "/brand/effects/comic-pop.mp4" },
+        "cop-lights-text": { src: "/brand/effects/cop-lights.mp4" },
+        "fireworks-text": { src: "/brand/effects/fireworks.mp4" },
+        "of-demon-pulse-text": { src: "/brand/effects/of-demon-pulse.mp4" },
+        "of-demon-inferno-text": { src: "/brand/effects/of-demon-inferno.mp4" },
+        "confetti-pop-text": { src: "/brand/effects/confetti-pop.mp4" },
+        "cash-toss-text": { src: "/brand/effects/cash-toss.mp4" },
+        "kiss-marks-text": { src: "/brand/effects/kiss-marks.mp4" },
       };
       const customTextEffectVideoPool = new Map();
 
@@ -18395,6 +18409,11 @@
         });
       }
 
+      function getCustomTextFillColor(customText) {
+        const color = `${customText?.color || ""}`.trim();
+        return /^#[0-9a-f]{6}$/i.test(color) ? color : "#ffffff";
+      }
+
       function drawCustomTextOverlay(ctx, outputWidth, outputHeight, scene) {
         if (ctx.canvas === compositionCanvas) window.__customTextOverlayBox = null;
         const customText = scene?.overlays?.customText;
@@ -18417,6 +18436,7 @@
         const fontWeight = customText.style === "quote-card" ? 700 : 900;
         const lineHeight = Math.round(fontSize * 1.12);
         const isEffectTextStyle = !!CUSTOM_TEXT_EFFECT_STYLES[customText.style];
+        const userTextColor = getCustomTextFillColor(customText);
         const maxWidth = outputWidth * (customText.style === "big-hook" ? 0.92 : 0.82);
         const anchor = getCustomTextAnchor(customText, outputWidth, outputHeight);
         ctx.save();
@@ -18475,7 +18495,7 @@
             ctx.shadowBlur = Math.max(8, fontSize * 0.22);
             ctx.shadowOffsetY = Math.max(2, fontSize * 0.06);
           }
-          drawCustomTextLines(ctx, lines, 0, topY, lineHeight, "#ffffff", "#050505", Math.max(4, fontSize * 0.07));
+          drawCustomTextLines(ctx, lines, 0, topY, lineHeight, userTextColor, "#050505", Math.max(4, fontSize * 0.07));
         } else if (style === "yellow-highlight") {
           ctx.shadowBlur = customText.shadow ? ctx.shadowBlur : 0;
           ctx.fillStyle = "#ffd400";
@@ -18526,20 +18546,19 @@
           ["#00f5ff", "#ff2cf4", "#00f5ff"].forEach((glow, idx) => {
             ctx.shadowColor = glow;
             ctx.shadowBlur = fontSize * (0.32 - idx * 0.07);
-            drawCustomTextLines(ctx, lines, 0, topY, lineHeight, customText.color || "#ffffff", null, 0);
+            drawCustomTextLines(ctx, lines, 0, topY, lineHeight, userTextColor, null, 0);
           });
           ctx.shadowBlur = 0;
-          drawCustomTextLines(ctx, lines, 0, topY, lineHeight, customText.color || "#ffffff", null, 0);
+          drawCustomTextLines(ctx, lines, 0, topY, lineHeight, userTextColor, null, 0);
         } else if (style === "subtitle-bar") {
           const stripH = Math.max(boxH, outputHeight * 0.085);
           ctx.fillStyle = "#000000";
           ctx.fillRect(-outputWidth / 2, -stripH / 2, outputWidth, stripH);
           ctx.shadowBlur = 0;
-          drawCustomTextLines(ctx, lines, 0, -block.height / 2, lineHeight, "#ffffff", null, 0);
+          drawCustomTextLines(ctx, lines, 0, -block.height / 2, lineHeight, userTextColor, null, 0);
         } else {
           const strokeW = style === "big-hook" ? Math.max(7, fontSize * 0.08) : Math.max(4, fontSize * 0.07);
-          const fill = style === "big-hook" ? (customText.color || "#ffffff") : "#ffffff";
-          drawCustomTextLines(ctx, lines, 0, topY, lineHeight, fill, "#050505", strokeW);
+          drawCustomTextLines(ctx, lines, 0, topY, lineHeight, userTextColor, "#050505", strokeW);
         }
         if (ctx.canvas === compositionCanvas) {
           window.__customTextOverlayBox = {
@@ -23403,6 +23422,7 @@
           }
 
           window._syncCustomTextUI = syncCustomText;
+          try { syncCustomText(); } catch (e) {}
         }
 
         // ── Pre-Roll Title Card ──────────────────────────────────
