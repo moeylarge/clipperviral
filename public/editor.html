@@ -17240,6 +17240,16 @@
         });
       }
 
+      async function prepareOptionalOverlayVideo(video, label) {
+        try {
+          await waitForVideoReady(video);
+          return true;
+        } catch (err) {
+          console.warn(`Skipping optional overlay video during export: ${label}`, err);
+          return false;
+        }
+      }
+
       function seekVideo(video, seconds) {
         return new Promise((resolve, reject) => {
           const target = clamp(seconds, 0, getEffectiveDuration());
@@ -19563,10 +19573,6 @@
         });
         renderImagePanelOverlayToCanvas(ctx, outputWidth, outputHeight, scene);
         renderKickOverlayToCanvas(ctx, outputWidth, outputHeight, scene.overlays?.kick || null, scene.source.currentTime || 0);
-        const vh = scene.overlays?.viralHeader || null;
-        const forExport = !!options.forExport;
-        const vhGateOk = vh && (forExport ? vh.includeInExport !== false : vh.showInPreview !== false);
-        if (vhGateOk) drawViralHeader(ctx, outputWidth, outputHeight, vh, scene.source.currentTime || 0, scene.layout?.panelBoxes?.focus);
         drawEffectOverlay(ctx, outputWidth, outputHeight, scene);
         drawSplitFrame(ctx, outputWidth, outputHeight, scene, scene.source.currentTime || 0);
         drawNeonFrame(ctx, outputWidth, outputHeight, scene, scene.source.currentTime || 0);
@@ -19598,6 +19604,11 @@
         drawWaveformViz(ctx, outputWidth, outputHeight, scene);
         // Bundle C #11: iPhone frame — outermost layer, drawn last.
         drawIPhoneFrame(ctx, outputWidth, outputHeight, scene);
+        // Brand watermark belongs above the device/frame chrome but below the required Kick Program bar.
+        const vh = scene.overlays?.viralHeader || null;
+        const forExport = !!options.forExport;
+        const vhGateOk = vh && (forExport ? vh.includeInExport !== false : vh.showInPreview !== false);
+        if (vhGateOk) drawViralHeader(ctx, outputWidth, outputHeight, vh, scene.source.currentTime || 0, scene.layout?.panelBoxes?.focus);
         // Kick Program compliance bar must sit above every other overlay.
         drawKickProgramOverlay(ctx, outputWidth, outputHeight, scene);
       }
@@ -19750,15 +19761,17 @@
         const _animLogoVid = document.getElementById("viralAnimatedLogoVideo");
         if (_animLogoVid && (viralHeaderState.animMode === "animatedLogo") && viralHeaderState.enabled) {
           _animLogoVid.currentTime = 0;
-          await waitForVideoReady(_animLogoVid);
-          await _animLogoVid.play().catch(() => {});
+          if (await prepareOptionalOverlayVideo(_animLogoVid, "viral animated logo")) {
+            await _animLogoVid.play().catch(() => {});
+          }
         }
         /* Ensure bar art video is playing during export if animated frame layout is active */
         const _barArtExport = document.getElementById("barArtVideo");
         if (_barArtExport && layoutState.activeLayoutKey === "feed45-animated-frame") {
           _barArtExport.currentTime = 0;
-          await waitForVideoReady(_barArtExport);
-          await _barArtExport.play().catch(() => {});
+          if (await prepareOptionalOverlayVideo(_barArtExport, "4:5 animated frame bar art")) {
+            await _barArtExport.play().catch(() => {});
+          }
         }
         /* Ensure effect overlay video is playing during export */
         const _fxExport = document.getElementById("effectOverlayVideo");
@@ -19770,9 +19783,10 @@
             _fxExport.load();
           }
           _fxExport.currentTime = 0;
-          await waitForVideoReady(_fxExport);
-          _fxExport.playbackRate = clamp(_fxState.speed ?? 1.0, 0.25, 2.0);
-          await _fxExport.play().catch(() => {});
+          if (await prepareOptionalOverlayVideo(_fxExport, `effect overlay ${_fxState.effect}`)) {
+            _fxExport.playbackRate = clamp(_fxState.speed ?? 1.0, 0.25, 2.0);
+            await _fxExport.play().catch(() => {});
+          }
         }
         /* Lower-third and pre-roll are now rendered fully via canvas — no video preload needed. */
         updateKickOverlay();
