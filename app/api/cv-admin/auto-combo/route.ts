@@ -293,7 +293,7 @@ function assertBlobUrl(value: unknown, index: number) {
 async function downloadBlobClip(blobUrl: string, index: number, workdir: string) {
   const response = await fetch(blobUrl);
   if (!response.ok) {
-    throw new Error(`Clip ${index + 1} blob download failed with ${response.status}.`);
+    throw new Error(`Clip ${index + 1} blob download failed with ${response.status}. Re-upload this clip and try again.`);
   }
 
   const contentLength = Number(response.headers.get("content-length") || 0);
@@ -373,6 +373,13 @@ async function runAutoCombo(processed: ProcessedClip[], workdir: string, perClip
   });
 }
 
+async function deleteBlobUploads(blobUrls: string[]) {
+  if (!blobUrls.length) return;
+  await del(blobUrls).catch((error) => {
+    console.warn("Failed to delete auto-combo blob uploads", error);
+  });
+}
+
 export async function POST(req: Request) {
   const auth = await requireAdmin();
   if (auth instanceof NextResponse) return auth;
@@ -407,7 +414,10 @@ export async function POST(req: Request) {
         processClipPath(sourcePath, index, workdir, perClipSeconds, apiKey),
       );
 
-      return await runAutoCombo(processed, workdir, perClipSeconds);
+      const response = await runAutoCombo(processed, workdir, perClipSeconds);
+      await deleteBlobUploads(blobUrlsToDelete);
+      blobUrlsToDelete.length = 0;
+      return response;
     }
 
     const formData = await req.formData();
@@ -433,11 +443,6 @@ export async function POST(req: Request) {
     });
     return jsonError("process", error, 500);
   } finally {
-    if (blobUrlsToDelete.length) {
-      await del(blobUrlsToDelete).catch((error) => {
-        console.warn("Failed to delete auto-combo blob uploads", error);
-      });
-    }
     await fs.rm(workdir, { recursive: true, force: true });
   }
 }

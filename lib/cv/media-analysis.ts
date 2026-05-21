@@ -32,6 +32,7 @@ export function getFfmpegCandidates() {
   let bundled: string | null = null;
   let staticPackageBinary: string | null = null;
   let installerBinary: string | null = null;
+  const installerPackageBinaries: string[] = [];
   try {
     const resolved = require("ffmpeg-static");
     if (typeof resolved === "string") bundled = resolved;
@@ -50,11 +51,19 @@ export function getFfmpegCandidates() {
   } catch {
     installerBinary = null;
   }
+  for (const packageName of ["@ffmpeg-installer/linux-x64", "@ffmpeg-installer/linux-arm64"]) {
+    try {
+      installerPackageBinaries.push(path.join(path.dirname(require.resolve(`${packageName}/package.json`)), "ffmpeg"));
+    } catch {
+      // Optional platform package is only present for the current install target.
+    }
+  }
 
   return [
     staticPackageBinary,
     bundled,
     installerBinary,
+    ...installerPackageBinaries,
     process.env.FFMPEG_PATH?.trim(),
     "ffmpeg",
     "/usr/local/bin/ffmpeg",

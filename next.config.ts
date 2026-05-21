@@ -27,6 +27,8 @@ const nextConfig: NextConfig = {
     "/api/cv-admin/auto-combo": [
       "./node_modules/ffmpeg-static/**",
       "./node_modules/@ffmpeg-installer/ffmpeg/**",
+      "./node_modules/@ffmpeg-installer/linux-x64/**",
+      "./node_modules/@ffmpeg-installer/linux-arm64/**",
     ],
   },
 };
