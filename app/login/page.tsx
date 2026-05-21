@@ -1,32 +1,14 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
-
-function getSafeNext(next: string | null) {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) {
-    return "/editor.html";
-  }
-
-  try {
-    const parsed = new URL(next, "https://clipperviral.local");
-    if (parsed.origin !== "https://clipperviral.local" || parsed.pathname === "/auth/callback") {
-      return "/editor.html";
-    }
-
-    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-  } catch {
-    return "/editor.html";
-  }
-}
 
 function LoginPanel() {
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const next = useMemo(() => getSafeNext(searchParams.get("next")), [searchParams]);
   const errorCode = searchParams.get("error");
   const errorMessage = searchParams.get("message");
 
@@ -36,7 +18,7 @@ function LoginPanel() {
 
     try {
       const supabase = createBrowserSupabaseClient();
-      const redirectTo = `${window.location.origin}/auth/callback?flow=cv&next=${encodeURIComponent(next)}`;
+      const redirectTo = `${window.location.origin}/auth/callback`;
       const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {

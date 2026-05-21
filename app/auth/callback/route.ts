@@ -36,11 +36,19 @@ function getLoginErrorRedirect(origin: string, code: string, message: string) {
   return NextResponse.redirect(url);
 }
 
+function isClipperViralHost(hostname: string) {
+  return (
+    hostname === "www.clipperviral.com" ||
+    hostname === "clipperviral.com" ||
+    hostname.startsWith("clipperviral-")
+  );
+}
+
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const flow = requestUrl.searchParams.get("flow");
-  const isCvFlow = flow === "cv";
+  const isCvFlow = flow === "cv" || isClipperViralHost(requestUrl.hostname);
   const next = getSafeNext(requestUrl.searchParams.get("next"), isCvFlow ? "/editor.html" : "/");
 
   if (!code) {
