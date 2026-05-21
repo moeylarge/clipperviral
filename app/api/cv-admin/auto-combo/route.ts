@@ -427,6 +427,9 @@ export async function POST(req: Request) {
 
     return await runAutoCombo(processed, workdir, perClipSeconds);
   } catch (error) {
+    console.error("CV auto-combo failed", {
+      error: error instanceof Error ? error.message : String(error || "Unknown error"),
+    });
     return jsonError("process", error, 500);
   } finally {
     if (blobUrlsToDelete.length) {
