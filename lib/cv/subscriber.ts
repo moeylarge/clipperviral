@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export type CvSubscriber = {
   id: string;
@@ -47,4 +48,18 @@ export async function getCvSubscriberForRequest(): Promise<CvSubscriber | null> 
   }
 
   return data as CvSubscriber;
+}
+
+export async function canUsePasteLink(authUserId: string): Promise<boolean> {
+  const { data, error } = await getSupabaseAdmin()
+    .from("cv_subscribers")
+    .select("status")
+    .eq("auth_user_id", authUserId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return false;
+  }
+
+  return data.status === "active";
 }

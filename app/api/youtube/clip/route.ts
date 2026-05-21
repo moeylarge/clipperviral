@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getYoutubeJob, touchYoutubeJob } from "@/lib/youtube-job-store";
 import { requireAllowedApiUser } from "@/lib/auth/api-access";
+import { canUsePasteLink } from "@/lib/cv/subscriber";
 
 export const runtime = "nodejs";
 
@@ -365,6 +366,17 @@ export async function GET(req: NextRequest) {
     const access = await requireAllowedApiUser();
     if (!access.ok) {
       return access.response;
+    }
+    const authUserId = "id" in access.user && typeof access.user.id === "string" ? access.user.id : null;
+    if (!authUserId || !(await canUsePasteLink(authUserId))) {
+      return NextResponse.json(
+        {
+          error: "paste-link-requires-pro",
+          message: "VOD scanning is a Pro feature. Upgrade to scan YouTube and Kick links.",
+          upgrade_url: "/pricing",
+        },
+        { status: 402 },
+      );
     }
 
   const params = new URL(req.url).searchParams;
