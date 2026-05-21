@@ -287,6 +287,35 @@ function parseJsonObject(value: string) {
   }
 }
 
+function fallbackViralScore(options: { text: string; audioRms: number }) {
+  const words = options.text.split(/\s+/).filter(Boolean);
+  const text = options.text.toLowerCase();
+  const hookWords = [
+    "wait",
+    "what",
+    "crazy",
+    "insane",
+    "no way",
+    "bro",
+    "dude",
+    "wow",
+    "laugh",
+    "lol",
+    "kill",
+    "win",
+    "clutch",
+  ];
+  const hookHits = hookWords.filter((word) => text.includes(word)).length;
+  const score = Math.max(
+    1,
+    Math.min(100, Math.round(Math.min(35, words.length * 1.6) + Math.min(45, options.audioRms * 55) + hookHits * 6)),
+  );
+  return {
+    score,
+    reason: "Local fallback score from transcript density, hook words, and normalized audio energy.",
+  };
+}
+
 export async function scoreWindowWithClaude(options: {
   perClipSeconds: number;
   text: string;
@@ -335,6 +364,9 @@ export async function scoreWindowWithClaude(options: {
   }
 
   if (!response?.ok) {
+    if (response?.status === 404 && lastErrorText.includes("not_found_error")) {
+      return fallbackViralScore(options);
+    }
     throw new Error(`Claude scoring failed: ${response?.status || "unknown"} ${lastErrorText}`);
   }
 
