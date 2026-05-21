@@ -1320,7 +1320,7 @@ function normalizeKickWindowSet(
       ? configuredDefaultDuration
       : 12 * 60 * 60;
   const hasKnownDuration = typeof totalDuration === "number" && Number.isFinite(totalDuration) && totalDuration > safeClipDuration;
-  const unknownDurationFallback = Math.max(30 * 60, safeClipDuration * (safeMaxClips + 4));
+  const unknownDurationFallback = fallbackDuration;
   const safeDuration = hasKnownDuration ? totalDuration : Math.min(fallbackDuration, unknownDurationFallback);
   const maxStart = Math.max(0, safeDuration - safeClipDuration);
   const minGap = Math.max(6, safeClipDuration * 0.55);
@@ -1430,7 +1430,7 @@ function buildKickProbeWindows(clipDuration: number, maxClips: number, totalDura
     ? Math.max(firstStart, Math.min(maxStart, focusStart + focusWindowSeconds / 2))
     : hasKnownDuration
       ? Math.max(firstStart, Math.min(maxStart, safeDuration * 0.95))
-      : Math.max(firstStart, Math.min(maxStart, safeClipDuration * (safeMaxClips + 1)));
+      : Math.max(firstStart, Math.min(maxStart, safeDuration * 0.95));
   const windows: { start: number; end: number; text: string }[] = [];
 
   for (let index = 0; index < probeCount; index += 1) {
@@ -1458,7 +1458,7 @@ function buildFocusedKickManualWindows(clipDuration: number, maxClips: number, t
     Number.isFinite(configuredDefaultDuration) && configuredDefaultDuration > safeClipDuration
       ? configuredDefaultDuration
       : 12 * 60 * 60;
-  const unknownDurationFallback = Math.max(30 * 60, safeClipDuration * (safeMaxClips + 4));
+  const unknownDurationFallback = fallbackDuration;
   const unknownDurationWithFocus = Math.max(
     unknownDurationFallback,
     focusStartSeconds + Math.max(45 * 60, safeClipDuration * (safeMaxClips + 4)),
@@ -1497,7 +1497,7 @@ function buildKickCoverageFallbackWindows(
     Number.isFinite(configuredDefaultDuration) && configuredDefaultDuration > safeClipDuration
       ? configuredDefaultDuration
       : 12 * 60 * 60;
-  const unknownDurationFallback = Math.max(30 * 60, safeClipDuration * (safeMaxClips + 4));
+  const unknownDurationFallback = fallbackDuration;
   const focusSafe = typeof focusStartSeconds === "number" && Number.isFinite(focusStartSeconds) && focusStartSeconds > 0
     ? focusStartSeconds
     : null;
@@ -1531,9 +1531,7 @@ function buildKickCoverageFallbackWindows(
   }
 
   const firstStart = Math.min(maxStart, Math.max(0, safeDuration * 0.12));
-  const lastStart = hasKnownDuration
-    ? Math.max(firstStart, Math.min(maxStart, safeDuration * 0.92))
-    : Math.max(firstStart, Math.min(maxStart, safeClipDuration * (safeMaxClips + 1)));
+  const lastStart = Math.max(firstStart, Math.min(maxStart, safeDuration * 0.92));
   for (let index = 0; index < safeMaxClips; index += 1) {
     const ratio = safeMaxClips <= 1 ? 0 : index / (safeMaxClips - 1);
     const start = firstStart + (lastStart - firstStart) * ratio;

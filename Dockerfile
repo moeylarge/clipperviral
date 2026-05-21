@@ -11,9 +11,8 @@ ENV NODE_ENV=production \
 WORKDIR /app
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates curl ffmpeg python3 \
-  && curl -fsSL "https://github.com/yt-dlp/yt-dlp/releases/download/${YT_DLP_VERSION}/yt-dlp" -o /usr/local/bin/yt-dlp \
-  && chmod +x /usr/local/bin/yt-dlp \
+  && apt-get install -y --no-install-recommends ca-certificates ffmpeg python3 python3-pip \
+  && python3 -m pip install --break-system-packages --no-cache-dir "yt-dlp[default,curl-cffi]==${YT_DLP_VERSION}" \
   && yt-dlp --version \
   && ffmpeg -version | head -n 1 \
   && rm -rf /var/lib/apt/lists/*

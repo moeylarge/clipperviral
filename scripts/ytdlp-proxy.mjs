@@ -3,7 +3,7 @@
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 import { createReadStream, existsSync } from "node:fs";
-import { mkdir, readdir, readFile, rm, stat } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
@@ -15,7 +15,37 @@ const YTDLP_BIN = (process.env.YTDLP_BIN || "yt-dlp").trim();
 const USER_AGENT =
   (process.env.YTDLP_USER_AGENT || "").trim() ||
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36";
-const COOKIE_FILE = (process.env.YTDLP_COOKIE_FILE || "").trim();
+const COOKIE_FILE_ENV = (process.env.YTDLP_COOKIE_FILE || "").trim();
+const COOKIE_PAYLOAD = (process.env.YTDLP_COOKIES_B64 || process.env.YTDLP_COOKIES || "").trim();
+
+function looksLikeNetscapeCookieText(text) {
+  return text.includes("# Netscape HTTP Cookie File") || text.split("\n").some((line) => line.split("\t").length >= 7);
+}
+
+function normalizeCookieText(text) {
+  return `${text || ""}`
+    .replace(/\\r\\n/g, "\n")
+    .replace(/\\n/g, "\n")
+    .replace(/\\t/g, "\t")
+    .replace(/\r\n/g, "\n")
+    .trim();
+}
+
+async function resolveCookieFile() {
+  if (COOKIE_FILE_ENV) return COOKIE_FILE_ENV;
+  if (!COOKIE_PAYLOAD) return "";
+  let text = normalizeCookieText(COOKIE_PAYLOAD);
+  try {
+    const decoded = normalizeCookieText(Buffer.from(COOKIE_PAYLOAD, "base64").toString("utf8"));
+    if (looksLikeNetscapeCookieText(decoded)) text = decoded;
+  } catch {}
+  if (!looksLikeNetscapeCookieText(text)) return "";
+  const file = path.join(tmpdir(), "clipperviral-ytdlp-cookies.txt");
+  await writeFile(file, text.endsWith("\n") ? text : `${text}\n`, "utf8");
+  return file;
+}
+
+const COOKIE_FILE = await resolveCookieFile();
 
 function resolveBundledFfmpegPath() {
   const explicit = (process.env.FFMPEG_PATH || "").trim();
