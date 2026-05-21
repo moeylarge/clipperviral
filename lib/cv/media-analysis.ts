@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
+const preparedFfmpegPaths = new Map<string, Promise<string>>();
 
 export type WhisperSegment = {
   start: number;
@@ -60,6 +61,9 @@ export function getFfmpegCandidates() {
   }
 
   return [
+    path.join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg"),
+    path.join(process.cwd(), "node_modules", "@ffmpeg-installer", "linux-x64", "ffmpeg"),
+    path.join(process.cwd(), "node_modules", "@ffmpeg-installer", "linux-arm64", "ffmpeg"),
     staticPackageBinary,
     bundled,
     installerBinary,
@@ -74,15 +78,33 @@ export function getFfmpegCandidates() {
     .filter((candidate) => !path.isAbsolute(candidate) || existsSync(candidate));
 }
 
+async function prepareFfmpegCommand(command: string) {
+  if (!path.isAbsolute(command)) return command;
+  if (command.startsWith(os.tmpdir())) return command;
+
+  let prepared = preparedFfmpegPaths.get(command);
+  if (!prepared) {
+    prepared = (async () => {
+      const target = path.join(os.tmpdir(), `cv-ffmpeg-${Buffer.from(command).toString("base64url").slice(0, 24)}`);
+      await fs.copyFile(command, target);
+      await fs.chmod(target, 0o755);
+      return target;
+    })();
+    preparedFfmpegPaths.set(command, prepared);
+  }
+  return prepared;
+}
+
 export async function runFfmpeg(args: string[], timeoutMs = 10 * 60 * 1000) {
   let lastError: unknown = null;
   for (const command of [...new Set(getFfmpegCandidates())]) {
     try {
-      const result = await execFileAsync(command, args, {
+      const executable = await prepareFfmpegCommand(command);
+      const result = await execFileAsync(executable, args, {
         timeout: timeoutMs,
         maxBuffer: 50 * 1024 * 1024,
       });
-      return { ok: true as const, command, stdout: result.stdout, stderr: result.stderr };
+      return { ok: true as const, command: executable, stdout: result.stdout, stderr: result.stderr };
     } catch (error) {
       lastError = error;
       if ((error as { code?: string })?.code === "ENOENT") continue;
