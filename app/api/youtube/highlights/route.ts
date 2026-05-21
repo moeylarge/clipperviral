@@ -55,6 +55,9 @@ type ProxyDownloadResult =
 type ProxyTranscriptResult =
   | { ok: true; text: string; segments: WhisperSegment[] }
   | { ok: false; error: string };
+type ProxyMetadataResult =
+  | { ok: true; duration: number | null }
+  | { ok: false; error: string };
 
 function getYtDlpProxyUrl() {
   return (
@@ -862,6 +865,63 @@ async function fetchTranscriptViaProxy(options: {
     return {
       ok: false,
       error: error instanceof Error ? error.message : "Unknown proxy transcript error.",
+    };
+  }
+}
+
+async function fetchMetadataViaProxy(options: {
+  sourceUrl: string;
+  sourceKind: SourceKind;
+}): Promise<ProxyMetadataResult> {
+  const proxyUrl = getYtDlpProxyUrl();
+  if (!proxyUrl) return { ok: false, error: "Proxy downloader is not configured." };
+
+  const authToken = process.env.YTDLP_PROXY_TOKEN?.trim();
+  const authHeader = process.env.YTDLP_PROXY_AUTH_HEADER?.trim() || "x-api-key";
+  const requestHeaders: Record<string, string> = {
+    "content-type": "application/json",
+    accept: "application/json",
+  };
+  if (authToken) {
+    requestHeaders[authHeader] = authToken;
+    requestHeaders.authorization = `Bearer ${authToken}`;
+  }
+
+  try {
+    const response = await fetch(proxyUrl, {
+      method: "POST",
+      headers: requestHeaders,
+      body: JSON.stringify({
+        sourceUrl: options.sourceUrl,
+        sourceKind: options.sourceKind,
+        metadataOnly: true,
+      }),
+      signal: AbortSignal.timeout(90_000),
+    });
+
+    const rawText = await response.text();
+    let payload: Record<string, unknown> = {};
+    if (rawText.trim()) {
+      try {
+        payload = JSON.parse(rawText) as Record<string, unknown>;
+      } catch {
+        return { ok: false, error: `Proxy metadata response was not JSON: ${rawText.slice(0, 240)}` };
+      }
+    }
+
+    if (!response.ok) {
+      return { ok: false, error: parseProxyError(payload) || `Proxy returned ${response.status}` };
+    }
+
+    const duration = Number(payload.duration);
+    return {
+      ok: true,
+      duration: Number.isFinite(duration) && duration > 0 ? duration : null,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Unknown proxy metadata error.",
     };
   }
 }
@@ -2155,6 +2215,17 @@ export async function POST(req: NextRequest) {
         duration = ytdlpCandidates.length
           ? (await getDurationFromSourceMetadata(sourceUrl, ytdlpCandidates, ytdlpCookieFile)) || 0
           : 0;
+      }
+      if (sourceKind === "kick" && proxyConfigured && (!duration || !Number.isFinite(duration))) {
+        const proxyMetadata = await fetchMetadataViaProxy({ sourceUrl, sourceKind });
+        if (proxyMetadata.ok && proxyMetadata.duration) {
+          duration = proxyMetadata.duration;
+          console.log(`[kick] proxy metadata duration returned ${duration}s for ${sourceUrl}`);
+        } else if (!proxyMetadata.ok) {
+          console.log(`[kick] proxy metadata duration failed: ${proxyMetadata.error}`);
+        } else {
+          console.log("[kick] proxy metadata returned no duration.");
+        }
       }
 
       let transcriptSegments: WhisperSegment[] = [];

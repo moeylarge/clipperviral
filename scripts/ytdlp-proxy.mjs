@@ -437,10 +437,43 @@ const server = createServer(async (req, res) => {
     const sourceKind = normalizeSourceKind(payload.sourceKind || detectSourceKind(sourceUrl));
     const audioOnly = parseBoolean(payload.audioOnly);
     const transcriptOnly = parseBoolean(payload.transcriptOnly);
+    const metadataOnly = parseBoolean(payload.metadataOnly);
     const language = `${payload.language || "en"}`.trim();
     const formatPref = `${payload.formatPref || ""}`.trim();
     const clipStart = Number(payload.clipStart ?? payload.start);
     const clipDuration = Number(payload.clipDuration ?? payload.duration);
+
+    if (metadataOnly) {
+      const result = await runCommand(YTDLP_BIN, buildMetadataArgs({ sourceUrl, sourceKind }), 90_000);
+      if (!result.ok) {
+        console.error("[ytdlp-proxy] metadata failed", {
+          sourceUrl,
+          sourceKind,
+          code: result.code,
+          timedOut: result.timedOut,
+          stderr: (result.stderr || "").slice(0, 800),
+        });
+        return sendJson(res, 502, {
+          error: "yt-dlp metadata failed.",
+          details: result.timedOut
+            ? "yt-dlp metadata timed out."
+            : result.stderr || result.stdout || `exit code ${result.code}`,
+        });
+      }
+      let metadata = {};
+      try {
+        metadata = JSON.parse(result.stdout || "{}");
+      } catch {
+        return sendJson(res, 502, { error: "yt-dlp metadata was not valid JSON." });
+      }
+      const duration = Number(metadata.duration);
+      return sendJson(res, 200, {
+        duration: Number.isFinite(duration) && duration > 0 ? duration : null,
+        title: typeof metadata.title === "string" ? metadata.title : null,
+        id: typeof metadata.id === "string" ? metadata.id : null,
+      });
+    }
+
     const workdir = path.join(tmpdir(), `ytdlp-proxy-${randomUUID()}`);
     await mkdir(workdir, { recursive: true });
     const outputTemplate = transcriptOnly
@@ -505,6 +538,10 @@ const server = createServer(async (req, res) => {
     if (!fileStats.size) {
       await rm(workdir, { recursive: true, force: true });
       return sendJson(res, 502, { error: "Downloaded file is empty." });
+    }
+    if (fileStats.size < 1024) {
+      await rm(workdir, { recursive: true, force: true });
+      return sendJson(res, 502, { error: "Downloaded clip is too small to be valid media." });
     }
 
     res.statusCode = 200;

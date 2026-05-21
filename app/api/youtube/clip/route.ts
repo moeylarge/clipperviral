@@ -219,6 +219,15 @@ async function renderClipViaProxy(sourceUrl: string, start: number, duration: nu
   if (!clipBuffer.byteLength) {
     return NextResponse.json({ error: "External downloader returned an empty clip." }, { status: 502 });
   }
+  if (clipBuffer.byteLength < 1024) {
+    return NextResponse.json(
+      {
+        error: "External downloader returned an invalid clip.",
+        details: "The requested clip offset is outside the available media window. Re-run Analyze URL and pick a new candidate.",
+      },
+      { status: 502 },
+    );
+  }
   const base = filenameSafe((sourceUrl || "stream").split("/").pop() || "clip");
   const outName = `clipperviral-${base}-${String(start).replace(".", "-")}s-${String(start + duration).replace(".", "-")}s.mp4`;
   return new NextResponse(clipBuffer, {
