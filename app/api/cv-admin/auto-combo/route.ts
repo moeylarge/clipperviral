@@ -142,7 +142,7 @@ async function extractAndNormalizeWindow(options: {
     "-t",
     String(options.duration),
     "-vf",
-    "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,format=yuv420p",
+    "scale=w='if(gt(a,1080/1350),1080,-2)':h='if(gt(a,1080/1350),-2,1350)',pad=1080:1350:(ow-iw)/2:(oh-ih)/2:black,setsar=1,fps=30,format=yuv420p",
     "-c:v",
     "libx264",
     "-preset",
@@ -350,7 +350,8 @@ async function processClipPath(clipPath: string, index: number, workdir: string,
 
 async function runAutoCombo(processed: ProcessedClip[], workdir: string, perClipSeconds: number) {
   const finalPath = path.join(workdir, "auto-combo-final.mp4");
-  await stitchFinal(processed, perClipSeconds, finalPath);
+  const rankedProcessed = [...processed].sort((a, b) => b.winningWindow.score - a.winningWindow.score || a.index - b.index);
+  await stitchFinal(rankedProcessed, perClipSeconds, finalPath);
   const output = await fs.readFile(finalPath);
 
   return new Response(output, {
@@ -359,7 +360,7 @@ async function runAutoCombo(processed: ProcessedClip[], workdir: string, perClip
       "content-disposition": `attachment; filename="autocombo-${Date.now()}.mp4"`,
       "x-cv-auto-combo-windows": encodeURIComponent(
         JSON.stringify(
-          processed.map((clip) => ({
+          rankedProcessed.map((clip) => ({
             clip: clip.index + 1,
             start: clip.winningWindow.start,
             end: clip.winningWindow.end,
