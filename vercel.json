@@ -4,12 +4,5 @@
       "path": "/api/cron/supabase-keepalive",
       "schedule": "0 15 * * 1,4"
     }
-  ],
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/editor.html",
-      "permanent": false
-    }
   ]
 }

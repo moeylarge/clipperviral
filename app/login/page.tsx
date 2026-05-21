@@ -55,7 +55,7 @@ function LoginPanel() {
           </p>
         ) : (
           <p className="rounded-2xl border border-[#e35de0]/14 bg-[#fff8fe] px-4 py-3 text-sm font-semibold leading-6 text-[#6e6e73]">
-            Your trial starts after sign-in. No card required for this step.
+            Sign in with Google to start your 7-day free trial. No credit card required.
           </p>
         )}
       </div>
@@ -73,7 +73,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">ClipperViral</h1>
           <p className="text-sm leading-6 text-[#6e6e73]">
-            Sign in to start your 7-day free trial.
+            Sign in with Google to start your 7-day free trial. No credit card required.
           </p>
         </div>
         <Suspense fallback={<p className="text-sm text-[#6e6e73]">Loading sign-in...</p>}>
