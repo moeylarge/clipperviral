@@ -326,8 +326,7 @@ export async function scoreWindowWithClaude(options: {
 
   const modelCandidates = [
     process.env.ANTHROPIC_MODEL?.trim(),
-    "claude-3-5-haiku-20241022",
-    "claude-3-haiku-20240307",
+    "claude-haiku-4-5-20251001",
   ].filter((model): model is string => Boolean(model));
 
   let response: Response | null = null;
