@@ -3178,6 +3178,71 @@
         color: #247a36;
       }
 
+      .auto-combo-drop {
+        border: 1px dashed #b9c2d8;
+        border-radius: 8px;
+        background: #fff;
+        padding: 12px;
+        color: #4a5060;
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .auto-combo-drop.dragover {
+        border-color: var(--green);
+        box-shadow: 0 0 0 3px rgba(131, 255, 63, 0.16);
+      }
+
+      .auto-combo-slots {
+        display: grid;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .auto-combo-slot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        border: 1px solid #e2e6f2;
+        border-radius: 8px;
+        padding: 7px 8px;
+        background: #f8faff;
+        min-width: 0;
+      }
+
+      .auto-combo-slot span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .auto-combo-progress {
+        display: grid;
+        gap: 5px;
+      }
+
+      .auto-combo-progress-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        border: 1px solid #e2e6f2;
+        border-radius: 8px;
+        padding: 7px 8px;
+        background: #fff;
+        color: #4a5060;
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .auto-combo-preview {
+        width: 100%;
+        max-height: 240px;
+        border-radius: 8px;
+        background: #05060a;
+        border: 1px solid #dfe4f1;
+      }
+
       .range-fields {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -7556,6 +7621,31 @@
                 <button type="button" role="menuitem" disabled title="Coming in Wave D">CTA Chip <span class="menu-tag">Soon</span></button>
               </div>
             </div>
+            <details id="autoComboAdminPanel" class="elements-section" data-element-section="autoComboAdmin" hidden>
+              <summary>Admin: Auto-Combo Compiler</summary>
+              <article class="element-card">
+                <div class="element-card-head">
+                  <div>
+                    <strong>Viral moment compiler</strong>
+                    <p>Upload 5 short clips, score the strongest moment in each, then stitch one combo MP4.</p>
+                  </div>
+                  <span class="element-badge">Admin</span>
+                </div>
+                <div id="autoComboDrop" class="auto-combo-drop">
+                  <input id="autoComboFiles" type="file" accept="video/mp4,video/quicktime,video/webm,video/*" multiple />
+                  <div class="auto-combo-slots" id="autoComboSlots" aria-live="polite"></div>
+                </div>
+                <div class="element-slider-grid">
+                  <label>Total length <output id="autoComboTotalOutput" for="autoComboTotal">25s</output><input id="autoComboTotal" type="range" min="10" max="60" step="1" value="25" /></label>
+                  <label>Per clip <output id="autoComboPerClipOutput" for="autoComboPerClip">5s</output><input id="autoComboPerClip" type="range" min="3" max="15" step="1" value="5" /></label>
+                </div>
+                <button id="autoComboGenerate" type="button" class="source-action">Generate Auto-Combo</button>
+                <div id="autoComboProgress" class="auto-combo-progress" hidden></div>
+                <div id="autoComboStatus" class="element-status" aria-live="polite">Admin only. Choose up to 5 clips.</div>
+                <video id="autoComboPreview" class="auto-combo-preview" controls hidden playsinline></video>
+                <a id="autoComboDownload" class="source-action secondary-action" hidden download="autocombo.mp4">Download combo</a>
+              </article>
+            </details>
             <details class="elements-section" data-element-section="kickProgram" open>
               <summary>🎯 Kick Program Mode</summary>
               <article class="element-card">
@@ -24258,6 +24348,155 @@
         setInterval(refreshEmptyState, 2500);
 
       })(); // end initWaveD
+
+      (function initAutoComboAdmin() {
+        const panel = document.getElementById("autoComboAdminPanel");
+        const input = document.getElementById("autoComboFiles");
+        const drop = document.getElementById("autoComboDrop");
+        const slots = document.getElementById("autoComboSlots");
+        const total = document.getElementById("autoComboTotal");
+        const totalOut = document.getElementById("autoComboTotalOutput");
+        const perClip = document.getElementById("autoComboPerClip");
+        const perClipOut = document.getElementById("autoComboPerClipOutput");
+        const generate = document.getElementById("autoComboGenerate");
+        const progress = document.getElementById("autoComboProgress");
+        const status = document.getElementById("autoComboStatus");
+        const preview = document.getElementById("autoComboPreview");
+        const download = document.getElementById("autoComboDownload");
+        let files = [];
+        let resultUrl = null;
+
+        function setStatus(message, kind) {
+          if (!status) return;
+          status.textContent = message;
+          status.classList.toggle("active", kind === "success");
+          status.classList.toggle("error", kind === "error");
+          status.classList.toggle("loading", kind === "loading");
+        }
+
+        function refreshControls() {
+          const clipCount = files.length || 5;
+          const totalValue = Number(total?.value || 25);
+          const perValue = Number(perClip?.value || 5);
+          if (totalOut) totalOut.textContent = `${totalValue}s`;
+          if (perClipOut) perClipOut.textContent = `${perValue}s`;
+          const valid = files.length > 0 && files.length <= 5 && perValue * clipCount <= totalValue;
+          if (generate) generate.disabled = !valid;
+          if (files.length && !valid) {
+            setStatus("Per-clip length times clip count must fit inside total length.", "error");
+          } else if (files.length) {
+            setStatus(`${files.length} clip${files.length > 1 ? "s" : ""} ready.`, "success");
+          }
+        }
+
+        function renderSlots() {
+          if (!slots) return;
+          slots.innerHTML = "";
+          for (let i = 0; i < 5; i += 1) {
+            const row = document.createElement("div");
+            row.className = "auto-combo-slot";
+            const file = files[i];
+            row.innerHTML = file
+              ? `<span>${i + 1}. ${file.name}</span><strong>${Math.round(file.size / 1024 / 1024)}MB</strong>`
+              : `<span>${i + 1}. Empty slot</span><strong>—</strong>`;
+            slots.appendChild(row);
+          }
+          refreshControls();
+        }
+
+        function setFiles(nextFiles) {
+          files = Array.from(nextFiles || []).filter((file) => file && file.type.startsWith("video/")).slice(0, 5);
+          if (files.length !== (nextFiles?.length || 0)) {
+            setStatus("Only the first 5 video files were kept.", "error");
+          }
+          renderSlots();
+        }
+
+        function renderProgress(stage) {
+          if (!progress) return;
+          progress.hidden = false;
+          progress.innerHTML = files.map((file, index) => {
+            const label = stage === "done" ? "done" : stage === "uploading" ? "uploading" : stage === "scoring" ? "transcribing + scoring" : "waiting";
+            return `<div class="auto-combo-progress-row"><span>${index + 1}. ${file.name}</span><strong>${label}</strong></div>`;
+          }).join("");
+        }
+
+        async function loadAdminFlag() {
+          try {
+            const response = await fetch("/api/cv-admin/whoami", { headers: { accept: "application/json" } });
+            const payload = await response.json().catch(() => ({}));
+            window.__CV_IS_ADMIN__ = Boolean(payload?.is_admin);
+          } catch {
+            window.__CV_IS_ADMIN__ = false;
+          }
+          if (panel) panel.hidden = window.__CV_IS_ADMIN__ !== true;
+        }
+
+        input?.addEventListener("change", () => setFiles(input.files));
+        total?.addEventListener("input", refreshControls);
+        perClip?.addEventListener("input", refreshControls);
+        drop?.addEventListener("dragover", (event) => {
+          event.preventDefault();
+          drop.classList.add("dragover");
+        });
+        drop?.addEventListener("dragleave", () => drop.classList.remove("dragover"));
+        drop?.addEventListener("drop", (event) => {
+          event.preventDefault();
+          drop.classList.remove("dragover");
+          setFiles(event.dataTransfer?.files);
+        });
+
+        generate?.addEventListener("click", async () => {
+          if (!files.length || generate.disabled) return;
+          if (resultUrl) URL.revokeObjectURL(resultUrl);
+          resultUrl = null;
+          if (preview) {
+            preview.hidden = true;
+            preview.removeAttribute("src");
+          }
+          if (download) {
+            download.hidden = true;
+            download.removeAttribute("href");
+          }
+          setStatus("Uploading clips…", "loading");
+          renderProgress("uploading");
+          generate.disabled = true;
+
+          const form = new FormData();
+          files.forEach((file) => form.append("clips[]", file, file.name));
+          form.append("total_length_seconds", String(total?.value || 25));
+          form.append("per_clip_seconds", String(perClip?.value || 5));
+
+          try {
+            renderProgress("scoring");
+            setStatus("Transcribing, scoring, and stitching. This can take a few minutes.", "loading");
+            const response = await fetch("/api/cv-admin/auto-combo", { method: "POST", body: form });
+            if (!response.ok) {
+              const errorPayload = await response.json().catch(() => ({}));
+              throw new Error(errorPayload.error || errorPayload.stage || `Auto-combo failed (${response.status}).`);
+            }
+            const blob = await response.blob();
+            resultUrl = URL.createObjectURL(blob);
+            if (preview) {
+              preview.src = resultUrl;
+              preview.hidden = false;
+            }
+            if (download) {
+              download.href = resultUrl;
+              download.hidden = false;
+            }
+            renderProgress("done");
+            setStatus("Auto-combo ready.", "success");
+          } catch (error) {
+            setStatus(error instanceof Error ? error.message : "Auto-combo failed.", "error");
+          } finally {
+            refreshControls();
+          }
+        });
+
+        renderSlots();
+        loadAdminFlag();
+      })();
     </script>
   </body>
 </html>
