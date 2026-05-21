@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { promises as fs } from "node:fs";
+import { existsSync, promises as fs } from "node:fs";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
@@ -31,6 +31,7 @@ export type ViralWindow = {
 export function getFfmpegCandidates() {
   let bundled: string | null = null;
   let staticPackageBinary: string | null = null;
+  let installerBinary: string | null = null;
   try {
     const resolved = require("ffmpeg-static");
     if (typeof resolved === "string") bundled = resolved;
@@ -43,16 +44,25 @@ export function getFfmpegCandidates() {
   } catch {
     staticPackageBinary = null;
   }
+  try {
+    const resolved = require("@ffmpeg-installer/ffmpeg");
+    if (resolved && typeof resolved === "object" && typeof resolved.path === "string") installerBinary = resolved.path;
+  } catch {
+    installerBinary = null;
+  }
 
   return [
-    process.env.FFMPEG_PATH?.trim(),
-    bundled,
     staticPackageBinary,
+    bundled,
+    installerBinary,
+    process.env.FFMPEG_PATH?.trim(),
     "ffmpeg",
     "/usr/local/bin/ffmpeg",
     "/opt/homebrew/bin/ffmpeg",
     "/usr/bin/ffmpeg",
-  ].filter((candidate): candidate is string => typeof candidate === "string" && candidate.length > 0);
+  ]
+    .filter((candidate): candidate is string => typeof candidate === "string" && candidate.length > 0)
+    .filter((candidate) => !path.isAbsolute(candidate) || existsSync(candidate));
 }
 
 export async function runFfmpeg(args: string[], timeoutMs = 10 * 60 * 1000) {
