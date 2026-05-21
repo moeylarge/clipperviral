@@ -50,7 +50,6 @@ const secondaryFeatures = [
 ];
 
 const complianceItems = [
-  "Approved by Kick HQ",
   "Auto-resizes per layout",
   "Streamer search built into editor",
   "Always renders top-most",
