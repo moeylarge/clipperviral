@@ -30,6 +30,7 @@ export type ViralWindow = {
 
 export function getFfmpegCandidates() {
   let bundled: string | null = null;
+  let staticPackageBinary: string | null = null;
   try {
     const resolved = require("ffmpeg-static");
     if (typeof resolved === "string") bundled = resolved;
@@ -37,10 +38,16 @@ export function getFfmpegCandidates() {
   } catch {
     bundled = null;
   }
+  try {
+    staticPackageBinary = path.join(path.dirname(require.resolve("ffmpeg-static/package.json")), "ffmpeg");
+  } catch {
+    staticPackageBinary = null;
+  }
 
   return [
     process.env.FFMPEG_PATH?.trim(),
     bundled,
+    staticPackageBinary,
     "ffmpeg",
     "/usr/local/bin/ffmpeg",
     "/opt/homebrew/bin/ffmpeg",
