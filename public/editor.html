@@ -3211,10 +3211,56 @@
         min-width: 0;
       }
 
+      .auto-combo-slot.is-uploading {
+        border-color: rgba(55, 120, 255, 0.35);
+        background: #f6f9ff;
+      }
+
+      .auto-combo-slot.is-ready {
+        border-color: rgba(36, 122, 54, 0.24);
+        background: #f4fff6;
+      }
+
       .auto-combo-slot span {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+      }
+
+      .auto-combo-slot .slot-label {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .slot-upload-btn,
+      .slot-clear-btn {
+        border: 1px solid #cfd6e8;
+        border-radius: 7px;
+        background: #fff;
+        color: #16181f;
+        font-weight: 900;
+        font-size: 12px;
+        min-height: 30px;
+        padding: 6px 9px;
+        cursor: pointer;
+      }
+
+      .slot-upload-btn:disabled,
+      .slot-clear-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .slot-clear-btn {
+        width: 30px;
+        padding: 0;
+      }
+
+      .slot-progress {
+        color: #586074;
+        font-weight: 900;
+        min-width: 88px;
+        text-align: right;
       }
 
       .auto-combo-progress {
@@ -7632,7 +7678,6 @@
                   <span class="element-badge">Admin</span>
                 </div>
                 <div id="autoComboDrop" class="auto-combo-drop">
-                  <input id="autoComboFiles" type="file" accept="video/mp4,video/quicktime,video/webm,video/*" multiple />
                   <div class="auto-combo-slots" id="autoComboSlots" aria-live="polite"></div>
                 </div>
                 <div class="element-slider-grid">
@@ -24351,7 +24396,6 @@
 
       (function initAutoComboAdmin() {
         const panel = document.getElementById("autoComboAdminPanel");
-        const input = document.getElementById("autoComboFiles");
         const drop = document.getElementById("autoComboDrop");
         const slots = document.getElementById("autoComboSlots");
         const total = document.getElementById("autoComboTotal");
@@ -24363,8 +24407,43 @@
         const status = document.getElementById("autoComboStatus");
         const preview = document.getElementById("autoComboPreview");
         const download = document.getElementById("autoComboDownload");
-        let files = [];
+        const slotState = Array.from({ length: 5 }, () => ({
+          file: null,
+          blob: null,
+          uploading: false,
+          progress: 0,
+          error: null,
+        }));
         let resultUrl = null;
+        let blobClientPromise = null;
+
+        function getBlobClient() {
+          if (!blobClientPromise) {
+            blobClientPromise = import("https://esm.sh/@vercel/blob@2.4.0/client");
+          }
+          return blobClientPromise;
+        }
+
+        function readySlots() {
+          return slotState.filter((slot) => slot.blob && !slot.uploading);
+        }
+
+        function safeBlobPathName(file) {
+          const fallback = "clip.mp4";
+          const rawName = (file?.name || fallback).toString();
+          const safeName = rawName.replace(/[^a-z0-9._-]+/gi, "-").replace(/^-+|-+$/g, "") || fallback;
+          return `auto-combo/${Date.now()}-${Math.random().toString(16).slice(2)}-${safeName}`;
+        }
+
+        function escapeAutoComboHtml(value) {
+          return `${value ?? ""}`.replace(/[&<>"']/g, (char) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          }[char]));
+        }
 
         function setStatus(message, kind) {
           if (!status) return;
@@ -24375,17 +24454,20 @@
         }
 
         function refreshControls() {
-          const clipCount = files.length || 5;
+          const clipCount = readySlots().length || 5;
           const totalValue = Number(total?.value || 25);
           const perValue = Number(perClip?.value || 5);
           if (totalOut) totalOut.textContent = `${totalValue}s`;
           if (perClipOut) perClipOut.textContent = `${perValue}s`;
-          const valid = files.length > 0 && files.length <= 5 && perValue * clipCount <= totalValue;
+          const hasUploading = slotState.some((slot) => slot.uploading);
+          const valid = readySlots().length > 0 && !hasUploading && perValue * clipCount <= totalValue;
           if (generate) generate.disabled = !valid;
-          if (files.length && !valid) {
+          if (hasUploading) {
+            setStatus("Upload in progress. Generate will unlock when it finishes.", "loading");
+          } else if (readySlots().length && !valid) {
             setStatus("Per-clip length times clip count must fit inside total length.", "error");
-          } else if (files.length) {
-            setStatus(`${files.length} clip${files.length > 1 ? "s" : ""} ready.`, "success");
+          } else if (readySlots().length) {
+            setStatus(`${readySlots().length} clip${readySlots().length > 1 ? "s" : ""} uploaded.`, "success");
           }
         }
 
@@ -24393,31 +24475,93 @@
           if (!slots) return;
           slots.innerHTML = "";
           for (let i = 0; i < 5; i += 1) {
+            const slot = slotState[i];
             const row = document.createElement("div");
-            row.className = "auto-combo-slot";
-            const file = files[i];
-            row.innerHTML = file
-              ? `<span>${i + 1}. ${file.name}</span><strong>${Math.round(file.size / 1024 / 1024)}MB</strong>`
-              : `<span>${i + 1}. Empty slot</span><strong>—</strong>`;
+            row.className = `auto-combo-slot${slot.uploading ? " is-uploading" : ""}${slot.blob ? " is-ready" : ""}`;
+            row.dataset.slotIndex = String(i);
+            const label = slot.file
+              ? `${i + 1}. ${slot.file.name}`
+              : slot.error
+                ? `${i + 1}. ${slot.error}`
+                : `${i + 1}. Empty slot`;
+            const progressLabel = slot.uploading && slot.progress > 0 ? `${slot.progress}%` : "Uploading…";
+            row.innerHTML = `
+              <span class="slot-label">${escapeAutoComboHtml(label)}</span>
+              <button class="slot-upload-btn" type="button" ${slot.uploading ? "disabled" : ""}>${slot.blob ? "Replace" : "Upload"}</button>
+              <input type="file" accept="video/*" hidden />
+              <button class="slot-clear-btn" type="button" ${slot.blob || slot.file || slot.error ? "" : "hidden"} aria-label="Clear slot ${i + 1}">×</button>
+              <span class="slot-progress" ${slot.uploading ? "" : "hidden"}>${progressLabel}</span>
+            `;
+            const uploadButton = row.querySelector(".slot-upload-btn");
+            const clearButton = row.querySelector(".slot-clear-btn");
+            const fileInput = row.querySelector("input[type='file']");
+            uploadButton?.addEventListener("click", () => fileInput?.click());
+            fileInput?.addEventListener("change", () => {
+              const file = fileInput.files?.[0];
+              if (file) uploadFileToSlot(i, file);
+              fileInput.value = "";
+            });
+            clearButton?.addEventListener("click", () => {
+              slotState[i] = { file: null, blob: null, uploading: false, progress: 0, error: null };
+              renderSlots();
+              refreshControls();
+            });
             slots.appendChild(row);
           }
           refreshControls();
         }
 
-        function setFiles(nextFiles) {
-          files = Array.from(nextFiles || []).filter((file) => file && file.type.startsWith("video/")).slice(0, 5);
-          if (files.length !== (nextFiles?.length || 0)) {
-            setStatus("Only the first 5 video files were kept.", "error");
+        async function uploadFileToSlot(index, file) {
+          if (!file || !file.type.startsWith("video/")) {
+            slotState[index] = { file: null, blob: null, uploading: false, progress: 0, error: "Choose a video file." };
+            renderSlots();
+            return;
           }
+          slotState[index] = { file, blob: null, uploading: true, progress: 0, error: null };
           renderSlots();
+          setStatus(`Uploading ${file.name}…`, "loading");
+          try {
+            const { upload } = await getBlobClient();
+            const blob = await upload(safeBlobPathName(file), file, {
+              access: "public",
+              handleUploadUrl: "/api/cv-admin/blob-upload-token",
+              clientPayload: JSON.stringify({ slot: index, name: file.name }),
+              onUploadProgress: (event) => {
+                const nextProgress = Math.max(1, Math.min(99, Math.round(event?.percentage || 0)));
+                slotState[index].progress = nextProgress;
+                renderSlots();
+              },
+            });
+            slotState[index] = { file, blob, uploading: false, progress: 100, error: null };
+            setStatus(`${file.name} uploaded.`, "success");
+          } catch (error) {
+            slotState[index] = {
+              file: null,
+              blob: null,
+              uploading: false,
+              progress: 0,
+              error: error instanceof Error ? error.message : "Upload failed.",
+            };
+            setStatus(slotState[index].error, "error");
+          } finally {
+            renderSlots();
+            refreshControls();
+          }
         }
 
         function renderProgress(stage) {
           if (!progress) return;
           progress.hidden = false;
-          progress.innerHTML = files.map((file, index) => {
-            const label = stage === "done" ? "done" : stage === "uploading" ? "uploading" : stage === "scoring" ? "transcribing + scoring" : "waiting";
-            return `<div class="auto-combo-progress-row"><span>${index + 1}. ${file.name}</span><strong>${label}</strong></div>`;
+          const clips = readySlots();
+          progress.innerHTML = clips.map((slot, index) => {
+            const label = stage === "done"
+              ? "done"
+              : stage === "stitching"
+                ? "stitching"
+                : stage === "scoring"
+                  ? "transcribing + scoring"
+                  : "uploaded";
+            return `<div class="auto-combo-progress-row"><span>${index + 1}. ${escapeAutoComboHtml(slot.file?.name || "clip")}</span><strong>${label}</strong></div>`;
           }).join("");
         }
 
@@ -24429,10 +24573,13 @@
           } catch {
             window.__CV_IS_ADMIN__ = false;
           }
-          if (panel) panel.hidden = window.__CV_IS_ADMIN__ !== true;
+          if (window.__CV_IS_ADMIN__ && panel) {
+            panel.hidden = false;
+          } else if (panel) {
+            panel.hidden = true;
+          }
         }
 
-        input?.addEventListener("change", () => setFiles(input.files));
         total?.addEventListener("input", refreshControls);
         perClip?.addEventListener("input", refreshControls);
         drop?.addEventListener("dragover", (event) => {
@@ -24440,14 +24587,29 @@
           drop.classList.add("dragover");
         });
         drop?.addEventListener("dragleave", () => drop.classList.remove("dragover"));
-        drop?.addEventListener("drop", (event) => {
+        drop?.addEventListener("drop", async (event) => {
           event.preventDefault();
           drop.classList.remove("dragover");
-          setFiles(event.dataTransfer?.files);
+          const dropped = Array.from(event.dataTransfer?.files || []).filter((file) => file.type.startsWith("video/"));
+          if (!dropped.length) {
+            setStatus("Drop video files only.", "error");
+            return;
+          }
+          let fileIndex = 0;
+          for (let slotIndex = 0; slotIndex < slotState.length && fileIndex < dropped.length; slotIndex += 1) {
+            if (!slotState[slotIndex].blob && !slotState[slotIndex].uploading) {
+              await uploadFileToSlot(slotIndex, dropped[fileIndex]);
+              fileIndex += 1;
+            }
+          }
+          if (fileIndex < dropped.length) {
+            setStatus("Only 5 slots are available.", "error");
+          }
         });
 
         generate?.addEventListener("click", async () => {
-          if (!files.length || generate.disabled) return;
+          const clips = readySlots();
+          if (!clips.length || generate.disabled) return;
           if (resultUrl) URL.revokeObjectURL(resultUrl);
           resultUrl = null;
           if (preview) {
@@ -24458,19 +24620,30 @@
             download.hidden = true;
             download.removeAttribute("href");
           }
-          setStatus("Uploading clips…", "loading");
-          renderProgress("uploading");
+          setStatus("Transcribing, scoring, and stitching. This can take a few minutes.", "loading");
+          renderProgress("scoring");
           generate.disabled = true;
 
-          const form = new FormData();
-          files.forEach((file) => form.append("clips[]", file, file.name));
-          form.append("total_length_seconds", String(total?.value || 25));
-          form.append("per_clip_seconds", String(perClip?.value || 5));
-
+          const timers = [
+            setTimeout(() => {
+              setStatus("Scoring viral moments…", "loading");
+              renderProgress("scoring");
+            }, 4000),
+            setTimeout(() => {
+              setStatus("Stitching final combo…", "loading");
+              renderProgress("stitching");
+            }, 15000),
+          ];
           try {
-            renderProgress("scoring");
-            setStatus("Transcribing, scoring, and stitching. This can take a few minutes.", "loading");
-            const response = await fetch("/api/cv-admin/auto-combo", { method: "POST", body: form });
+            const response = await fetch("/api/cv-admin/auto-combo", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                clips: clips.map((slot) => ({ blob_url: slot.blob?.url || slot.blob?.downloadUrl })),
+                total_length_seconds: Number(total?.value || 25),
+                per_clip_seconds: Number(perClip?.value || 5),
+              }),
+            });
             if (!response.ok) {
               const errorPayload = await response.json().catch(() => ({}));
               throw new Error(errorPayload.error || errorPayload.stage || `Auto-combo failed (${response.status}).`);
@@ -24490,6 +24663,7 @@
           } catch (error) {
             setStatus(error instanceof Error ? error.message : "Auto-combo failed.", "error");
           } finally {
+            timers.forEach((timer) => clearTimeout(timer));
             refreshControls();
           }
         });
