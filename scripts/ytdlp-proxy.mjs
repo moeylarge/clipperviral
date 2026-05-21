@@ -355,7 +355,10 @@ function buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, aud
   const duration = Number(clipDuration);
   if (!audioOnly && FFMPEG_PATH && Number.isFinite(start) && start >= 0 && Number.isFinite(duration) && duration > 0) {
     const end = start + duration;
-    args.push("--download-sections", `*${start}-${end}`, "--force-keyframes-at-cuts");
+    args.push("--download-sections", `*${start}-${end}`);
+    if (sourceKind !== "kick" && !/\/\/(?:www\.)?kick\.com\//i.test(sourceUrl)) {
+      args.push("--force-keyframes-at-cuts");
+    }
   }
 
   args.push(sourceUrl);
