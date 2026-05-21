@@ -295,32 +295,48 @@ export async function scoreWindowWithClaude(options: {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("Missing ANTHROPIC_API_KEY.");
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": key,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-3-5-haiku-latest",
-      max_tokens: 120,
-      temperature: 0.2,
-      messages: [
-        {
-          role: "user",
-          content:
-            `Rate the viral potential of this ${options.perClipSeconds}-second clip moment from 0-100. ` +
-            "Consider hype level, comedic timing, surprise, hookability, and shareability. " +
-            "Return ONLY a JSON object: {\"score\": number, \"reason\": string}.\n" +
-            `Transcript: ${options.text || "(no clear speech)"}\n` +
-            `Audio energy (0-1 normalized): ${options.audioRms.toFixed(3)}`,
-        },
-      ],
-    }),
-  });
+  const modelCandidates = [
+    process.env.ANTHROPIC_MODEL?.trim(),
+    "claude-3-5-haiku-20241022",
+    "claude-3-haiku-20240307",
+  ].filter((model): model is string => Boolean(model));
 
-  if (!response.ok) throw new Error(`Claude scoring failed: ${response.status} ${await response.text()}`);
+  let response: Response | null = null;
+  let lastErrorText = "";
+  for (const model of [...new Set(modelCandidates)]) {
+    response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 120,
+        temperature: 0.2,
+        messages: [
+          {
+            role: "user",
+            content:
+              `Rate the viral potential of this ${options.perClipSeconds}-second clip moment from 0-100. ` +
+              "Consider hype level, comedic timing, surprise, hookability, and shareability. " +
+              "Return ONLY a JSON object: {\"score\": number, \"reason\": string}.\n" +
+              `Transcript: ${options.text || "(no clear speech)"}\n` +
+              `Audio energy (0-1 normalized): ${options.audioRms.toFixed(3)}`,
+          },
+        ],
+      }),
+    });
+
+    if (response.ok) break;
+    lastErrorText = await response.text();
+    if (response.status !== 404 || !lastErrorText.includes("not_found_error")) break;
+  }
+
+  if (!response?.ok) {
+    throw new Error(`Claude scoring failed: ${response?.status || "unknown"} ${lastErrorText}`);
+  }
 
   const payload = (await response.json()) as { content?: Array<{ text?: string }> };
   const text = payload.content?.map((item) => item.text || "").join("\n") || "";
