@@ -142,7 +142,7 @@ async function extractAndNormalizeWindow(options: {
     "-t",
     String(options.duration),
     "-vf",
-    "scale=w='if(gt(a,1080/1350),1080,-2)':h='if(gt(a,1080/1350),-2,1350)',pad=1080:1350:(ow-iw)/2:(oh-ih)/2:black,setsar=1,fps=30,format=yuv420p",
+    "split=2[bg][fg];[bg]scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350,gblur=sigma=24[bg];[fg]scale=1080:1350:force_original_aspect_ratio=decrease[fg];[bg][fg]overlay=(W-w)/2:(H-h)/2,setsar=1,fps=30,format=yuv420p",
     "-c:v",
     "libx264",
     "-preset",
