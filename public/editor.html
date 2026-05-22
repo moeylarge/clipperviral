@@ -881,6 +881,8 @@
       .layout-card[data-layout="feed45-full-frame"] .thumb::before { display: none; }
       .layout-card[data-layout="feed45-zoom-full-frame"] .thumb { background: radial-gradient(circle at 54% 42%, #eef6f0 0 16%, #70d9ec 17% 36%, #415837 56%, #0d1615 100%); }
       .layout-card[data-layout="feed45-zoom-full-frame"] .thumb::before { display: none; }
+      .layout-card[data-layout="feed45-combo-full-frame"] .thumb { background: linear-gradient(180deg, #c9ced8 0 27.5%, #70d9ec 27.5% 72.5%, #c9ced8 72.5% 100%); }
+      .layout-card[data-layout="feed45-combo-full-frame"] .thumb::before { display: none; }
       .layout-card[data-layout="feed45-landscape-frame"] .thumb { background: linear-gradient(180deg, #070707 0 27.5%, #70d9ec 27.5% 72.5%, #070707 72.5% 100%); }
       .layout-card[data-layout="feed45-landscape-frame"] .thumb::before { display: none; }
       .layout-card[data-layout="feed45-animated-frame"] .thumb { background: linear-gradient(180deg, #1a0505 0 27.5%, #70d9ec 27.5% 72.5%, #1a0505 72.5% 100%); position: relative; }
@@ -9442,6 +9444,7 @@
         "feed45-fullscreen": { key: "feed45-fullscreen", label: "Feed 4:5 Split", format: "portrait45", cameraMode: "split", aspectRatio: "4:5", rendererKey: "feed45-fullscreen", panels: ["focus", "facecamRight"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 46, radius: 0 }, facecamRight: { x: 0, y: 54, w: 100, h: 46, radius: 0, borderWidth: "0" } } },
         "feed45-full-frame": { key: "feed45-full-frame", label: "4:5 Full Frame", format: "portrait45", cameraMode: "single", aspectRatio: "4:5", rendererKey: "feed45-full-frame", panels: ["focus"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 100, radius: 0 } } },
         "feed45-zoom-full-frame": { key: "feed45-zoom-full-frame", label: "4:5 Zoom Full Frame", format: "portrait45", cameraMode: "single", aspectRatio: "4:5", rendererKey: "feed45-zoom-full-frame", panels: ["focus"], videoZoom: 1.24, panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 100, radius: 0 } } },
+        "feed45-combo-full-frame": { key: "feed45-combo-full-frame", label: "4:5 Full Frame Combo", format: "portrait45", cameraMode: "single", aspectRatio: "4:5", rendererKey: "feed45-combo-full-frame", panels: ["focus"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 100, radius: 0, sourceCrop: { x: 0, y: 27.5, w: 100, h: 45 } } } },
         "feed45-landscape-frame": { key: "feed45-landscape-frame", label: "4:5 Landscape Frame", format: "portrait45", cameraMode: "single", aspectRatio: "4:5", rendererKey: "feed45-landscape-frame", panels: ["topBar", "focus", "bottomBar"], panelBoxes: { topBar: { x: 0, y: 0, w: 100, h: 27.5, radius: 0 }, focus: { x: 0, y: 27.5, w: 100, h: 45, radius: 0 }, bottomBar: { x: 0, y: 72.5, w: 100, h: 27.5, radius: 0 } } },
         "feed45-animated-frame": { key: "feed45-animated-frame", label: "4:5 Animated Frame", format: "portrait45", cameraMode: "single", aspectRatio: "4:5", rendererKey: "feed45-animated-frame", panels: ["topBar", "focus", "bottomBar"], panelBoxes: { topBar: { x: 0, y: 0, w: 100, h: 27.5, radius: 0 }, focus: { x: 0, y: 27.5, w: 100, h: 45, radius: 0 }, bottomBar: { x: 0, y: 72.5, w: 100, h: 27.5, radius: 0 } } },
         "square-fullscreen": { key: "square-fullscreen", label: "Square Fullscreen", format: "square", cameraMode: "single", aspectRatio: "1:1", rendererKey: "square-fullscreen", panels: ["focus"], panelBoxes: { focus: { x: 0, y: 0, w: 100, h: 100, radius: 0 } } },
@@ -10656,6 +10659,7 @@
         "feed45-fullscreen": { category: "Feed", description: "Stacked top and bottom clip panels for larger 4:5 posts." },
         "feed45-full-frame": { category: "Feed", description: "One natural video fills the full 4:5 frame with no black bars." },
         "feed45-zoom-full-frame": { category: "Feed", description: "One full-frame 4:5 crop with extra zoom for a larger subject." },
+        "feed45-combo-full-frame": { category: "Feed", description: "Crop compiler 4:5 output to the center action and fill the full frame." },
         "feed45-landscape-frame": { category: "Feed", description: "16:9 landscape clip centered in a 4:5 frame with black branding bars." },
         "feed45-animated-frame": { category: "Feed", description: "16:9 landscape clip in a 4:5 frame with animated ember art bars." },
         "square-fullscreen": { category: "Square", description: "One 1:1 fullscreen export." },
@@ -18214,9 +18218,10 @@
         } else if (drawImagePanelGroup(ctx, panelImages, rect, drawOptions)) {
           // Image panel drawn.
         } else if (panelVideo?.videoWidth && panelVideo?.videoHeight) {
-          // Wave A: source-crop per panel, vertical-only.
+          // Wave A: source-crop per panel. Keyframed source crops stay vertical-only.
           const sceneFormat = scene?.layout?.format || layoutState.format;
-          let sourceCrop = (sceneFormat === "vertical" && panelBox && panelBox.sourceCrop) ? panelBox.sourceCrop : null;
+          const supportsStaticSourceCrop = sceneFormat === "vertical" || sceneFormat === "portrait45";
+          let sourceCrop = (supportsStaticSourceCrop && panelBox && panelBox.sourceCrop) ? panelBox.sourceCrop : null;
           // Wave B: keyframe interpolation takes priority when >=2 keyframes exist.
           if (sceneFormat === "vertical") {
             try {
@@ -18583,6 +18588,7 @@
         const contentPanels = panels.filter((panelKey) => !["background", "topBar", "bottomBar"].includes(panelKey));
         const focus = panelBoxes.focus;
         const format = layout.format || layoutState.format;
+        if (layout.key === "feed45-combo-full-frame") return [];
         if (format === "portrait45" && contentPanels.length <= 1 && focus && focus.w >= 99 && focus.h >= 99) {
           const landscapeContentHeight = outputWidth / (16 / 9);
           const barHeight = Math.floor((outputHeight - landscapeContentHeight) / 2);
