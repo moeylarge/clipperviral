@@ -18560,6 +18560,53 @@
         });
       }
 
+      function getEffectOverlayBarRects(outputWidth, outputHeight, scene) {
+        const layout = scene?.layout || {};
+        const panelBoxes = layout.panelBoxes || {};
+        const panels = Array.isArray(layout.panels) ? layout.panels : [];
+        const rects = [];
+        const addPanelBox = (box) => {
+          if (!box) return;
+          const rect = {
+            x: Math.round(outputWidth * (Number(box.x) || 0) / 100),
+            y: Math.round(outputHeight * (Number(box.y) || 0) / 100),
+            w: Math.round(outputWidth * (Number(box.w) || 0) / 100),
+            h: Math.round(outputHeight * (Number(box.h) || 0) / 100),
+          };
+          if (rect.w > 0 && rect.h > 0) rects.push(rect);
+        };
+
+        if (panels.includes("topBar")) addPanelBox(panelBoxes.topBar);
+        if (panels.includes("bottomBar")) addPanelBox(panelBoxes.bottomBar);
+        if (rects.length) return rects;
+
+        const contentPanels = panels.filter((panelKey) => !["background", "topBar", "bottomBar"].includes(panelKey));
+        const focus = panelBoxes.focus;
+        const format = layout.format || layoutState.format;
+        if (format === "portrait45" && contentPanels.length <= 1 && focus && focus.w >= 99 && focus.h >= 99) {
+          const landscapeContentHeight = outputWidth / (16 / 9);
+          const barHeight = Math.floor((outputHeight - landscapeContentHeight) / 2);
+          if (barHeight > 0) {
+            return [
+              { x: 0, y: 0, w: outputWidth, h: barHeight },
+              { x: 0, y: outputHeight - barHeight, w: outputWidth, h: barHeight },
+            ];
+          }
+        }
+
+        if (focus && contentPanels.length <= 1) {
+          const focusY = outputHeight * focus.y / 100;
+          const focusBottom = outputHeight * (focus.y + focus.h) / 100;
+          const topBarH = Math.floor(focusY);
+          const bottomBarY = Math.ceil(focusBottom);
+          const bottomBarH = outputHeight - bottomBarY;
+          if (topBarH > 0) rects.push({ x: 0, y: 0, w: outputWidth, h: topBarH });
+          if (bottomBarH > 0) rects.push({ x: 0, y: bottomBarY, w: outputWidth, h: bottomBarH });
+        }
+
+        return rects;
+      }
+
       function drawEffectOverlay(ctx, outputWidth, outputHeight, scene) {
         const fx = scene?.overlays?.effectOverlay;
         if (!fx?.enabled || fx.effect === "none") return;
@@ -18571,28 +18618,17 @@
         const blendMode = validBlends.includes(fx.blendMode) ? fx.blendMode : "screen";
         const region = fx.region === "bars" ? "bars" : "whole";
         ctx.save();
-        /* Region "bars": clip to top + bottom bar regions only (skip the focus video area) */
+        /* Region "bars": clip to explicit 4:5 bar panels, or the 4:5 top/bottom bands around a centered 16:9 safe area. */
         if (region === "bars") {
-          const focus = scene?.layout?.panelBoxes?.focus;
-          if (focus) {
-            const focusY = outputHeight * focus.y / 100;
-            const focusBottom = outputHeight * (focus.y + focus.h) / 100;
-            const topBarH = Math.floor(focusY);
-            const bottomBarY = Math.ceil(focusBottom);
-            const bottomBarH = outputHeight - bottomBarY;
-            if (topBarH <= 0 && bottomBarH <= 0) {
-              /* no bars to draw into — bail */
-              ctx.restore();
-              return;
-            }
-            ctx.beginPath();
-            if (topBarH > 0) ctx.rect(0, 0, outputWidth, topBarH);
-            if (bottomBarH > 0) ctx.rect(0, bottomBarY, outputWidth, bottomBarH);
-            ctx.clip();
-          } else {
+          const barRects = getEffectOverlayBarRects(outputWidth, outputHeight, scene);
+          if (!barRects.length) {
+            /* no bars to draw into — bail */
             ctx.restore();
             return;
           }
+          ctx.beginPath();
+          barRects.forEach((rect) => ctx.rect(rect.x, rect.y, rect.w, rect.h));
+          ctx.clip();
         }
         ctx.globalAlpha = opacity;
         const prevComp = ctx.globalCompositeOperation;
