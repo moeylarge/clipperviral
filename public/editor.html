@@ -10312,13 +10312,20 @@
         const key = currentSourceKey();
         if (!key) return;
         const bucket = sourceCropsBySource[key];
-        // Always clear any existing sourceCrop before restoring, so stale crops from a
-        // previous source don't persist on the live state.
+        const activeLayout = getActiveLayout();
+        // Reset persisted source crops without wiping source crops defined by
+        // fixed layouts, such as the 4:5 compiler full-frame crop.
         SOURCE_CROP_PANELS.forEach((pk) => {
-          if (cropState[pk] && cropState[pk].sourceCrop) delete cropState[pk].sourceCrop;
+          if (!cropState[pk]) return;
+          const layoutCrop = activeLayout?.panelBoxes?.[pk]?.sourceCrop;
+          if (layoutCrop) {
+            cropState[pk].sourceCrop = { ...layoutCrop };
+          } else if (cropState[pk].sourceCrop) {
+            delete cropState[pk].sourceCrop;
+          }
         });
         if (!bucket) return;
-        // Vertical-only gate for application.
+        // User-authored source crops and keyframes remain vertical-only.
         if (layoutState.format !== "vertical") return;
         SOURCE_CROP_PANELS.forEach((pk) => {
           if (bucket[pk]) applySourceCropToLayoutState(pk, bucket[pk]);
