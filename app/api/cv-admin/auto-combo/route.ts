@@ -26,6 +26,12 @@ const MAX_CLIPS = 5;
 const MAX_FILE_SIZE_BYTES = 200 * 1024 * 1024;
 const MAX_BLOB_FILE_SIZE_BYTES = 500 * 1024 * 1024;
 const TRANSITION_SECONDS = 0.25;
+const WATERMARK_ASSET_DIR = path.join(process.cwd(), "app/api/cv-admin/auto-combo/assets");
+const WATERMARK_HANDLE_PATH = path.join(WATERMARK_ASSET_DIR, "clipperviral-handle.png");
+const WATERMARK_URL_FONT_PATH = path.join(WATERMARK_ASSET_DIR, "Inter.ttf");
+const WATERMARK_BADGES: Record<string, string> = {
+  kick: path.join(WATERMARK_ASSET_DIR, "kick-badge.png"),
+};
 
 type ProcessedClip = {
   index: number;
@@ -33,6 +39,11 @@ type ProcessedClip = {
   winningWindow: ViralWindow;
   extractedPath: string;
   normalizedPath: string;
+};
+
+type AutoComboWatermark = {
+  platform: string;
+  streamerUrl: string | null;
 };
 
 function jsonError(stage: string, error: unknown, status = 500) {
@@ -55,6 +66,33 @@ function numberValue(value: unknown, fallback: number, min: number, max: number)
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.max(min, Math.min(max, Math.round(parsed)));
+}
+
+function stringValue(value: unknown, fallback = "") {
+  return typeof value === "string" ? value.trim() : fallback;
+}
+
+function normalizePlatform(value: unknown) {
+  const platform = stringValue(value, "kick").toLowerCase();
+  if (Object.prototype.hasOwnProperty.call(WATERMARK_BADGES, platform)) return platform;
+  return "kick";
+}
+
+function normalizeStreamerUrl(value: unknown) {
+  const raw = stringValue(value);
+  if (!raw) return null;
+  return raw
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/[^\w./@-]+/g, "")
+    .slice(0, 64) || null;
+}
+
+function escapeDrawtext(value: string) {
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/:/g, "\\:")
+    .replace(/'/g, "\\'");
 }
 
 function assertVideoFile(file: File, index: number) {
@@ -233,6 +271,55 @@ async function stitchFinal(processed: ProcessedClip[], perClipSeconds: number, o
   if (!result.ok) throw new Error("Failed to stitch final auto-combo MP4.");
 }
 
+async function applyWatermark(inputPath: string, outputPath: string, watermark: AutoComboWatermark) {
+  const badgePath = WATERMARK_BADGES[watermark.platform];
+  const inputArgs = ["-i", inputPath, "-i", WATERMARK_HANDLE_PATH];
+  const hasBadge = Boolean(badgePath);
+  if (badgePath) inputArgs.push("-i", badgePath);
+
+  const filterParts = [
+    "[0:v]format=rgba[base]",
+    "[1:v]scale=150:-1[handle]",
+  ];
+  let currentVideo = "[wm1]";
+  filterParts.push("[base][handle]overlay=x=(W-w)/2:y=(H*0.84)-(h/2):format=auto[wm1]");
+
+  if (hasBadge) {
+    filterParts.push("[2:v]scale=-1:30[badge]");
+    filterParts.push("[wm1][badge]overlay=x=W*0.04:y=H-h-(H*0.025):format=auto[wm2]");
+    currentVideo = "[wm2]";
+  }
+
+  if (watermark.streamerUrl) {
+    filterParts.push(
+      `${currentVideo}drawtext=fontfile='${WATERMARK_URL_FONT_PATH}':text='${escapeDrawtext(watermark.streamerUrl)}':fontcolor=white@0.95:fontsize=w*0.028:x=w-text_w-(w*0.04):y=h-text_h-(h*0.035):borderw=2:bordercolor=black@0.4,format=yuv420p[vout]`,
+    );
+  } else {
+    filterParts.push(`${currentVideo}format=yuv420p[vout]`);
+  }
+
+  const result = await runFfmpeg([
+    "-y",
+    ...inputArgs,
+    "-filter_complex",
+    filterParts.join(";"),
+    "-map",
+    "[vout]",
+    "-map",
+    "0:a?",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "veryfast",
+    "-c:a",
+    "aac",
+    "-movflags",
+    "+faststart",
+    outputPath,
+  ]);
+  if (!result.ok) throw new Error("Failed to apply ClipperViral watermark.");
+}
+
 async function processClip(file: File, index: number, workdir: string, perClipSeconds: number, apiKey: string) {
   assertVideoFile(file, index);
 
@@ -348,11 +435,13 @@ async function processClipPath(clipPath: string, index: number, workdir: string,
   return { index, sourcePath: clipPath, winningWindow, extractedPath, normalizedPath };
 }
 
-async function runAutoCombo(processed: ProcessedClip[], workdir: string, perClipSeconds: number) {
+async function runAutoCombo(processed: ProcessedClip[], workdir: string, perClipSeconds: number, watermark: AutoComboWatermark) {
   const finalPath = path.join(workdir, "auto-combo-final.mp4");
+  const watermarkedPath = path.join(workdir, "auto-combo-final-watermarked.mp4");
   const rankedProcessed = [...processed].sort((a, b) => b.winningWindow.score - a.winningWindow.score || a.index - b.index);
   await stitchFinal(rankedProcessed, perClipSeconds, finalPath);
-  const output = await fs.readFile(finalPath);
+  await applyWatermark(finalPath, watermarkedPath, watermark);
+  const output = await fs.readFile(watermarkedPath);
 
   return new Response(output, {
     headers: {
@@ -394,12 +483,18 @@ export async function POST(req: Request) {
     if (contentType.toLowerCase().includes("application/json")) {
       const body = await req.json().catch(() => null);
       if (!body || typeof body !== "object") return jsonError("validate", "Invalid JSON body.", 400);
-      const clips = Array.isArray((body as { clips?: unknown }).clips) ? (body as { clips: Array<{ blob_url?: unknown }> }).clips : [];
+      const clips = Array.isArray((body as { clips?: unknown }).clips)
+        ? (body as { clips: Array<{ blob_url?: unknown; platform?: unknown; streamer_url?: unknown }> }).clips
+        : [];
       if (!clips.length) return jsonError("validate", "Upload at least one clip.", 400);
       if (clips.length > MAX_CLIPS) return jsonError("validate", "Upload no more than 5 clips.", 400);
 
       const perClipSeconds = numberValue((body as { per_clip_seconds?: unknown }).per_clip_seconds, 5, 3, 15);
       const totalLengthSeconds = numberValue((body as { total_length_seconds?: unknown }).total_length_seconds, 25, 10, 60);
+      const watermark = {
+        platform: normalizePlatform((body as { platform?: unknown }).platform ?? clips[0]?.platform),
+        streamerUrl: normalizeStreamerUrl((body as { streamer_url?: unknown }).streamer_url ?? clips[0]?.streamer_url),
+      };
       if (perClipSeconds * clips.length > totalLengthSeconds) {
         return jsonError("validate", "per_clip_seconds times clip count must be <= total_length_seconds.", 400);
       }
@@ -414,7 +509,7 @@ export async function POST(req: Request) {
         processClipPath(sourcePath, index, workdir, perClipSeconds, apiKey),
       );
 
-      const response = await runAutoCombo(processed, workdir, perClipSeconds);
+      const response = await runAutoCombo(processed, workdir, perClipSeconds, watermark);
       await deleteBlobUploads(blobUrlsToDelete);
       blobUrlsToDelete.length = 0;
       return response;
@@ -427,6 +522,10 @@ export async function POST(req: Request) {
 
     const perClipSeconds = numberField(formData, "per_clip_seconds", 5, 3, 15);
     const totalLengthSeconds = numberField(formData, "total_length_seconds", 25, 10, 60);
+    const watermark = {
+      platform: normalizePlatform(formData.get("platform")),
+      streamerUrl: normalizeStreamerUrl(formData.get("streamer_url")),
+    };
     if (perClipSeconds * files.length > totalLengthSeconds) {
       return jsonError("validate", "per_clip_seconds times clip count must be <= total_length_seconds.", 400);
     }
@@ -436,7 +535,7 @@ export async function POST(req: Request) {
       processClip(file, index, workdir, perClipSeconds, apiKey),
     );
 
-    return await runAutoCombo(processed, workdir, perClipSeconds);
+    return await runAutoCombo(processed, workdir, perClipSeconds, watermark);
   } catch (error) {
     console.error("CV auto-combo failed", {
       error: error instanceof Error ? error.message : String(error || "Unknown error"),

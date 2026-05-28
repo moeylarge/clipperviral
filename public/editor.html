@@ -24986,11 +24986,19 @@
             }, 15000),
           ];
           try {
+            const autoComboStreamerId = window.kickProgramState?.streamerId || "";
+            const autoComboStreamerUrl = autoComboStreamerId ? `kick.com/${autoComboStreamerId}` : "";
             const response = await fetch("/api/cv-admin/auto-combo", {
               method: "POST",
               headers: { "content-type": "application/json" },
               body: JSON.stringify({
-                clips: clips.map((slot) => ({ blob_url: slot.blob?.url || slot.blob?.downloadUrl })),
+                clips: clips.map((slot) => ({
+                  blob_url: slot.blob?.url || slot.blob?.downloadUrl,
+                  platform: "kick",
+                  streamer_url: autoComboStreamerUrl,
+                })),
+                platform: "kick",
+                streamer_url: autoComboStreamerUrl,
                 total_length_seconds: Number(total?.value || 25),
                 per_clip_seconds: Number(perClip?.value || 5),
               }),

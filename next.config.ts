@@ -29,6 +29,7 @@ const nextConfig: NextConfig = {
       "./node_modules/@ffmpeg-installer/ffmpeg/**",
       "./node_modules/@ffmpeg-installer/linux-x64/**",
       "./node_modules/@ffmpeg-installer/linux-arm64/**",
+      "./app/api/cv-admin/auto-combo/assets/**",
     ],
   },
 };
