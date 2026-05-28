@@ -2585,20 +2585,22 @@
         font-family: Oswald, Inter, "Helvetica Neue", Arial, sans-serif;
         font-size: 14px;
         font-weight: 700;
-        letter-spacing: 2.5px;
+        letter-spacing: 0;
         line-height: 1;
         white-space: nowrap;
-        color: rgba(255, 255, 255, 0.95);
+        color: #53fc18;
+        background: linear-gradient(90deg, #53fc18 0%, #62f5d0 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 7px rgba(83,252,24,0.36), 0 1px 4px rgba(0,0,0,0.55);
       }
       .viral-header-overlay .viral-tag-text .viral-v {
-        color: #e02020;
+        color: inherit;
       }
 
       .viral-header-overlay .viral-tag-underline {
-        width: 100%;
-        height: 2px;
-        background: linear-gradient(90deg, rgba(212,32,32,0.9) 0%, rgba(212,32,32,0) 100%);
-        border-radius: 1px;
+        display: none;
       }
 
       .viral-header-overlay::before {
@@ -14802,11 +14804,19 @@
 
       function drawViralHeader(ctx, outputWidth, outputHeight, sceneHeader, currentTime, focusBox) {
         if (!sceneHeader?.enabled) return;
-        const fontSize = clamp(sceneHeader.fontSize ?? 22, 12, 48);
-        const rawText = `${sceneHeader.text || "CLIPPERVIRAL"}`.trim().slice(0, 24) || "CLIPPERVIRAL";
+        const animMode = sceneHeader.animMode || VIRAL_HEADER_DEFAULTS.animMode;
+        const rawText = animMode === "animatedLogo"
+          ? `${sceneHeader.text || "CLIPPERVIRAL"}`.trim().slice(0, 24) || "CLIPPERVIRAL"
+          : "@clipperviral";
+        const requestedFontSize = clamp(sceneHeader.fontSize ?? 22, 12, 48);
+        const targetMarkW = animMode === "animatedLogo"
+          ? clamp(sceneHeader.width ?? 200, 120, outputWidth * 0.95)
+          : clamp(sceneHeader.width ?? 150, 92, Math.min(170, outputWidth * 0.16));
+        const fontSize = animMode === "animatedLogo"
+          ? requestedFontSize
+          : clamp(targetMarkW / 7.7, 12, 22);
         const opacity = clamp(Number.isFinite(Number(sceneHeader.opacity)) ? Number(sceneHeader.opacity) : 0.92, 0, 1);
         const rotation = clamp(Number.isFinite(Number(sceneHeader.rotation)) ? Number(sceneHeader.rotation) : 0, -180, 180);
-        const animMode = sceneHeader.animMode || VIRAL_HEADER_DEFAULTS.animMode;
         const driftCycleSec = clamp(sceneHeader.driftCycleSec ?? 6, 2, 30);
         const t = currentTime || 0;
 
@@ -14817,13 +14827,13 @@
         const textW = ctx.measureText(rawText).width;
         ctx.letterSpacing = "0px";
 
-        const padH = fontSize * 0.65;
-        const padTop = fontSize * 0.32;
-        const padBot = fontSize * 0.45;            /* extra room for underline */
-        const underlineH = Math.max(2, fontSize * 0.09);
-        const underlineGap = fontSize * 0.18;
+        const padH = animMode === "animatedLogo" ? fontSize * 0.65 : 0;
+        const padTop = animMode === "animatedLogo" ? fontSize * 0.32 : fontSize * 0.12;
+        const padBot = animMode === "animatedLogo" ? fontSize * 0.45 : fontSize * 0.16;
+        const underlineH = animMode === "animatedLogo" ? Math.max(2, fontSize * 0.09) : 0;
+        const underlineGap = animMode === "animatedLogo" ? fontSize * 0.18 : 0;
 
-        const pillW = padH + textW + padH;
+        const pillW = animMode === "animatedLogo" ? padH + textW + padH : targetMarkW;
         const pillH = padTop + fontSize + underlineGap + underlineH + padBot;
         const pillR = Math.min(6, pillH * 0.14);
 
@@ -14963,30 +14973,43 @@
           ctx.translate(-cx, -cy);
         }
 
-        /* --- pill background removed: floating text + underline only --- */
-        /* Add a subtle text shadow to keep readability over varied backgrounds */
-        ctx.shadowBlur = 6;
-        ctx.shadowColor = "rgba(0,0,0,0.6)";
-        ctx.shadowOffsetY = 1;
-
-        /* --- text: red V + white IRALCLIPS --- */
         const txtX = pillX + padH;
         const txtY = pillY + padTop + fontSize * 0.5;
         ctx.font = `700 ${fontSize}px "Oswald", "Inter", Arial, sans-serif`;
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
-        ctx.letterSpacing = `${fontSize * 0.12}px`;
 
-        /* measure just the "V" to know where to color-split */
+        if (animMode !== "animatedLogo") {
+          ctx.letterSpacing = "0px";
+          ctx.shadowBlur = Math.max(3, fontSize * 0.28);
+          ctx.shadowColor = "rgba(83,252,24,0.34)";
+          ctx.shadowOffsetY = 0;
+          const glowGrad = ctx.createLinearGradient(txtX, txtY, txtX + pillW, txtY);
+          glowGrad.addColorStop(0, "rgba(83,252,24,0.32)");
+          glowGrad.addColorStop(1, "rgba(98,245,208,0.28)");
+          ctx.fillStyle = glowGrad;
+          ctx.fillText(rawText, txtX, txtY, pillW);
+          ctx.shadowBlur = 0;
+          ctx.shadowColor = "transparent";
+          const markGrad = ctx.createLinearGradient(txtX, txtY, txtX + pillW, txtY);
+          markGrad.addColorStop(0, "#53fc18");
+          markGrad.addColorStop(1, "#62f5d0");
+          ctx.fillStyle = markGrad;
+          ctx.fillText(rawText, txtX, txtY, pillW);
+          ctx.restore();
+          return;
+        }
+
+        ctx.letterSpacing = `${fontSize * 0.12}px`;
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = "rgba(0,0,0,0.6)";
+        ctx.shadowOffsetY = 1;
+
         const vChar = rawText.charAt(0);
         const restText = rawText.slice(1);
         const vW = ctx.measureText(vChar).width;
-
-        /* draw red V */
         ctx.fillStyle = "#e02020";
         ctx.fillText(vChar, txtX, txtY);
-
-        /* draw white rest */
         ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
         ctx.fillText(restText, txtX + vW, txtY);
         ctx.letterSpacing = "0px";
@@ -15037,14 +15060,22 @@
         const previewRect = editorCanvas.getBoundingClientRect();
         const scaleX = previewRect.width / dims.width;
         const scaleY = previewRect.height / dims.height;
-        const text = `${sceneHeader.text || VIRAL_HEADER_DEFAULTS.text}`.trim().slice(0, 24) || VIRAL_HEADER_DEFAULTS.text;
-        const font = clamp(sceneHeader.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 12, 48);
-        const estimatedTextWidth = text.length * font * 0.62;
-        const iconSize = font * 0.95;
-        const iconGap = font * 0.38;
-        const padH = font * 0.7;
-        const w = clamp(sceneHeader.width ?? Math.ceil(padH + iconSize + iconGap + estimatedTextWidth + padH), 120, dims.width);
-        const h = font + (font * 0.42 * 2);
+        const isAnimatedLogo = (sceneHeader.animMode || VIRAL_HEADER_DEFAULTS.animMode) === "animatedLogo";
+        const text = isAnimatedLogo
+          ? `${sceneHeader.text || VIRAL_HEADER_DEFAULTS.text}`.trim().slice(0, 24) || VIRAL_HEADER_DEFAULTS.text
+          : "@clipperviral";
+        const requestedFont = clamp(sceneHeader.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 12, 48);
+        const markWidth = isAnimatedLogo
+          ? clamp(sceneHeader.width ?? VIRAL_HEADER_DEFAULTS.width, 120, dims.width)
+          : clamp(sceneHeader.width ?? 150, 92, Math.min(170, dims.width * 0.16));
+        const font = isAnimatedLogo ? requestedFont : clamp(markWidth / 7.7, 12, 22);
+        const iconSize = isAnimatedLogo ? font * 0.95 : 0;
+        const iconGap = isAnimatedLogo ? font * 0.38 : 0;
+        const padH = isAnimatedLogo ? font * 0.7 : 0;
+        const w = isAnimatedLogo
+          ? clamp(sceneHeader.width ?? Math.ceil(padH + iconSize + iconGap + text.length * font * 0.62 + padH), 120, dims.width)
+          : markWidth;
+        const h = isAnimatedLogo ? font + (font * 0.42 * 2) : font * 1.28;
         const autoPosition = Number(sceneHeader.x) < 0 || Number(sceneHeader.y) < 0;
         const x = autoPosition ? (dims.width - w) / 2 : clamp(sceneHeader.x ?? VIRAL_HEADER_DEFAULTS.x, 0, dims.width - w);
         const y = autoPosition ? dims.height - h - dims.height * 0.035 : clamp(sceneHeader.y ?? VIRAL_HEADER_DEFAULTS.y, 0, dims.height - h);
@@ -15058,18 +15089,23 @@
         const icon = element.querySelector(".viral-tag-icon");
         const label = element.querySelector(".viral-tag-text");
         if (icon) {
-          icon.textContent = "CV";
+          icon.textContent = isAnimatedLogo ? "CV" : "";
+          icon.style.display = isAnimatedLogo ? "" : "none";
           icon.style.width = `${iconSize * scaleX}px`;
           icon.style.height = `${iconSize * scaleY}px`;
           icon.style.fontSize = `${Math.max(7, iconSize * 0.52 * Math.min(scaleX, scaleY))}px`;
         }
         if (label) {
-          const firstChar = text.charAt(0);
-          const restText = text.slice(1);
-          const vSpan = document.createElement("span");
-          vSpan.className = "viral-v";
-          vSpan.textContent = firstChar;
-          label.replaceChildren(vSpan, document.createTextNode(restText));
+          if (isAnimatedLogo) {
+            const firstChar = text.charAt(0);
+            const restText = text.slice(1);
+            const vSpan = document.createElement("span");
+            vSpan.className = "viral-v";
+            vSpan.textContent = firstChar;
+            label.replaceChildren(vSpan, document.createTextNode(restText));
+          } else {
+            label.textContent = text;
+          }
           label.style.fontSize = `${font * Math.min(scaleX, scaleY)}px`;
         }
         const opacity = Number.isFinite(Number(sceneHeader.opacity)) ? clamp(sceneHeader.opacity, 0, 1) : VIRAL_HEADER_DEFAULTS.opacity;
