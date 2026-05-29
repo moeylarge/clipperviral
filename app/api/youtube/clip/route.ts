@@ -112,6 +112,13 @@ function parseProxyError(payload: Record<string, unknown>) {
   return value.length ? value : null;
 }
 
+function getProxyTimeoutMs(sourceKind: string, forThumbnail = false) {
+  if (sourceKind === "kick") {
+    return forThumbnail ? 60_000 : 90_000;
+  }
+  return 20_000;
+}
+
 async function extractThumbnailFromVideoFile(videoPath: string, outputPath: string) {
   return runFfmpeg([
     "-y",
@@ -168,7 +175,7 @@ async function renderClipViaProxy(sourceUrl: string, start: number, duration: nu
             clipStart: start,
             clipDuration: duration,
           }),
-          signal: AbortSignal.timeout(20_000),
+          signal: AbortSignal.timeout(getProxyTimeoutMs(sourceKind, false)),
         });
         break;
       } catch (error) {
@@ -279,7 +286,7 @@ async function renderThumbnailViaProxy(sourceUrl: string, start: number, duratio
             clipStart: start,
             clipDuration: Math.max(2, Math.min(duration, 4)),
           }),
-          signal: AbortSignal.timeout(20_000),
+          signal: AbortSignal.timeout(getProxyTimeoutMs(sourceKind, true)),
         });
         break;
       } catch (error) {
