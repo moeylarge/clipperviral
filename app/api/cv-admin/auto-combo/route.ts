@@ -56,6 +56,27 @@ function jsonError(stage: string, error: unknown, status = 500) {
   );
 }
 
+function ffmpegFailureDetails(result: Awaited<ReturnType<typeof runFfmpeg>>) {
+  if (result.ok) return null;
+  const error = result.error as
+    | {
+        message?: string;
+        code?: string | number;
+        signal?: string;
+        stdout?: string;
+        stderr?: string;
+      }
+    | undefined;
+  return {
+    command: result.command,
+    code: error?.code ?? null,
+    signal: error?.signal ?? null,
+    message: error?.message ?? String(result.error || "Unknown ffmpeg error"),
+    stderr: error?.stderr?.slice(-4000) ?? null,
+    stdout: error?.stdout?.slice(-1000) ?? null,
+  };
+}
+
 function numberField(formData: FormData, key: string, fallback: number, min: number, max: number) {
   const value = Number(formData.get(key));
   if (!Number.isFinite(value)) return fallback;
@@ -317,7 +338,11 @@ async function applyWatermark(inputPath: string, outputPath: string, watermark: 
     "+faststart",
     outputPath,
   ]);
-  if (!result.ok) throw new Error("Failed to apply ClipperViral watermark.");
+  if (!result.ok) {
+    console.error("CV auto-combo watermark failed", ffmpegFailureDetails(result));
+    return false;
+  }
+  return true;
 }
 
 async function processClip(file: File, index: number, workdir: string, perClipSeconds: number, apiKey: string) {
@@ -440,8 +465,8 @@ async function runAutoCombo(processed: ProcessedClip[], workdir: string, perClip
   const watermarkedPath = path.join(workdir, "auto-combo-final-watermarked.mp4");
   const rankedProcessed = [...processed].sort((a, b) => b.winningWindow.score - a.winningWindow.score || a.index - b.index);
   await stitchFinal(rankedProcessed, perClipSeconds, finalPath);
-  await applyWatermark(finalPath, watermarkedPath, watermark);
-  const output = await fs.readFile(watermarkedPath);
+  const watermarked = await applyWatermark(finalPath, watermarkedPath, watermark);
+  const output = await fs.readFile(watermarked ? watermarkedPath : finalPath);
 
   return new Response(output, {
     headers: {
