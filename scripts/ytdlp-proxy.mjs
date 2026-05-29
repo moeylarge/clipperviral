@@ -12,6 +12,7 @@ const PORT = Number(process.env.PORT || 8787);
 const HOST = process.env.HOST || "0.0.0.0";
 const TOKEN = (process.env.YTDLP_PROXY_TOKEN || "").trim();
 const YTDLP_BIN = (process.env.YTDLP_BIN || "yt-dlp").trim();
+const PYTHON_BIN = (process.env.PYTHON_BIN || "python3").trim();
 const USER_AGENT =
   (process.env.YTDLP_USER_AGENT || "").trim() ||
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36";
@@ -94,6 +95,21 @@ function detectSourceKind(url) {
   return "generic";
 }
 
+function parseKickVodUrl(url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname !== "kick.com" && parsed.hostname !== "www.kick.com") return null;
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    if (parts.length >= 3 && parts[1] === "videos") {
+      return {
+        channelSlug: parts[0],
+        videoId: parts[2],
+      };
+    }
+  } catch {}
+  return null;
+}
+
 function collectRequestBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -134,6 +150,138 @@ function runCommand(command, args, timeoutMs = 15 * 60 * 1000) {
       });
     });
   });
+}
+
+const KICK_VOD_RESOLVER_SCRIPT = String.raw`
+import http.cookiejar as cj
+import json
+import sys
+import urllib.parse
+
+from curl_cffi import requests
+
+channel_slug, video_id, cookie_file, referer, user_agent = sys.argv[1:6]
+cookies = {}
+if cookie_file:
+    try:
+        jar = cj.MozillaCookieJar(cookie_file)
+        jar.load(ignore_discard=True, ignore_expires=True)
+        cookies = {c.name: c.value for c in jar if "kick.com" in c.domain}
+    except Exception:
+        cookies = {}
+
+headers = {
+    "accept": "application/json, text/plain, */*",
+    "accept-language": "en-US,en;q=0.9",
+    "cache-control": "no-cache",
+    "pragma": "no-cache",
+    "referer": referer,
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "user-agent": user_agent,
+}
+xsrf = urllib.parse.unquote(cookies.get("XSRF-TOKEN", ""))
+if xsrf:
+    headers["x-xsrf-token"] = xsrf
+session_token = urllib.parse.unquote(cookies.get("session_token", ""))
+if session_token:
+    headers["authorization"] = f"Bearer {session_token}"
+
+url = f"https://kick.com/api/v2/channels/{channel_slug}/videos"
+response = requests.get(url, headers=headers, cookies=cookies, impersonate="chrome136", timeout=25)
+body = response.text
+if response.status_code != 200:
+    print(json.dumps({
+        "ok": False,
+        "status": response.status_code,
+        "error": body[:500],
+    }))
+    sys.exit(0)
+
+try:
+    videos = response.json()
+except Exception:
+    print(json.dumps({"ok": False, "status": response.status_code, "error": "Kick videos response was not JSON."}))
+    sys.exit(0)
+
+match = None
+for item in videos if isinstance(videos, list) else []:
+    video = item.get("video") if isinstance(item, dict) else None
+    if isinstance(video, dict) and video.get("uuid") == video_id:
+        match = item
+        break
+
+if not match:
+    print(json.dumps({
+        "ok": False,
+        "status": response.status_code,
+        "error": f"Kick VOD {video_id} was not found in the latest channel videos.",
+        "count": len(videos) if isinstance(videos, list) else None,
+    }))
+    sys.exit(0)
+
+video = match.get("video") if isinstance(match.get("video"), dict) else {}
+duration_ms = match.get("duration")
+try:
+    duration = float(duration_ms) / 1000 if duration_ms is not None else None
+except Exception:
+    duration = None
+
+print(json.dumps({
+    "ok": True,
+    "id": video.get("uuid") or video_id,
+    "title": match.get("session_title"),
+    "duration": duration,
+    "source": match.get("source"),
+    "status": video.get("status"),
+    "channel": channel_slug,
+}))
+`;
+
+async function resolveKickVodFromChannelVideos(sourceUrl, sourceKind) {
+  if (sourceKind !== "kick") return null;
+  const parsed = parseKickVodUrl(sourceUrl);
+  if (!parsed) return null;
+
+  const result = await runCommand(
+    PYTHON_BIN,
+    [
+      "-c",
+      KICK_VOD_RESOLVER_SCRIPT,
+      parsed.channelSlug,
+      parsed.videoId,
+      COOKIE_FILE,
+      sourceUrl,
+      USER_AGENT,
+    ],
+    45_000,
+  );
+
+  if (!result.ok) {
+    return {
+      ok: false,
+      error: result.stderr || result.stdout || `Kick resolver exited with ${result.code}`,
+    };
+  }
+
+  try {
+    const payload = JSON.parse(result.stdout || "{}");
+    if (!payload.ok || !payload.source) {
+      return {
+        ok: false,
+        error: payload.error || "Kick VOD source was not found.",
+        details: payload,
+      };
+    }
+    return { ok: true, ...payload };
+  } catch {
+    return {
+      ok: false,
+      error: "Kick resolver response was not valid JSON.",
+      details: (result.stdout || "").slice(0, 500),
+    };
+  }
 }
 
 function parseBoolean(value) {
@@ -442,8 +590,26 @@ const server = createServer(async (req, res) => {
     const formatPref = `${payload.formatPref || ""}`.trim();
     const clipStart = Number(payload.clipStart ?? payload.start);
     const clipDuration = Number(payload.clipDuration ?? payload.duration);
+    const kickVodRequest = parseKickVodUrl(sourceUrl);
 
     if (metadataOnly) {
+      const kickVod = await resolveKickVodFromChannelVideos(sourceUrl, sourceKind);
+      if (kickVod?.ok) {
+        return sendJson(res, 200, {
+          duration: Number.isFinite(Number(kickVod.duration)) && Number(kickVod.duration) > 0 ? Number(kickVod.duration) : null,
+          title: typeof kickVod.title === "string" ? kickVod.title : null,
+          id: typeof kickVod.id === "string" ? kickVod.id : null,
+        });
+      }
+      if (kickVodRequest && kickVod && !kickVod.ok) {
+        console.error("[ytdlp-proxy] kick v2 metadata failed", {
+          sourceUrl,
+          sourceKind,
+          error: kickVod.error,
+          details: kickVod.details || null,
+        });
+      }
+
       const result = await runCommand(YTDLP_BIN, buildMetadataArgs({ sourceUrl, sourceKind }), 90_000);
       if (!result.ok) {
         console.error("[ytdlp-proxy] metadata failed", {
@@ -474,14 +640,33 @@ const server = createServer(async (req, res) => {
       });
     }
 
+    let effectiveSourceUrl = sourceUrl;
+    let resolvedKickVod = null;
+    if (kickVodRequest && sourceKind === "kick") {
+      resolvedKickVod = await resolveKickVodFromChannelVideos(sourceUrl, sourceKind);
+      if (!resolvedKickVod?.ok) {
+        console.error("[ytdlp-proxy] kick v2 source resolve failed", {
+          sourceUrl,
+          sourceKind,
+          error: resolvedKickVod?.error || "unknown",
+          details: resolvedKickVod?.details || null,
+        });
+        return sendJson(res, 502, {
+          error: "Kick VOD lookup failed.",
+          details: resolvedKickVod?.error || "Could not resolve Kick VOD source.",
+        });
+      }
+      effectiveSourceUrl = resolvedKickVod.source;
+    }
+
     const workdir = path.join(tmpdir(), `ytdlp-proxy-${randomUUID()}`);
     await mkdir(workdir, { recursive: true });
     const outputTemplate = transcriptOnly
       ? path.join(workdir, "subtitle.%(ext)s")
       : path.join(workdir, "source.%(ext)s");
     const args = transcriptOnly
-      ? buildTranscriptArgs({ sourceUrl, sourceKind, outputTemplate, language })
-      : buildYtDlpArgs({ sourceUrl, sourceKind, outputTemplate, formatPref, audioOnly, clipStart, clipDuration });
+      ? buildTranscriptArgs({ sourceUrl: effectiveSourceUrl, sourceKind, outputTemplate, language })
+      : buildYtDlpArgs({ sourceUrl: effectiveSourceUrl, sourceKind, outputTemplate, formatPref, audioOnly, clipStart, clipDuration });
     const result = await runCommand(YTDLP_BIN, args);
 
     if (!result.ok) {
@@ -548,6 +733,7 @@ const server = createServer(async (req, res) => {
     res.setHeader("content-type", contentTypeForExtension(sourceFile));
     res.setHeader("content-length", String(fileStats.size));
     res.setHeader("x-ytdlp-source", sourceKind);
+    if (resolvedKickVod?.ok) res.setHeader("x-ytdlp-kick-resolved", "v2-channel-videos");
 
     const stream = createReadStream(sourceFile);
     stream.pipe(res);
