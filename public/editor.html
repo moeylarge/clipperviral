@@ -2518,8 +2518,7 @@
         transform: translate(-50%, -50%);
       }
       .viral-header-overlay.anim-animatedLogo {
-        animation: vhDriftXY_x 6s ease-in-out infinite alternate,
-                   vhDriftXY_y 8.2s ease-in-out infinite alternate;
+        animation: none;
         background: transparent;
         border-color: transparent;
         box-shadow: none;
@@ -2537,12 +2536,26 @@
         pointer-events: none;
       }
       .viral-header-overlay.anim-animatedLogo .viral-tag-icon,
-      .viral-header-overlay.anim-animatedLogo .viral-tag-text,
       .viral-header-overlay.anim-animatedLogo .viral-tag-underline {
         display: none;
       }
+      .viral-header-overlay.anim-animatedLogo .viral-tag-text {
+        display: block;
+        order: 1;
+        font-family: Oswald, Inter, "Helvetica Neue", Arial, sans-serif;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        color: rgba(255,255,255,0.96);
+        -webkit-text-fill-color: rgba(255,255,255,0.96);
+        text-shadow: 0 1px 4px rgba(0,0,0,0.72), 0 0 8px rgba(0,0,0,0.55);
+      }
       .viral-header-overlay.anim-animatedLogo .viral-animated-logo-video {
         display: block;
+        order: 0;
+        width: 36%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 23% center;
       }
       @keyframes vhDriftXY_x {
         0%   { left: 4%; }
@@ -8045,7 +8058,7 @@
                   <select id="viralHeaderAnimModeSelect">
                     <option value="driftXY">Drift XY</option>
                     <option value="randomWalk">Random Walk</option>
-                    <option value="animatedLogo">Animated Logo ✦</option>
+                    <option value="animatedLogo">Animation Still</option>
                     <option value="drift">Drift X (horizontal)</option>
                     <option value="static" selected>Static clear</option>
                   </select>
@@ -14836,17 +14849,20 @@
         if (!sceneHeader?.enabled) return;
         const animMode = sceneHeader.animMode || VIRAL_HEADER_DEFAULTS.animMode;
         const isAnimatedLogo = animMode === "animatedLogo";
-        const rawText = animMode === "animatedLogo"
-          ? `${sceneHeader.text || "CLIPPERVIRAL"}`.trim().slice(0, 24) || "CLIPPERVIRAL"
+        const rawText = isAnimatedLogo
+          ? "ClipperViral"
           : `${sceneHeader.text || "CLIPPERVIRAL"}`.trim().slice(0, 24).toUpperCase() || "CLIPPERVIRAL";
         const requestedFontSize = clamp(sceneHeader.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 11, 48);
         const renderScale = Math.min(outputWidth, outputHeight) / 540;
-        const targetMarkW = isAnimatedLogo
-          ? clamp(sceneHeader.width ?? 200, 120, outputWidth * 0.95)
-          : clamp((sceneHeader.width ?? VIRAL_HEADER_DEFAULTS.width) * renderScale, Math.min(160, outputWidth * 0.18), outputWidth * 0.74);
         const fontSize = isAnimatedLogo
-          ? requestedFontSize
+          ? clamp(requestedFontSize * renderScale, 18, 34)
           : clamp(requestedFontSize * renderScale, 20, 36);
+        const animatedIconH = isAnimatedLogo ? fontSize * 2.25 : 0;
+        const animatedIconW = isAnimatedLogo ? animatedIconH * 1.1 : 0;
+        const animatedGap = isAnimatedLogo ? fontSize * 0.28 : 0;
+        const targetMarkW = isAnimatedLogo
+          ? clamp(sceneHeader.width ?? VIRAL_HEADER_DEFAULTS.width, 120, outputWidth * 0.95)
+          : clamp((sceneHeader.width ?? VIRAL_HEADER_DEFAULTS.width) * renderScale, Math.min(160, outputWidth * 0.18), outputWidth * 0.74);
         const opacity = clamp(Number.isFinite(Number(sceneHeader.opacity)) ? Number(sceneHeader.opacity) : 0.92, 0, 1);
         const rotation = clamp(Number.isFinite(Number(sceneHeader.rotation)) ? Number(sceneHeader.rotation) : 0, -180, 180);
         const driftCycleSec = clamp(sceneHeader.driftCycleSec ?? 6, 2, 30);
@@ -14861,14 +14877,14 @@
         const textW = isAnimatedLogo ? ctx.measureText(rawText).width : measureLetterSpacedText(ctx, rawText, glassTracking);
         ctx.letterSpacing = "0px";
 
-        const padH = isAnimatedLogo ? fontSize * 0.65 : fontSize * 1.55;
-        const padTop = isAnimatedLogo ? fontSize * 0.32 : fontSize * 0.56;
-        const padBot = isAnimatedLogo ? fontSize * 0.45 : fontSize * 0.58;
+        const padH = isAnimatedLogo ? fontSize * 0.12 : fontSize * 1.55;
+        const padTop = isAnimatedLogo ? 0 : fontSize * 0.56;
+        const padBot = isAnimatedLogo ? 0 : fontSize * 0.58;
         const underlineH = isAnimatedLogo ? Math.max(2, fontSize * 0.09) : 0;
         const underlineGap = isAnimatedLogo ? fontSize * 0.18 : 0;
 
-        const pillW = isAnimatedLogo ? padH + textW + padH : clamp(Math.max(textW + padH * 2, targetMarkW), Math.min(160, outputWidth * 0.18), outputWidth * 0.74);
-        const pillH = padTop + fontSize + underlineGap + underlineH + padBot;
+        const pillW = isAnimatedLogo ? clamp(animatedIconW + animatedGap + textW + padH * 2, 120, outputWidth * 0.95) : clamp(Math.max(textW + padH * 2, targetMarkW), Math.min(160, outputWidth * 0.18), outputWidth * 0.74);
+        const pillH = isAnimatedLogo ? Math.max(animatedIconH, fontSize * 1.45) : padTop + fontSize + underlineGap + underlineH + padBot;
         const pillR = isAnimatedLogo ? Math.min(6, pillH * 0.14) : pillH * 0.5;
 
         /* --- position: constrain to focus panel if present (avoids black bars) --- */
@@ -14879,7 +14895,7 @@
         const fbw = Math.max(1, fbr - fbx);
         const fbh = Math.max(1, fbb - fby);
         const margin = fbw * 0.04;
-        const bottomY = fby + fbh * (isAnimatedLogo ? 0.76 : 0.5) - pillH * 0.5;
+        const bottomY = fby + fbh * 0.5 - pillH * 0.5;
         const minX = fbx + margin;
         const maxX = fbx + fbw - pillW - margin;
         const minY = fby + fbh * 0.06;
@@ -14892,7 +14908,7 @@
         });
         let pillX, pillY;
 
-        if (animMode === "driftXY" || animMode === "animatedLogo") {
+        if (animMode === "driftXY") {
           /* two axes, different cycle speeds — Lissajous-like path */
           const cycleX = driftCycleSec;
           const cycleY = driftCycleSec * 1.37;          /* offset ratio so path never repeats exactly */
@@ -14939,17 +14955,13 @@
         if (isAnimatedLogo) {
           const vid = document.getElementById("viralAnimatedLogoVideo");
           if (vid && vid.readyState >= 2 && vid.videoWidth > 0) {
-            /* Size the animated logo: use sceneHeader.width if set, else default to ~18% of output width */
-            const userWidth = Number(sceneHeader.width) || 0;
-            const defaultWidth = clamp(outputWidth * 0.18, 80, 260);
-            const logoScale = userWidth >= 120 ? clamp(userWidth, 120, outputWidth * 0.95) : defaultWidth;
-            const aspect = vid.videoHeight / vid.videoWidth;
-            const drawW = logoScale;
-            const drawH = logoScale * aspect;
-            /* Center the logo on the pill position, then clamp the actual video frame into the focus area. */
-            const logoPos = clampRectToFocus(pillX + (pillW - drawW) / 2, pillY + (pillH - drawH) / 2, drawW, drawH);
+            const drawW = animatedIconW;
+            const drawH = animatedIconH;
+            const logoPos = clampRectToFocus(pillX + padH, pillY + (pillH - drawH) / 2, drawW, drawH);
             const drawX = logoPos.x;
             const drawY = logoPos.y;
+            const textX = drawX + drawW + animatedGap;
+            const textY = pillY + pillH / 2;
 
             ctx.globalAlpha = opacity;
             if (rotation !== 0) {
@@ -14971,7 +14983,11 @@
               const keyCtx = keyCanvas.getContext("2d", { willReadFrequently: true });
               keyCtx.clearRect(0, 0, keyW, keyH);
               keyCtx.filter = "contrast(1.25) brightness(1.05)";
-              keyCtx.drawImage(vid, 0, 0, keyW, keyH);
+              const srcX = 0;
+              const srcY = 0;
+              const srcW = vid.videoWidth * 0.43;
+              const srcH = vid.videoHeight;
+              keyCtx.drawImage(vid, srcX, srcY, srcW, srcH, 0, 0, keyW, keyH);
               keyCtx.filter = "none";
               const frame = keyCtx.getImageData(0, 0, keyW, keyH);
               const data = frame.data;
@@ -14989,10 +15005,21 @@
             } catch (error) {
               ctx.globalCompositeOperation = "lighten";
               ctx.filter = "contrast(1.25) brightness(1.05)";
-              ctx.drawImage(vid, drawX, drawY, drawW, drawH);
+              ctx.drawImage(vid, 0, 0, vid.videoWidth * 0.43, vid.videoHeight, drawX, drawY, drawW, drawH);
             }
             ctx.globalCompositeOperation = prevComp;
             ctx.filter = prevFilter;
+            ctx.globalAlpha = opacity;
+            ctx.globalCompositeOperation = "source-over";
+            ctx.filter = "none";
+            ctx.font = `800 ${fontSize}px "Oswald", "Inter", Arial, sans-serif`;
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            ctx.shadowBlur = Math.max(2, fontSize * 0.18);
+            ctx.shadowColor = "rgba(0,0,0,0.72)";
+            ctx.shadowOffsetY = Math.max(1, fontSize * 0.06);
+            ctx.fillStyle = "rgba(255,255,255,0.96)";
+            ctx.fillText(rawText, textX, textY);
           }
           ctx.restore();
           return;
@@ -15087,25 +15114,28 @@
         const scaleY = previewRect.height / dims.height;
         const isAnimatedLogo = (sceneHeader.animMode || VIRAL_HEADER_DEFAULTS.animMode) === "animatedLogo";
         const text = isAnimatedLogo
-          ? `${sceneHeader.text || VIRAL_HEADER_DEFAULTS.text}`.trim().slice(0, 24) || VIRAL_HEADER_DEFAULTS.text
+          ? "ClipperViral"
           : `${sceneHeader.text || VIRAL_HEADER_DEFAULTS.text}`.trim().slice(0, 24) || VIRAL_HEADER_DEFAULTS.text;
         const requestedFont = clamp(sceneHeader.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 11, 48);
         const renderScale = Math.min(dims.width, dims.height) / 540;
+        const font = isAnimatedLogo ? clamp(requestedFont * renderScale, 18, 34) : clamp(requestedFont * renderScale, 20, 36);
+        const animatedIconH = isAnimatedLogo ? font * 2.25 : 0;
+        const animatedIconW = isAnimatedLogo ? animatedIconH * 1.1 : 0;
+        const animatedGap = isAnimatedLogo ? font * 0.28 : 0;
         const markWidth = isAnimatedLogo
-          ? clamp(sceneHeader.width ?? VIRAL_HEADER_DEFAULTS.width, 120, dims.width)
+          ? clamp(sceneHeader.width ?? VIRAL_HEADER_DEFAULTS.width, 120, dims.width * 0.95)
           : clamp((sceneHeader.width ?? VIRAL_HEADER_DEFAULTS.width) * renderScale, Math.min(160, dims.width * 0.18), dims.width * 0.74);
-        const font = isAnimatedLogo ? requestedFont : clamp(requestedFont * renderScale, 20, 36);
         const iconSize = isAnimatedLogo ? font * 0.95 : 0;
         const iconGap = isAnimatedLogo ? font * 0.38 : 0;
-        const padH = isAnimatedLogo ? font * 0.7 : font * 1.55;
+        const padH = isAnimatedLogo ? font * 0.12 : font * 1.55;
         const textEstimate = Array.from(text).reduce((sum, char) => sum + (/[MW]/.test(char) ? font * 0.9 : font * 0.62), 0) + Math.max(0, text.length - 1) * font * 0.14;
         const w = isAnimatedLogo
-          ? clamp(sceneHeader.width ?? Math.ceil(padH + iconSize + iconGap + text.length * font * 0.62 + padH), 120, dims.width)
+          ? clamp(Math.max(markWidth, Math.ceil(padH * 2 + animatedIconW + animatedGap + textEstimate)), 120, dims.width * 0.95)
           : clamp(Math.max(textEstimate + padH * 2, markWidth), Math.min(160, dims.width * 0.18), dims.width * 0.74);
-        const h = isAnimatedLogo ? font + (font * 0.42 * 2) : font * 2.14;
+        const h = isAnimatedLogo ? Math.max(animatedIconH, font * 1.45) : font * 2.14;
         const autoPosition = Number(sceneHeader.x) < 0 || Number(sceneHeader.y) < 0;
         const x = autoPosition ? (dims.width - w) / 2 : clamp(sceneHeader.x ?? VIRAL_HEADER_DEFAULTS.x, 0, dims.width - w);
-        const y = autoPosition ? dims.height * (isAnimatedLogo ? 0.76 : 0.5) - h * 0.5 : clamp(sceneHeader.y ?? VIRAL_HEADER_DEFAULTS.y, 0, dims.height - h);
+        const y = autoPosition ? dims.height * 0.5 - h * 0.5 : clamp(sceneHeader.y ?? VIRAL_HEADER_DEFAULTS.y, 0, dims.height - h);
         element.style.left = `${x * scaleX}px`;
         element.style.top = `${y * scaleY}px`;
         element.style.bottom = "auto";
@@ -15125,12 +15155,7 @@
         }
         if (label) {
           if (isAnimatedLogo) {
-            const firstChar = text.charAt(0);
-            const restText = text.slice(1);
-            const vSpan = document.createElement("span");
-            vSpan.className = "viral-v";
-            vSpan.textContent = firstChar;
-            label.replaceChildren(vSpan, document.createTextNode(restText));
+            label.textContent = text;
           } else {
             label.textContent = text;
           }
