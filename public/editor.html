@@ -2584,16 +2584,16 @@
       .viral-header-overlay .viral-tag-text {
         font-family: Oswald, Inter, "Helvetica Neue", Arial, sans-serif;
         font-size: 14px;
-        font-weight: 700;
+        font-weight: 800;
         letter-spacing: 0;
         line-height: 1;
         white-space: nowrap;
-        color: #53fc18;
-        background: linear-gradient(90deg, #53fc18 0%, #62f5d0 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 7px rgba(83,252,24,0.36), 0 1px 4px rgba(0,0,0,0.55);
+        color: rgba(255,255,255,0.94);
+        -webkit-text-fill-color: rgba(255,255,255,0.94);
+        text-shadow:
+          0 1px 2px rgba(0,0,0,0.88),
+          0 0 1px rgba(0,0,0,0.9);
+        -webkit-text-stroke: 0.35px rgba(0,0,0,0.72);
       }
       .viral-header-overlay .viral-tag-text .viral-v {
         color: inherit;
@@ -8043,9 +8043,9 @@
                   <select id="viralHeaderAnimModeSelect">
                     <option value="driftXY">Drift XY</option>
                     <option value="randomWalk">Random Walk</option>
-                    <option value="animatedLogo" selected>Animated Logo ✦</option>
+                    <option value="animatedLogo">Animated Logo ✦</option>
                     <option value="drift">Drift X (horizontal)</option>
-                    <option value="static">Static</option>
+                    <option value="static" selected>Static clear</option>
                   </select>
                 </label>
               </div>
@@ -8058,12 +8058,12 @@
                 <label>Y px<input id="viralHeaderYInput" type="number" min="-1" max="1280" step="1" value="-1" /><output id="viralHeaderYOutput" for="viralHeaderYInput">Auto</output><button type="button" class="viral-header-reset viral-header-reset-inline" data-viral-header-reset="y" title="Reset to default" aria-label="Reset Y">&#x21BA;</button></label>
               </div>
               <div class="range-fields">
-                <label>Width px<input id="viralHeaderWidthInput" type="number" min="120" max="1600" step="1" value="200" /><output id="viralHeaderWidthOutput" for="viralHeaderWidthInput">200</output><button type="button" class="viral-header-reset viral-header-reset-inline" data-viral-header-reset="width" title="Reset to default" aria-label="Reset width">&#x21BA;</button></label>
-                <label>Font px<input id="viralHeaderFontInput" type="number" min="12" max="48" step="1" value="22" /><output id="viralHeaderFontOutput" for="viralHeaderFontInput">22</output><button type="button" class="viral-header-reset viral-header-reset-inline" data-viral-header-reset="fontSize" title="Reset to default" aria-label="Reset font size">&#x21BA;</button></label>
+                <label>Width px<input id="viralHeaderWidthInput" type="number" min="82" max="1600" step="1" value="128" /><output id="viralHeaderWidthOutput" for="viralHeaderWidthInput">128</output><button type="button" class="viral-header-reset viral-header-reset-inline" data-viral-header-reset="width" title="Reset to default" aria-label="Reset width">&#x21BA;</button></label>
+                <label>Font px<input id="viralHeaderFontInput" type="number" min="11" max="48" step="1" value="16" /><output id="viralHeaderFontOutput" for="viralHeaderFontInput">16</output><button type="button" class="viral-header-reset viral-header-reset-inline" data-viral-header-reset="fontSize" title="Reset to default" aria-label="Reset font size">&#x21BA;</button></label>
               </div>
               <div class="section-title">Appearance</div>
               <div class="element-slider-grid">
-                <label>Opacity <output id="viralHeaderOpacityOutput" for="viralHeaderOpacityInput">92%</output><input id="viralHeaderOpacityInput" type="range" min="0" max="1" step="0.01" value="0.92" /><button type="button" class="viral-header-reset viral-header-reset-inline" data-viral-header-reset="opacity" title="Reset to default" aria-label="Reset opacity">&#x21BA;</button></label>
+                <label>Opacity <output id="viralHeaderOpacityOutput" for="viralHeaderOpacityInput">88%</output><input id="viralHeaderOpacityInput" type="range" min="0" max="1" step="0.01" value="0.88" /><button type="button" class="viral-header-reset viral-header-reset-inline" data-viral-header-reset="opacity" title="Reset to default" aria-label="Reset opacity">&#x21BA;</button></label>
                 <label>Rotation <output id="viralHeaderRotationOutput" for="viralHeaderRotationInput">0&deg;</output><input id="viralHeaderRotationInput" type="range" min="-180" max="180" step="1" value="0" /><button type="button" class="viral-header-reset viral-header-reset-inline" data-viral-header-reset="rotation" title="Reset to default" aria-label="Reset rotation">&#x21BA;</button></label>
               </div>
               <div id="viralHeaderStatus" class="element-status" aria-live="polite">ClipperViral tag is off.</div>
@@ -9563,14 +9563,14 @@
               text: "CLIPPERVIRAL",
               x: -1,
               y: -1,
-              width: 200,
-              fontSize: 22,
-              opacity: 0.92,
+              width: 128,
+              fontSize: 16,
+              opacity: 0.88,
               rotation: 0,
               textAlign: "center",
               showInPreview: true,
               includeInExport: true,
-              animMode: "animatedLogo",
+              animMode: "static",
               driftCycleSec: 6,
             },
             effectOverlay: {
@@ -11963,8 +11963,8 @@
           text: `${viralSource.text || VIRAL_HEADER_DEFAULTS.text}`.trim().slice(0, 24) || VIRAL_HEADER_DEFAULTS.text,
           x: Number(viralSource.x) < 0 ? -1 : clamp(viralSource.x ?? VIRAL_HEADER_DEFAULTS.x, 0, overlayDims.width),
           y: Number(viralSource.y) < 0 ? -1 : clamp(viralSource.y ?? VIRAL_HEADER_DEFAULTS.y, 0, overlayDims.height),
-          width: clamp(viralSource.width ?? VIRAL_HEADER_DEFAULTS.width, 120, 900),
-          fontSize: clamp(viralSource.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 12, 48),
+          width: clamp(viralSource.width ?? VIRAL_HEADER_DEFAULTS.width, 82, 900),
+          fontSize: clamp(viralSource.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 11, 48),
           opacity: clamp(Number.isFinite(Number(viralSource.opacity)) ? Number(viralSource.opacity) : VIRAL_HEADER_DEFAULTS.opacity, 0, 1),
           rotation: clamp(Number.isFinite(Number(viralSource.rotation)) ? Number(viralSource.rotation) : 0, -180, 180),
           textAlign: viralTextAlign,
@@ -12737,14 +12737,14 @@
         text: "CLIPPERVIRAL",
         x: -1,
         y: -1,
-        width: 200,
-        fontSize: 22,
-        opacity: 0.92,
+        width: 128,
+        fontSize: 16,
+        opacity: 0.88,
         rotation: 0,
         textAlign: "center",
         showInPreview: true,
         includeInExport: true,
-        animMode: "animatedLogo",
+        animMode: "static",
         driftCycleSec: 6,
       });
 
@@ -12795,8 +12795,21 @@
             viralHeaderState.includeInExport = !!vh.enabled;
           }
           // Previous builds saved Drift XY as the implicit default. Move that old default
-          // to the new Animated Logo default; users can still manually choose Drift XY again.
+          // to the new clear static mark; users can still manually choose Drift XY again.
           if (vh.animMode === undefined || vh.animMode === "driftXY") {
+            viralHeaderState.animMode = VIRAL_HEADER_DEFAULTS.animMode;
+          }
+          const hasOldAnimatedLogoDefaults =
+            vh.animMode === "animatedLogo" &&
+            (!vh.text || vh.text === "CLIPPERVIRAL") &&
+            (vh.x === undefined || Number(vh.x) < 0) &&
+            (vh.y === undefined || Number(vh.y) < 0) &&
+            (vh.width === undefined || Number(vh.width) === 200) &&
+            (vh.fontSize === undefined || Number(vh.fontSize) === 22);
+          if (hasOldAnimatedLogoDefaults) {
+            viralHeaderState.width = VIRAL_HEADER_DEFAULTS.width;
+            viralHeaderState.fontSize = VIRAL_HEADER_DEFAULTS.fontSize;
+            viralHeaderState.opacity = VIRAL_HEADER_DEFAULTS.opacity;
             viralHeaderState.animMode = VIRAL_HEADER_DEFAULTS.animMode;
           }
           if (viralHeaderState.textAlign !== "left" && viralHeaderState.textAlign !== "right" && viralHeaderState.textAlign !== "center") {
@@ -13423,8 +13436,8 @@
         viralHeaderState.text = `${headerScene.text || VIRAL_HEADER_DEFAULTS.text}`.trim().slice(0, 24) || VIRAL_HEADER_DEFAULTS.text;
         viralHeaderState.x = Number(headerScene.x) < 0 ? -1 : clamp(headerScene.x ?? viralHeaderState.x, 0, dims.width);
         viralHeaderState.y = Number(headerScene.y) < 0 ? -1 : clamp(headerScene.y ?? viralHeaderState.y, 0, dims.height);
-        viralHeaderState.width = clamp(headerScene.width ?? viralHeaderState.width, 120, 900);
-        viralHeaderState.fontSize = clamp(headerScene.fontSize ?? viralHeaderState.fontSize, 12, 48);
+        viralHeaderState.width = clamp(headerScene.width ?? viralHeaderState.width, 82, 900);
+        viralHeaderState.fontSize = clamp(headerScene.fontSize ?? viralHeaderState.fontSize, 11, 48);
         viralHeaderState.opacity = clamp(headerScene.opacity ?? viralHeaderState.opacity ?? VIRAL_HEADER_DEFAULTS.opacity, 0, 1);
         viralHeaderState.rotation = clamp(headerScene.rotation ?? viralHeaderState.rotation ?? 0, -180, 180);
         const incomingAlign = headerScene.textAlign;
@@ -14808,14 +14821,14 @@
         const animMode = sceneHeader.animMode || VIRAL_HEADER_DEFAULTS.animMode;
         const rawText = animMode === "animatedLogo"
           ? `${sceneHeader.text || "CLIPPERVIRAL"}`.trim().slice(0, 24) || "CLIPPERVIRAL"
-          : "@clipperviral";
-        const requestedFontSize = clamp(sceneHeader.fontSize ?? 22, 12, 48);
+          : `${sceneHeader.text || "CLIPPERVIRAL"}`.trim().slice(0, 24) || "CLIPPERVIRAL";
+        const requestedFontSize = clamp(sceneHeader.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 11, 48);
         const targetMarkW = animMode === "animatedLogo"
           ? clamp(sceneHeader.width ?? 200, 120, outputWidth * 0.95)
-          : clamp(sceneHeader.width ?? 150, 92, Math.min(170, outputWidth * 0.16));
+          : clamp(sceneHeader.width ?? VIRAL_HEADER_DEFAULTS.width, 82, Math.min(170, outputWidth * 0.16));
         const fontSize = animMode === "animatedLogo"
           ? requestedFontSize
-          : clamp(targetMarkW / 7.7, 12, 22);
+          : clamp(requestedFontSize, 11, 18);
         const opacity = clamp(Number.isFinite(Number(sceneHeader.opacity)) ? Number(sceneHeader.opacity) : 0.92, 0, 1);
         const rotation = clamp(Number.isFinite(Number(sceneHeader.rotation)) ? Number(sceneHeader.rotation) : 0, -180, 180);
         const driftCycleSec = clamp(sceneHeader.driftCycleSec ?? 6, 2, 30);
@@ -14846,7 +14859,7 @@
         const fbw = Math.max(1, fbr - fbx);
         const fbh = Math.max(1, fbb - fby);
         const margin = fbw * 0.04;
-        const bottomY = fby + fbh - pillH - fbh * 0.035;
+        const bottomY = fby + fbh * 0.76 - pillH * 0.5;
         const minX = fbx + margin;
         const maxX = fbx + fbw - pillW - margin;
         const minY = fby + fbh * 0.06;
@@ -14982,20 +14995,15 @@
 
         if (animMode !== "animatedLogo") {
           ctx.letterSpacing = "0px";
-          ctx.shadowBlur = Math.max(3, fontSize * 0.28);
-          ctx.shadowColor = "rgba(83,252,24,0.34)";
-          ctx.shadowOffsetY = 0;
-          const glowGrad = ctx.createLinearGradient(txtX, txtY, txtX + pillW, txtY);
-          glowGrad.addColorStop(0, "rgba(83,252,24,0.32)");
-          glowGrad.addColorStop(1, "rgba(98,245,208,0.28)");
-          ctx.fillStyle = glowGrad;
-          ctx.fillText(rawText, txtX, txtY, pillW);
-          ctx.shadowBlur = 0;
-          ctx.shadowColor = "transparent";
-          const markGrad = ctx.createLinearGradient(txtX, txtY, txtX + pillW, txtY);
-          markGrad.addColorStop(0, "#53fc18");
-          markGrad.addColorStop(1, "#62f5d0");
-          ctx.fillStyle = markGrad;
+          ctx.shadowBlur = Math.max(1, fontSize * 0.12);
+          ctx.shadowColor = "rgba(0,0,0,0.72)";
+          ctx.shadowOffsetY = Math.max(1, fontSize * 0.06);
+          ctx.lineJoin = "round";
+          ctx.miterLimit = 2;
+          ctx.strokeStyle = "rgba(0,0,0,0.76)";
+          ctx.lineWidth = Math.max(1, fontSize * 0.12);
+          ctx.fillStyle = "rgba(255,255,255,0.92)";
+          ctx.strokeText(rawText, txtX, txtY, pillW);
           ctx.fillText(rawText, txtX, txtY, pillW);
           ctx.restore();
           return;
@@ -15064,12 +15072,12 @@
         const isAnimatedLogo = (sceneHeader.animMode || VIRAL_HEADER_DEFAULTS.animMode) === "animatedLogo";
         const text = isAnimatedLogo
           ? `${sceneHeader.text || VIRAL_HEADER_DEFAULTS.text}`.trim().slice(0, 24) || VIRAL_HEADER_DEFAULTS.text
-          : "@clipperviral";
-        const requestedFont = clamp(sceneHeader.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 12, 48);
+          : `${sceneHeader.text || VIRAL_HEADER_DEFAULTS.text}`.trim().slice(0, 24) || VIRAL_HEADER_DEFAULTS.text;
+        const requestedFont = clamp(sceneHeader.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 11, 48);
         const markWidth = isAnimatedLogo
           ? clamp(sceneHeader.width ?? VIRAL_HEADER_DEFAULTS.width, 120, dims.width)
-          : clamp(sceneHeader.width ?? 150, 92, Math.min(170, dims.width * 0.16));
-        const font = isAnimatedLogo ? requestedFont : clamp(markWidth / 7.7, 12, 22);
+          : clamp(sceneHeader.width ?? VIRAL_HEADER_DEFAULTS.width, 82, Math.min(170, dims.width * 0.16));
+        const font = isAnimatedLogo ? requestedFont : clamp(requestedFont, 11, 18);
         const iconSize = isAnimatedLogo ? font * 0.95 : 0;
         const iconGap = isAnimatedLogo ? font * 0.38 : 0;
         const padH = isAnimatedLogo ? font * 0.7 : 0;
@@ -15079,7 +15087,7 @@
         const h = isAnimatedLogo ? font + (font * 0.42 * 2) : font * 1.28;
         const autoPosition = Number(sceneHeader.x) < 0 || Number(sceneHeader.y) < 0;
         const x = autoPosition ? (dims.width - w) / 2 : clamp(sceneHeader.x ?? VIRAL_HEADER_DEFAULTS.x, 0, dims.width - w);
-        const y = autoPosition ? dims.height - h - dims.height * 0.035 : clamp(sceneHeader.y ?? VIRAL_HEADER_DEFAULTS.y, 0, dims.height - h);
+        const y = autoPosition ? dims.height * 0.76 - h * 0.5 : clamp(sceneHeader.y ?? VIRAL_HEADER_DEFAULTS.y, 0, dims.height - h);
         element.style.left = `${x * scaleX}px`;
         element.style.top = `${y * scaleY}px`;
         element.style.bottom = "auto";
@@ -15135,7 +15143,7 @@
         viralHeaderYInput.min = "-1";
         viralHeaderXInput.max = String(dims.width);
         viralHeaderYInput.max = String(dims.height);
-        viralHeaderFontInput.min = "12";
+        viralHeaderFontInput.min = "11";
         viralHeaderFontInput.max = "48";
         viralHeaderWidthInput.value = String(Math.round(viralHeaderState.width || VIRAL_HEADER_DEFAULTS.width));
         viralHeaderFontInput.value = String(Math.round(viralHeaderState.fontSize || VIRAL_HEADER_DEFAULTS.fontSize));
@@ -15206,8 +15214,8 @@
         const nextY = Number(viralHeaderYInput.value);
         viralHeaderState.x = nextX < 0 ? -1 : clamp(nextX, 0, dims.width);
         viralHeaderState.y = nextY < 0 ? -1 : clamp(nextY, 0, dims.height);
-        viralHeaderState.width = clamp(viralHeaderWidthInput.value, 120, 1600);
-        viralHeaderState.fontSize = clamp(viralHeaderFontInput.value, 12, 48);
+        viralHeaderState.width = clamp(viralHeaderWidthInput.value, 82, 1600);
+        viralHeaderState.fontSize = clamp(viralHeaderFontInput.value, 11, 48);
         if (viralHeaderOpacityInput) viralHeaderState.opacity = clamp(Number(viralHeaderOpacityInput.value) || VIRAL_HEADER_DEFAULTS.opacity, 0, 1);
         if (viralHeaderRotationInput) viralHeaderState.rotation = clamp(Number(viralHeaderRotationInput.value) || 0, -180, 180);
         const animModeSelect = document.getElementById("viralHeaderAnimModeSelect");
@@ -15429,8 +15437,8 @@
           viralHeaderState.enabled = true;
           viralHeaderState.showInPreview = true;
           viralHeaderState.includeInExport = true;
-          viralHeaderState.width = clamp(Math.round(baseWidth * 0.6), 120, 1600);
-          viralHeaderState.fontSize = clamp(Math.round(baseFont * 0.6), 12, 48);
+          viralHeaderState.width = clamp(Math.round(baseWidth * 0.6), 82, 1600);
+          viralHeaderState.fontSize = clamp(Math.round(baseFont * 0.6), 11, 48);
           positionViralHeaderForKickProgram();
         } else if (kickProgramViralHeaderBackup) {
           Object.assign(viralHeaderState, kickProgramViralHeaderBackup);
