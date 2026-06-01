@@ -8074,7 +8074,7 @@
               </div>
               <div class="range-fields">
                 <label>Width px<input id="viralHeaderWidthInput" type="number" min="82" max="1600" step="1" value="128" /><output id="viralHeaderWidthOutput" for="viralHeaderWidthInput">128</output><button type="button" class="viral-header-reset viral-header-reset-inline" data-viral-header-reset="width" title="Reset to default" aria-label="Reset width">&#x21BA;</button></label>
-                <label>Font px<input id="viralHeaderFontInput" type="number" min="11" max="48" step="1" value="16" /><output id="viralHeaderFontOutput" for="viralHeaderFontInput">16</output><button type="button" class="viral-header-reset viral-header-reset-inline" data-viral-header-reset="fontSize" title="Reset to default" aria-label="Reset font size">&#x21BA;</button></label>
+                <label>Font px<input id="viralHeaderFontInput" type="number" min="3" max="48" step="1" value="16" /><output id="viralHeaderFontOutput" for="viralHeaderFontInput">16</output><button type="button" class="viral-header-reset viral-header-reset-inline" data-viral-header-reset="fontSize" title="Reset to default" aria-label="Reset font size">&#x21BA;</button></label>
               </div>
               <div class="section-title">Appearance</div>
               <div class="element-slider-grid">
@@ -11979,7 +11979,7 @@
           x: Number(viralSource.x) < 0 ? -1 : clamp(viralSource.x ?? VIRAL_HEADER_DEFAULTS.x, 0, overlayDims.width),
           y: Number(viralSource.y) < 0 ? -1 : clamp(viralSource.y ?? VIRAL_HEADER_DEFAULTS.y, 0, overlayDims.height),
           width: clamp(viralSource.width ?? VIRAL_HEADER_DEFAULTS.width, 82, 900),
-          fontSize: clamp(viralSource.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 11, 48),
+          fontSize: clamp(viralSource.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 3, 48),
           opacity: clamp(Number.isFinite(Number(viralSource.opacity)) ? Number(viralSource.opacity) : VIRAL_HEADER_DEFAULTS.opacity, 0, 1),
           rotation: clamp(Number.isFinite(Number(viralSource.rotation)) ? Number(viralSource.rotation) : 0, -180, 180),
           textAlign: viralTextAlign,
@@ -13452,7 +13452,7 @@
         viralHeaderState.x = Number(headerScene.x) < 0 ? -1 : clamp(headerScene.x ?? viralHeaderState.x, 0, dims.width);
         viralHeaderState.y = Number(headerScene.y) < 0 ? -1 : clamp(headerScene.y ?? viralHeaderState.y, 0, dims.height);
         viralHeaderState.width = clamp(headerScene.width ?? viralHeaderState.width, 82, 900);
-        viralHeaderState.fontSize = clamp(headerScene.fontSize ?? viralHeaderState.fontSize, 11, 48);
+        viralHeaderState.fontSize = clamp(headerScene.fontSize ?? viralHeaderState.fontSize, 3, 48);
         viralHeaderState.opacity = clamp(headerScene.opacity ?? viralHeaderState.opacity ?? VIRAL_HEADER_DEFAULTS.opacity, 0, 1);
         viralHeaderState.rotation = clamp(headerScene.rotation ?? viralHeaderState.rotation ?? 0, -180, 180);
         const incomingAlign = headerScene.textAlign;
@@ -14852,11 +14852,11 @@
         const rawText = isAnimatedLogo
           ? "ClipperViral"
           : `${sceneHeader.text || "CLIPPERVIRAL"}`.trim().slice(0, 24).toUpperCase() || "CLIPPERVIRAL";
-        const requestedFontSize = clamp(sceneHeader.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 11, 48);
+        const requestedFontSize = clamp(sceneHeader.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 3, 48);
         const renderScale = Math.min(outputWidth, outputHeight) / 540;
         const fontSize = isAnimatedLogo
-          ? clamp(requestedFontSize * renderScale, 18, 34)
-          : clamp(requestedFontSize * renderScale, 20, 36);
+          ? clamp(requestedFontSize * renderScale, 3, 34)
+          : clamp(requestedFontSize * renderScale, 3, 36);
         const animatedIconH = isAnimatedLogo ? fontSize * 2.25 : 0;
         const animatedIconW = isAnimatedLogo ? animatedIconH * 1.1 : 0;
         const animatedGap = isAnimatedLogo ? fontSize * 0.28 : 0;
@@ -15116,9 +15116,9 @@
         const text = isAnimatedLogo
           ? "ClipperViral"
           : `${sceneHeader.text || VIRAL_HEADER_DEFAULTS.text}`.trim().slice(0, 24) || VIRAL_HEADER_DEFAULTS.text;
-        const requestedFont = clamp(sceneHeader.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 11, 48);
+        const requestedFont = clamp(sceneHeader.fontSize ?? VIRAL_HEADER_DEFAULTS.fontSize, 3, 48);
         const renderScale = Math.min(dims.width, dims.height) / 540;
-        const font = isAnimatedLogo ? clamp(requestedFont * renderScale, 18, 34) : clamp(requestedFont * renderScale, 20, 36);
+        const font = isAnimatedLogo ? clamp(requestedFont * renderScale, 3, 34) : clamp(requestedFont * renderScale, 3, 36);
         const animatedIconH = isAnimatedLogo ? font * 2.25 : 0;
         const animatedIconW = isAnimatedLogo ? animatedIconH * 1.1 : 0;
         const animatedGap = isAnimatedLogo ? font * 0.28 : 0;
@@ -15188,7 +15188,7 @@
         viralHeaderYInput.min = "-1";
         viralHeaderXInput.max = String(dims.width);
         viralHeaderYInput.max = String(dims.height);
-        viralHeaderFontInput.min = "11";
+        viralHeaderFontInput.min = "3";
         viralHeaderFontInput.max = "48";
         viralHeaderWidthInput.value = String(Math.round(viralHeaderState.width || VIRAL_HEADER_DEFAULTS.width));
         viralHeaderFontInput.value = String(Math.round(viralHeaderState.fontSize || VIRAL_HEADER_DEFAULTS.fontSize));
@@ -15260,7 +15260,7 @@
         viralHeaderState.x = nextX < 0 ? -1 : clamp(nextX, 0, dims.width);
         viralHeaderState.y = nextY < 0 ? -1 : clamp(nextY, 0, dims.height);
         viralHeaderState.width = clamp(viralHeaderWidthInput.value, 82, 1600);
-        viralHeaderState.fontSize = clamp(viralHeaderFontInput.value, 11, 48);
+        viralHeaderState.fontSize = clamp(viralHeaderFontInput.value, 3, 48);
         if (viralHeaderOpacityInput) viralHeaderState.opacity = clamp(Number(viralHeaderOpacityInput.value) || VIRAL_HEADER_DEFAULTS.opacity, 0, 1);
         if (viralHeaderRotationInput) viralHeaderState.rotation = clamp(Number(viralHeaderRotationInput.value) || 0, -180, 180);
         const animModeSelect = document.getElementById("viralHeaderAnimModeSelect");
@@ -15483,7 +15483,7 @@
           viralHeaderState.showInPreview = true;
           viralHeaderState.includeInExport = true;
           viralHeaderState.width = clamp(Math.round(baseWidth * 0.6), 82, 1600);
-          viralHeaderState.fontSize = clamp(Math.round(baseFont * 0.6), 11, 48);
+          viralHeaderState.fontSize = clamp(Math.round(baseFont * 0.6), 3, 48);
           positionViralHeaderForKickProgram();
         } else if (kickProgramViralHeaderBackup) {
           Object.assign(viralHeaderState, kickProgramViralHeaderBackup);
@@ -17779,7 +17779,7 @@
         viralHeaderState.enabled = true;
         updateViralHeaderControls();
         syncCanvasPreview();
-      }, { minW: 120, minFont: 12, maxFont: 48 });
+      }, { minW: 120, minFont: 3, maxFont: 48 });
       makeTimelineRangeInteractive(kickTimelineClip, document.querySelector(".overlay-lane"), () => ({ start: kickState.start, end: kickState.end }), (range) => {
         kickState.enabled = true;
         kickState.apply = "range";
