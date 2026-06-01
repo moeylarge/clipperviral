@@ -2489,19 +2489,16 @@
         width: auto;
         min-width: 100px;
         height: auto;
-        border: 1px solid rgba(255,255,255,0.55);
-        border-radius: 999px;
-        background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.03));
-        box-shadow:
-          inset 0 1px 0 rgba(255,255,255,0.85),
-          inset 0 -6px 10px rgba(255,255,255,0.12),
-          0 6px 18px rgba(0,0,0,0.25);
-        backdrop-filter: blur(4px) saturate(150%);
-        -webkit-backdrop-filter: blur(4px) saturate(150%);
+        border: 1px solid transparent;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
         z-index: 19;
         cursor: default;
         touch-action: none;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.45);
+        text-shadow: none;
       }
       /* --- Animation mode classes --- */
       .viral-header-overlay.anim-driftXY {
@@ -2597,7 +2594,7 @@
         color: rgba(255,255,255,0.9);
         -webkit-text-fill-color: rgba(255,255,255,0.9);
         text-transform: uppercase;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.45);
+        text-shadow: none;
         -webkit-text-stroke: 0;
       }
       .viral-header-overlay .viral-tag-text .viral-v {
@@ -14835,61 +14832,6 @@
         });
       }
 
-      function drawGlassCapsule(ctx, x, y, w, h, radius, opacity) {
-        const blurPad = Math.max(8, Math.round(h * 0.42));
-        const sx = clamp(Math.floor(x - blurPad), 0, ctx.canvas.width);
-        const sy = clamp(Math.floor(y - blurPad), 0, ctx.canvas.height);
-        const sw = clamp(Math.ceil(w + blurPad * 2), 1, ctx.canvas.width - sx);
-        const sh = clamp(Math.ceil(h + blurPad * 2), 1, ctx.canvas.height - sy);
-        const glassSample = drawGlassCapsule._sampleCanvas || (drawGlassCapsule._sampleCanvas = document.createElement("canvas"));
-        glassSample.width = sw;
-        glassSample.height = sh;
-        const sampleCtx = glassSample.getContext("2d");
-        sampleCtx.clearRect(0, 0, sw, sh);
-        sampleCtx.drawImage(ctx.canvas, sx, sy, sw, sh, 0, 0, sw, sh);
-
-        ctx.save();
-        drawRoundedRectPath(ctx, x, y, w, h, radius);
-        ctx.clip();
-        ctx.filter = `blur(${Math.max(3, h * 0.16)}px) saturate(1.5) brightness(1.06)`;
-        ctx.globalAlpha = Math.min(1, opacity * 0.92);
-        ctx.drawImage(glassSample, sx, sy, sw, sh);
-        ctx.filter = "none";
-        const fill = ctx.createLinearGradient(0, y, 0, y + h);
-        fill.addColorStop(0, "rgba(255,255,255,0.16)");
-        fill.addColorStop(1, "rgba(255,255,255,0.03)");
-        ctx.globalAlpha = opacity;
-        ctx.fillStyle = fill;
-        ctx.fill();
-        ctx.restore();
-
-        ctx.save();
-        ctx.globalAlpha = opacity;
-        ctx.shadowColor = "rgba(0,0,0,0.25)";
-        ctx.shadowBlur = Math.max(6, h * 0.32);
-        ctx.shadowOffsetY = Math.max(2, h * 0.12);
-        drawRoundedRectPath(ctx, x, y, w, h, radius);
-        ctx.strokeStyle = "rgba(255,255,255,0.55)";
-        ctx.lineWidth = Math.max(1, h * 0.025);
-        ctx.stroke();
-        ctx.shadowColor = "transparent";
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetY = 0;
-        ctx.strokeStyle = "rgba(255,255,255,0.7)";
-        ctx.lineWidth = Math.max(1, h * 0.018);
-        ctx.beginPath();
-        ctx.moveTo(x + radius * 0.75, y + h * 0.22);
-        ctx.lineTo(x + w - radius * 0.75, y + h * 0.22);
-        ctx.stroke();
-        ctx.strokeStyle = "rgba(255,255,255,0.1)";
-        ctx.lineWidth = Math.max(1, h * 0.08);
-        ctx.beginPath();
-        ctx.moveTo(x + radius, y + h * 0.78);
-        ctx.lineTo(x + w - radius, y + h * 0.78);
-        ctx.stroke();
-        ctx.restore();
-      }
-
       function drawViralHeader(ctx, outputWidth, outputHeight, sceneHeader, currentTime, focusBox) {
         if (!sceneHeader?.enabled) return;
         const animMode = sceneHeader.animMode || VIRAL_HEADER_DEFAULTS.animMode;
@@ -15072,12 +15014,11 @@
         ctx.textBaseline = "middle";
 
         if (!isAnimatedLogo) {
-          drawGlassCapsule(ctx, pillX, pillY, pillW, pillH, pillR, opacity);
           ctx.globalAlpha = opacity;
           ctx.letterSpacing = "0px";
-          ctx.shadowBlur = Math.max(1, fontSize * 0.08);
-          ctx.shadowColor = "rgba(0,0,0,0.45)";
-          ctx.shadowOffsetY = Math.max(1, fontSize * 0.05);
+          ctx.shadowBlur = 0;
+          ctx.shadowColor = "transparent";
+          ctx.shadowOffsetY = 0;
           ctx.fillStyle = "rgba(255,255,255,0.9)";
           drawLetterSpacedText(ctx, rawText, txtX, txtY, glassTracking);
           ctx.restore();
