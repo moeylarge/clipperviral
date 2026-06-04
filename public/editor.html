@@ -8142,6 +8142,7 @@
                 <label class="toggle-field"><input id="cutoutOverlayToggle" type="checkbox" /> Enable cutout overlay</label>
                 <input id="cutoutUploadInput" type="file" accept="image/png,image/webp,image/*" hidden />
                 <button id="cutoutUploadButton" class="primary-btn source-action" type="button">Upload cutout or photo</button>
+                <button id="cutoutRemoveBgButton" class="primary-btn source-action secondary-action" type="button" disabled>Remove background</button>
                 <div id="cutoutPreviewChip" class="cutout-preview-chip" hidden>
                   <img id="cutoutPreviewThumb" alt="" />
                   <span id="cutoutPreviewName">No cutout loaded</span>
@@ -10970,6 +10971,7 @@
       const cutoutOverlayToggle = document.getElementById("cutoutOverlayToggle");
       const cutoutUploadInput = document.getElementById("cutoutUploadInput");
       const cutoutUploadButton = document.getElementById("cutoutUploadButton");
+      const cutoutRemoveBgButton = document.getElementById("cutoutRemoveBgButton");
       const cutoutPreviewChip = document.getElementById("cutoutPreviewChip");
       const cutoutPreviewThumb = document.getElementById("cutoutPreviewThumb");
       const cutoutPreviewName = document.getElementById("cutoutPreviewName");
@@ -12043,6 +12045,7 @@
       }
 
       const cutoutImageCache = new Map();
+      let lastCutoutSourceFile = null;
       function getCutoutImageElement(imageDataUrl) {
         if (!imageDataUrl) return null;
         const cached = cutoutImageCache.get(imageDataUrl);
@@ -15553,6 +15556,7 @@
         if (cutoutPreviewThumb && hasImage) cutoutPreviewThumb.src = cutoutOverlayState.imageDataUrl;
         if (cutoutPreviewName) cutoutPreviewName.textContent = cutoutOverlayState.name || "Cutout PNG";
         if (cutoutSavePresetButton) cutoutSavePresetButton.disabled = !hasImage;
+        if (cutoutRemoveBgButton) cutoutRemoveBgButton.disabled = !lastCutoutSourceFile;
         updateCutoutStatus(message);
         renderCutoutPresetOptions();
         persistElementSettings();
@@ -15594,25 +15598,52 @@
         canvas.width = img.naturalWidth || img.width || 1;
         canvas.height = img.naturalHeight || img.height || 1;
         const ctx = canvas.getContext("2d");
-        if (!ctx) return { hasUsableTransparency: false, transparentRatio: 0, opaqueRatio: 1, width: canvas.width, height: canvas.height };
+        if (!ctx) return { isCleanCutout: false, transparentRatio: 0, borderTransparentRatio: 0, cornerTransparentRatio: 0, opaqueRatio: 1, width: canvas.width, height: canvas.height };
         ctx.drawImage(img, 0, 0);
         const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
         let transparentPixels = 0;
         let softTransparentPixels = 0;
         let opaquePixels = 0;
-        for (let i = 3; i < data.length; i += 4) {
-          if (data[i] < 16) transparentPixels += 1;
-          if (data[i] < 240) softTransparentPixels += 1;
-          if (data[i] > 240) opaquePixels += 1;
+        let borderPixels = 0;
+        let borderTransparentPixels = 0;
+        let cornerPixels = 0;
+        let cornerTransparentPixels = 0;
+        const width = canvas.width;
+        const height = canvas.height;
+        const borderSize = Math.max(2, Math.round(Math.min(width, height) * 0.08));
+        const cornerSize = Math.max(3, Math.round(Math.min(width, height) * 0.14));
+        for (let y = 0; y < height; y += 1) {
+          for (let x = 0; x < width; x += 1) {
+            const alpha = data[(y * width + x) * 4 + 3];
+            const isTransparent = alpha < 16;
+            if (isTransparent) transparentPixels += 1;
+            if (alpha < 240) softTransparentPixels += 1;
+            if (alpha > 240) opaquePixels += 1;
+            const inBorder = x < borderSize || x >= width - borderSize || y < borderSize || y >= height - borderSize;
+            if (inBorder) {
+              borderPixels += 1;
+              if (isTransparent) borderTransparentPixels += 1;
+            }
+            const inCorner = (x < cornerSize || x >= width - cornerSize) && (y < cornerSize || y >= height - cornerSize);
+            if (inCorner) {
+              cornerPixels += 1;
+              if (isTransparent) cornerTransparentPixels += 1;
+            }
+          }
         }
         const totalPixels = Math.max(1, data.length / 4);
         const transparentRatio = transparentPixels / totalPixels;
         const softTransparentRatio = softTransparentPixels / totalPixels;
         const opaqueRatio = opaquePixels / totalPixels;
+        const borderTransparentRatio = borderTransparentPixels / Math.max(1, borderPixels);
+        const cornerTransparentRatio = cornerTransparentPixels / Math.max(1, cornerPixels);
+        const isCleanCutout = transparentRatio >= 0.12 && borderTransparentRatio >= 0.72 && cornerTransparentRatio >= 0.88;
         return {
-          hasUsableTransparency: transparentRatio >= 0.08 || softTransparentRatio >= 0.12,
+          isCleanCutout,
           transparentRatio,
           softTransparentRatio,
+          borderTransparentRatio,
+          cornerTransparentRatio,
           opaqueRatio,
           width: canvas.width,
           height: canvas.height,
@@ -15686,27 +15717,34 @@
         return trimTransparentCutoutDataUrl(await blobToDataUrl(blob));
       }
 
-      async function loadCutoutFile(file) {
+      async function applyCutoutImageFromFile(file, options = {}) {
+        const forceRemoval = options.forceRemoval === true;
         if (!file) return;
         if (!/^image\//i.test(file.type || "")) {
           updateCutoutStatus("Choose an image file.");
           return;
         }
-        const originalLabel = cutoutUploadButton?.textContent || "Upload cutout or photo";
+        if (!forceRemoval) lastCutoutSourceFile = file;
+        const activeButton = forceRemoval ? cutoutRemoveBgButton : cutoutUploadButton;
+        const originalLabel = activeButton?.textContent || (forceRemoval ? "Remove background" : "Upload cutout or photo");
         if (cutoutUploadButton) {
           cutoutUploadButton.disabled = true;
-          cutoutUploadButton.textContent = "Processing...";
+          if (!forceRemoval) cutoutUploadButton.textContent = "Processing...";
+        }
+        if (cutoutRemoveBgButton) {
+          cutoutRemoveBgButton.disabled = true;
+          if (forceRemoval) cutoutRemoveBgButton.textContent = "Processing...";
         }
         try {
-          updateCutoutStatus("Reading cutout image...");
+          updateCutoutStatus(forceRemoval ? "Forcing background removal..." : "Reading cutout image...");
           const sourceDataUrl = await readFileAsDataUrl(file);
           const sourceAlpha = await analyzeImageAlphaDataUrl(sourceDataUrl);
-          const shouldUseAsCutout = sourceAlpha.hasUsableTransparency;
+          const shouldUseAsCutout = !forceRemoval && sourceAlpha.isCleanCutout;
           let imageDataUrl = sourceDataUrl;
           if (!shouldUseAsCutout) {
             imageDataUrl = await removeBackgroundFromCutoutFile(file);
             const processedAlpha = await analyzeImageAlphaDataUrl(imageDataUrl);
-            if (!processedAlpha.hasUsableTransparency || processedAlpha.opaqueRatio > 0.96) {
+            if ((processedAlpha.transparentRatio < 0.04 && processedAlpha.softTransparentRatio < 0.08) || processedAlpha.opaqueRatio > 0.98) {
               throw new Error("Background removal did not produce a clean transparent cutout. Try a clearer subject photo.");
             }
           }
@@ -15723,9 +15761,17 @@
         } finally {
           if (cutoutUploadButton) {
             cutoutUploadButton.disabled = false;
-            cutoutUploadButton.textContent = originalLabel;
+            if (!forceRemoval) cutoutUploadButton.textContent = originalLabel;
+          }
+          if (cutoutRemoveBgButton) {
+            cutoutRemoveBgButton.disabled = !lastCutoutSourceFile;
+            if (forceRemoval) cutoutRemoveBgButton.textContent = originalLabel;
           }
         }
+      }
+
+      async function loadCutoutFile(file) {
+        return applyCutoutImageFromFile(file);
       }
 
       function saveCutoutPreset() {
@@ -17636,6 +17682,13 @@
         loadCutoutFile(file);
         cutoutUploadInput.value = "";
       });
+      cutoutRemoveBgButton?.addEventListener("click", () => {
+        if (!lastCutoutSourceFile) {
+          updateCutoutStatus("Upload a photo first, then remove its background.");
+          return;
+        }
+        applyCutoutImageFromFile(lastCutoutSourceFile, { forceRemoval: true });
+      });
       cutoutOverlayToggle?.addEventListener("change", syncCutoutFromControls);
       cutoutScaleInput?.addEventListener("input", syncCutoutFromControls);
       cutoutOpacityInput?.addEventListener("input", syncCutoutFromControls);
@@ -17647,6 +17700,7 @@
         cutoutOverlayState.enabled = false;
         cutoutOverlayState.imageDataUrl = "";
         cutoutOverlayState.name = "";
+        lastCutoutSourceFile = null;
         syncCutoutControls("Cutout removed.");
         syncCanvasPreview();
       });
