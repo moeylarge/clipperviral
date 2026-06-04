@@ -7875,7 +7875,7 @@
                 <button type="button" role="menuitem" data-add-element="countdown">Countdown</button>
                 <button type="button" role="menuitem" disabled title="Coming in Wave D">Sticker <span class="menu-tag">Soon</span></button>
                 <button type="button" role="menuitem" data-add-element="watermark">Watermark</button>
-                <button type="button" role="menuitem" data-add-element="cutoutOverlay">Cutout Overlay</button>
+                <button type="button" role="menuitem" data-add-element="cutoutOverlay" data-admin-only="cutout" hidden>Cutout Overlay</button>
                 <button type="button" role="menuitem" disabled title="Use the Progress Bar card below">Progress Bar <span class="menu-tag">↓</span></button>
                 <button type="button" role="menuitem" disabled title="Coming in Wave D">CTA Chip <span class="menu-tag">Soon</span></button>
               </div>
@@ -8129,7 +8129,7 @@
               <button id="viralHeaderDeleteButton" class="primary-btn source-action secondary-action" type="button">Delete header</button>
             </article>
             </details>
-            <details class="elements-section" data-element-section="cutoutOverlay">
+            <details class="elements-section" data-element-section="cutoutOverlay" data-admin-only="cutout" hidden>
               <summary>Cutout Overlay</summary>
               <article class="element-card">
                 <div class="element-card-head">
@@ -10349,7 +10349,6 @@
       const CAPTION_SETTINGS_STORAGE_KEY = "clipperviral.captionSettings.v1";
       const ELEMENT_SETTINGS_STORAGE_KEY = "clipperviral.elementSettings.v1";
       const CUTOUT_PRESETS_STORAGE_KEY = "clipperviral.cutoutPresets.v1";
-      const CUTOUT_BG_REMOVAL_ESM = "https://esm.sh/@imgly/background-removal@1.7.0";
       const ELEMENT_SECTIONS_STORAGE_KEY = "clipperviral.elementSections.v1";
       const CAPTION_DIRECT_UPLOAD_LIMIT_BYTES = 3.5 * 1024 * 1024;
       const CAPTION_AUDIO_SAMPLE_RATE = 16000;
@@ -12078,15 +12077,16 @@
 
       function normalizeCutoutOverlayState(source, sourceDuration, currentTime) {
         const raw = source || {};
+        const adminAllowed = window.__CV_IS_ADMIN__ === true;
         const start = clamp(Number(raw.start) || 0, 0, Math.max(0, sourceDuration - 0.1));
         const end = clamp(Number(raw.end) || sourceDuration, start + 0.1, sourceDuration);
         const corner = ["tl", "tr", "bl", "br"].includes(raw.corner) ? raw.corner : "br";
         const layer = raw.layer === "aboveWatermark" ? "aboveWatermark" : "belowWatermark";
         const imageDataUrl = typeof raw.imageDataUrl === "string" ? raw.imageDataUrl : "";
-        const element = getCutoutImageElement(imageDataUrl);
-        const imageReady = !!(element && element.complete && element.naturalWidth > 0);
+        const element = adminAllowed ? getCutoutImageElement(imageDataUrl) : null;
+        const imageReady = !!(adminAllowed && element && element.complete && element.naturalWidth > 0);
         return {
-          enabled: !!raw.enabled,
+          enabled: adminAllowed && !!raw.enabled,
           imageDataUrl,
           name: `${raw.name || ""}`.trim().slice(0, 60),
           corner,
@@ -12095,7 +12095,7 @@
           start,
           end,
           layer,
-          visible: !!raw.enabled && imageReady && currentTime >= start && currentTime <= end,
+          visible: adminAllowed && !!raw.enabled && imageReady && currentTime >= start && currentTime <= end,
           element: imageReady ? element : null,
         };
       }
@@ -15588,35 +15588,35 @@
         });
       }
 
-      async function imageDataUrlHasTransparency(dataUrl) {
+      async function analyzeImageAlphaDataUrl(dataUrl) {
         const img = await loadImageElementFromDataUrl(dataUrl);
         const canvas = document.createElement("canvas");
         canvas.width = img.naturalWidth || img.width || 1;
         canvas.height = img.naturalHeight || img.height || 1;
         const ctx = canvas.getContext("2d");
-        if (!ctx) return false;
+        if (!ctx) return { hasUsableTransparency: false, transparentRatio: 0, opaqueRatio: 1, width: canvas.width, height: canvas.height };
         ctx.drawImage(img, 0, 0);
         const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let transparentPixels = 0;
+        let softTransparentPixels = 0;
+        let opaquePixels = 0;
         for (let i = 3; i < data.length; i += 4) {
-          if (data[i] < 250) return true;
+          if (data[i] < 16) transparentPixels += 1;
+          if (data[i] < 240) softTransparentPixels += 1;
+          if (data[i] > 240) opaquePixels += 1;
         }
-        return false;
-      }
-
-      let cutoutBackgroundRemovalLoader = null;
-      function loadCutoutBackgroundRemoval() {
-        if (cutoutBackgroundRemovalLoader) return cutoutBackgroundRemovalLoader;
-        cutoutBackgroundRemovalLoader = import(CUTOUT_BG_REMOVAL_ESM).then((module) => {
-          const removeBackground = module.removeBackground || module.default;
-          if (typeof removeBackground !== "function") {
-            throw new Error("Background remover loaded without an image processor.");
-          }
-          return removeBackground;
-        }).catch((error) => {
-          cutoutBackgroundRemovalLoader = null;
-          throw error instanceof Error ? error : new Error("Background remover failed to load.");
-        });
-        return cutoutBackgroundRemovalLoader;
+        const totalPixels = Math.max(1, data.length / 4);
+        const transparentRatio = transparentPixels / totalPixels;
+        const softTransparentRatio = softTransparentPixels / totalPixels;
+        const opaqueRatio = opaquePixels / totalPixels;
+        return {
+          hasUsableTransparency: transparentRatio >= 0.08 || softTransparentRatio >= 0.12,
+          transparentRatio,
+          softTransparentRatio,
+          opaqueRatio,
+          width: canvas.width,
+          height: canvas.height,
+        };
       }
 
       function blobToDataUrl(blob) {
@@ -15667,19 +15667,21 @@
         return trimmed.toDataURL("image/png");
       }
 
-      async function removeBackgroundFromCutoutDataUrl(dataUrl) {
-        updateCutoutStatus("Loading free in-browser background remover...");
-        const removeBackground = await loadCutoutBackgroundRemoval();
-        updateCutoutStatus("Removing background in your browser...");
-        const blob = await removeBackground(dataUrl, {
-          model: "isnet_quint8",
-          output: { format: "image/png", quality: 1 },
-          progress: (stage, current, total) => {
-            if (!total) return;
-            const pct = Math.max(1, Math.min(99, Math.round((current / total) * 100)));
-            updateCutoutStatus(`Removing background ${pct}% · ${stage}`);
-          },
+      async function removeBackgroundFromCutoutFile(file) {
+        updateCutoutStatus("Removing background with remove.bg...");
+        const formData = new FormData();
+        formData.append("image", file, file.name || "cutout-upload");
+        const response = await fetch("/api/removebg", {
+          method: "POST",
+          body: formData,
         });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          const detail = payload?.message || payload?.error || `remove.bg failed (${response.status}).`;
+          throw new Error(`Background removal failed: ${detail}`);
+        }
+        const blob = await response.blob();
+        if (!blob.size) throw new Error("Background removal failed: remove.bg returned an empty image.");
         updateCutoutStatus("Cropping transparent cutout...");
         return trimTransparentCutoutDataUrl(await blobToDataUrl(blob));
       }
@@ -15698,16 +15700,25 @@
         try {
           updateCutoutStatus("Reading cutout image...");
           const sourceDataUrl = await readFileAsDataUrl(file);
-          const hasTransparency = await imageDataUrlHasTransparency(sourceDataUrl);
-          const imageDataUrl = hasTransparency ? sourceDataUrl : await removeBackgroundFromCutoutDataUrl(sourceDataUrl);
+          const sourceAlpha = await analyzeImageAlphaDataUrl(sourceDataUrl);
+          const shouldUseAsCutout = sourceAlpha.hasUsableTransparency;
+          let imageDataUrl = sourceDataUrl;
+          if (!shouldUseAsCutout) {
+            imageDataUrl = await removeBackgroundFromCutoutFile(file);
+            const processedAlpha = await analyzeImageAlphaDataUrl(imageDataUrl);
+            if (!processedAlpha.hasUsableTransparency || processedAlpha.opaqueRatio > 0.96) {
+              throw new Error("Background removal did not produce a clean transparent cutout. Try a clearer subject photo.");
+            }
+          }
           cutoutOverlayState.imageDataUrl = imageDataUrl;
           const baseName = (file.name || "Cutout").replace(/\.[^.]+$/, "").slice(0, 60);
-          cutoutOverlayState.name = hasTransparency ? baseName : `${baseName} cutout`;
+          cutoutOverlayState.name = shouldUseAsCutout ? baseName : `${baseName} cutout`;
           cutoutOverlayState.enabled = true;
           await ensureCutoutImageReady(cutoutOverlayState.imageDataUrl);
-          syncCutoutControls(hasTransparency ? "Transparent cutout loaded. It will burn into preview and export." : "Background removed. Cutout will burn into preview and export.");
+          syncCutoutControls(shouldUseAsCutout ? "Transparent cutout loaded. It will burn into preview and export." : "Background removed. Cutout will burn into preview and export.");
           syncCanvasPreview();
         } catch (error) {
+          console.error("Cutout background removal failed", error);
           updateCutoutStatus(error instanceof Error ? error.message : "Could not process that cutout image.");
         } finally {
           if (cutoutUploadButton) {
@@ -15761,6 +15772,17 @@
         cutoutOverlayState.start = 0;
         cutoutOverlayState.end = getEffectiveDuration();
         syncCutoutControls();
+        syncCanvasPreview();
+      }
+
+      function setCutoutAdminVisibility(isAdmin) {
+        document.querySelectorAll('[data-admin-only="cutout"]').forEach((element) => {
+          element.hidden = !isAdmin;
+        });
+        if (!isAdmin && cutoutOverlayState.enabled) {
+          cutoutOverlayState.enabled = false;
+          syncCutoutControls("Cutout Overlay is admin-only.");
+        }
         syncCanvasPreview();
       }
 
@@ -25577,6 +25599,9 @@
             panel.hidden = false;
           } else if (panel) {
             panel.hidden = true;
+          }
+          if (typeof setCutoutAdminVisibility === "function") {
+            setCutoutAdminVisibility(Boolean(window.__CV_IS_ADMIN__));
           }
         }
 
