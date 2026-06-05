@@ -15610,6 +15610,10 @@
         let cornerTransparentPixels = 0;
         const width = canvas.width;
         const height = canvas.height;
+        let minAlphaX = width;
+        let minAlphaY = height;
+        let maxAlphaX = -1;
+        let maxAlphaY = -1;
         const borderSize = Math.max(2, Math.round(Math.min(width, height) * 0.08));
         const cornerSize = Math.max(3, Math.round(Math.min(width, height) * 0.14));
         for (let y = 0; y < height; y += 1) {
@@ -15619,6 +15623,12 @@
             if (isTransparent) transparentPixels += 1;
             if (alpha < 240) softTransparentPixels += 1;
             if (alpha > 240) opaquePixels += 1;
+            if (alpha > 16) {
+              if (x < minAlphaX) minAlphaX = x;
+              if (y < minAlphaY) minAlphaY = y;
+              if (x > maxAlphaX) maxAlphaX = x;
+              if (y > maxAlphaY) maxAlphaY = y;
+            }
             const inBorder = x < borderSize || x >= width - borderSize || y < borderSize || y >= height - borderSize;
             if (inBorder) {
               borderPixels += 1;
@@ -15637,13 +15647,38 @@
         const opaqueRatio = opaquePixels / totalPixels;
         const borderTransparentRatio = borderTransparentPixels / Math.max(1, borderPixels);
         const cornerTransparentRatio = cornerTransparentPixels / Math.max(1, cornerPixels);
-        const isCleanCutout = transparentRatio >= 0.12 && borderTransparentRatio >= 0.72 && cornerTransparentRatio >= 0.88;
+        let alphaBoxAreaRatio = 1;
+        let alphaBoxEdgeOpaqueRatio = 0;
+        if (maxAlphaX >= minAlphaX && maxAlphaY >= minAlphaY) {
+          const boxWidth = maxAlphaX - minAlphaX + 1;
+          const boxHeight = maxAlphaY - minAlphaY + 1;
+          alphaBoxAreaRatio = (boxWidth * boxHeight) / totalPixels;
+          const edgeInset = Math.max(2, Math.round(Math.min(boxWidth, boxHeight) * 0.025));
+          let alphaBoxEdgePixels = 0;
+          let alphaBoxEdgeOpaquePixels = 0;
+          for (let y = minAlphaY; y <= maxAlphaY; y += 1) {
+            for (let x = minAlphaX; x <= maxAlphaX; x += 1) {
+              const onEdge = x < minAlphaX + edgeInset || x > maxAlphaX - edgeInset || y < minAlphaY + edgeInset || y > maxAlphaY - edgeInset;
+              if (!onEdge) continue;
+              alphaBoxEdgePixels += 1;
+              if (data[(y * width + x) * 4 + 3] > 16) alphaBoxEdgeOpaquePixels += 1;
+            }
+          }
+          alphaBoxEdgeOpaqueRatio = alphaBoxEdgeOpaquePixels / Math.max(1, alphaBoxEdgePixels);
+        }
+        const isCleanCutout = transparentRatio >= 0.12
+          && borderTransparentRatio >= 0.72
+          && cornerTransparentRatio >= 0.88
+          && alphaBoxAreaRatio <= 0.65
+          && alphaBoxEdgeOpaqueRatio >= 0.14;
         return {
           isCleanCutout,
           transparentRatio,
           softTransparentRatio,
           borderTransparentRatio,
           cornerTransparentRatio,
+          alphaBoxAreaRatio,
+          alphaBoxEdgeOpaqueRatio,
           opaqueRatio,
           width: canvas.width,
           height: canvas.height,
