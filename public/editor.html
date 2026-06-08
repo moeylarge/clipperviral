@@ -15650,10 +15650,12 @@
         const cornerTransparentRatio = cornerTransparentPixels / Math.max(1, cornerPixels);
         let alphaBoxAreaRatio = 1;
         let alphaBoxEdgeOpaqueRatio = 0;
+        let alphaBoxTouchesCanvasEdge = true;
         if (maxAlphaX >= minAlphaX && maxAlphaY >= minAlphaY) {
           const boxWidth = maxAlphaX - minAlphaX + 1;
           const boxHeight = maxAlphaY - minAlphaY + 1;
           alphaBoxAreaRatio = (boxWidth * boxHeight) / totalPixels;
+          alphaBoxTouchesCanvasEdge = minAlphaX <= 0 || minAlphaY <= 0 || maxAlphaX >= width - 1 || maxAlphaY >= height - 1;
           const edgeInset = Math.max(2, Math.round(Math.min(boxWidth, boxHeight) * 0.025));
           let alphaBoxEdgePixels = 0;
           let alphaBoxEdgeOpaquePixels = 0;
@@ -15671,7 +15673,8 @@
           && borderTransparentRatio >= 0.72
           && cornerTransparentRatio >= 0.88
           && alphaBoxAreaRatio <= 0.65
-          && alphaBoxEdgeOpaqueRatio >= 0.14;
+          && alphaBoxEdgeOpaqueRatio >= 0.14
+          && !alphaBoxTouchesCanvasEdge;
         return {
           isCleanCutout,
           transparentRatio,
@@ -15680,6 +15683,7 @@
           cornerTransparentRatio,
           alphaBoxAreaRatio,
           alphaBoxEdgeOpaqueRatio,
+          alphaBoxTouchesCanvasEdge,
           opaqueRatio,
           width: canvas.width,
           height: canvas.height,
