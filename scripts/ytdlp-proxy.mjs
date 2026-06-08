@@ -805,6 +805,48 @@ function contentTypeForExtension(fileName) {
   return "application/octet-stream";
 }
 
+async function tryKickHlsWindow({ sourceUrl, sourceKind, effectiveSourceUrl, workdir, clipStart, clipDuration, audioOnly, attemptFailures }) {
+  if (sourceKind !== "kick" || audioOnly) return { ok: false };
+  try {
+    const windowRender = await renderKickHlsWindow({
+      playlistUrl: effectiveSourceUrl,
+      workdir,
+      clipStart,
+      clipDuration,
+    });
+    if (!windowRender.ok) {
+      attemptFailures.push({ label: "kick-hls-window", details: windowRender.reason });
+      return { ok: false };
+    }
+
+    const validation = await validateMediaFile(windowRender.outputPath, { audioOnly });
+    if (!validation.ok) {
+      attemptFailures.push({
+        label: "kick-hls-window",
+        details: validation.reason,
+        size: validation.size,
+      });
+      return { ok: false };
+    }
+
+    console.error("[ytdlp-proxy] kick hls window fallback produced valid media", {
+      sourceUrl,
+      sourceKind,
+      size: validation.size,
+      duration: validation.duration,
+      segmentCount: windowRender.segmentCount,
+      innerSeek: windowRender.innerSeek,
+    });
+    return { ok: true, sourceFile: windowRender.outputPath, validMedia: validation };
+  } catch (error) {
+    attemptFailures.push({
+      label: "kick-hls-window",
+      details: error instanceof Error ? error.message : "Kick HLS window render failed.",
+    });
+    return { ok: false };
+  }
+}
+
 const server = createServer(async (req, res) => {
   try {
     if (req.method === "GET" && req.url === "/healthz") {
@@ -921,8 +963,33 @@ const server = createServer(async (req, res) => {
     let sourceFile = "";
     let validMedia = null;
     const attemptFailures = [];
+    let usedAttempt = "";
 
-    for (let attemptIndex = 0; attemptIndex < attempts.length; attemptIndex += 1) {
+    const deepKickClip = sourceKind === "kick"
+      && !audioOnly
+      && !transcriptOnly
+      && Number.isFinite(clipStart)
+      && clipStart >= Number(process.env.KICK_HLS_WINDOW_FASTPATH_START_SECONDS || 60 * 60);
+
+    if (deepKickClip) {
+      const windowAttempt = await tryKickHlsWindow({
+        sourceUrl,
+        sourceKind,
+        effectiveSourceUrl,
+        workdir,
+        clipStart,
+        clipDuration,
+        audioOnly,
+        attemptFailures,
+      });
+      if (windowAttempt.ok) {
+        sourceFile = windowAttempt.sourceFile;
+        validMedia = windowAttempt.validMedia;
+        usedAttempt = "kick-hls-window";
+      }
+    }
+
+    for (let attemptIndex = 0; !sourceFile && attemptIndex < attempts.length; attemptIndex += 1) {
       const attempt = attempts[attemptIndex];
       const attemptTemplate = transcriptOnly
         ? outputTemplate
@@ -939,6 +1006,7 @@ const server = createServer(async (req, res) => {
             clipDuration,
           });
       const result = await runCommand(YTDLP_BIN, args);
+      usedAttempt = attempt.label;
 
       if (!result.ok) {
         const details = result.timedOut
@@ -992,42 +1060,21 @@ const server = createServer(async (req, res) => {
       break;
     }
 
-    if (!transcriptOnly && !sourceFile && sourceKind === "kick" && !audioOnly) {
-      try {
-        const windowRender = await renderKickHlsWindow({
-          playlistUrl: effectiveSourceUrl,
-          workdir,
-          clipStart,
-          clipDuration,
-        });
-        if (windowRender.ok) {
-          const validation = await validateMediaFile(windowRender.outputPath, { audioOnly });
-          if (validation.ok) {
-            sourceFile = windowRender.outputPath;
-            validMedia = validation;
-            console.error("[ytdlp-proxy] kick hls window fallback produced valid media", {
-              sourceUrl,
-              sourceKind,
-              size: validation.size,
-              duration: validation.duration,
-              segmentCount: windowRender.segmentCount,
-              innerSeek: windowRender.innerSeek,
-            });
-          } else {
-            attemptFailures.push({
-              label: "kick-hls-window",
-              details: validation.reason,
-              size: validation.size,
-            });
-          }
-        } else {
-          attemptFailures.push({ label: "kick-hls-window", details: windowRender.reason });
-        }
-      } catch (error) {
-        attemptFailures.push({
-          label: "kick-hls-window",
-          details: error instanceof Error ? error.message : "Kick HLS window render failed.",
-        });
+    if (!transcriptOnly && !sourceFile && sourceKind === "kick" && !audioOnly && !deepKickClip) {
+      const windowAttempt = await tryKickHlsWindow({
+        sourceUrl,
+        sourceKind,
+        effectiveSourceUrl,
+        workdir,
+        clipStart,
+        clipDuration,
+        audioOnly,
+        attemptFailures,
+      });
+      if (windowAttempt.ok) {
+        sourceFile = windowAttempt.sourceFile;
+        validMedia = windowAttempt.validMedia;
+        usedAttempt = "kick-hls-window";
       }
     }
 
@@ -1073,6 +1120,7 @@ const server = createServer(async (req, res) => {
     res.setHeader("content-type", contentTypeForExtension(sourceFile));
     res.setHeader("content-length", String(fileStats.size));
     res.setHeader("x-ytdlp-source", sourceKind);
+    if (usedAttempt) res.setHeader("x-ytdlp-attempt", usedAttempt);
     if (resolvedKickVod?.ok) res.setHeader("x-ytdlp-kick-resolved", "v2-channel-videos");
 
     const stream = createReadStream(sourceFile);

@@ -12,6 +12,7 @@ import { requireAllowedApiUser } from "@/lib/auth/api-access";
 import { canUsePasteLink } from "@/lib/cv/subscriber";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
@@ -114,7 +115,7 @@ function parseProxyError(payload: Record<string, unknown>) {
 
 function getProxyTimeoutMs(sourceKind: string, forThumbnail = false) {
   if (sourceKind === "kick") {
-    return forThumbnail ? 60_000 : 90_000;
+    return forThumbnail ? 120_000 : 240_000;
   }
   return 20_000;
 }

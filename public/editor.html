@@ -16463,7 +16463,7 @@
             showPasteLinkUpgrade(payload?.message || "VOD scanning is a Pro feature. Upgrade to unlock.");
             return payload?.message || "VOD scanning is a Pro feature. Upgrade to unlock.";
           }
-          return [payload?.message, payload?.error, payload?.details].filter(Boolean).join(" | ") || text;
+          return [payload?.message, payload?.error, payload?.details, payload?.reason, payload?.hint].filter(Boolean).join(" | ") || text;
         } catch {
           return text;
         }
@@ -16592,8 +16592,8 @@
                 preview.textContent = originalText || "Load clip";
                 return;
               }
-              const estimate = Math.min(45, Math.max(10, Math.ceil((clip.duration || 30) * 0.6)));
-              startSourceTimer("Rendering Kick segment.", estimate, renderRequestId);
+              const estimate = Math.min(180, Math.max(45, Math.ceil((clip.duration || 30) * 2.5)));
+              startSourceTimer("Rendering deep Kick segment.", estimate, renderRequestId);
             } else {
               setStatus(youtubeHint, "Rendering preview clip...", "loading");
             }
@@ -16640,8 +16640,8 @@
                 download.textContent = originalText || "Download source";
                 return;
               }
-              const estimate = Math.min(45, Math.max(10, Math.ceil((clip.duration || 30) * 0.6)));
-              startSourceTimer("Preparing Kick segment.", estimate, renderRequestId);
+              const estimate = Math.min(180, Math.max(45, Math.ceil((clip.duration || 30) * 2.5)));
+              startSourceTimer("Preparing deep Kick segment.", estimate, renderRequestId);
             } else {
               setStatus(youtubeHint, "Preparing source download...", "loading");
             }
