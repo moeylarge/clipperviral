@@ -66,6 +66,7 @@ function resolveBundledFfmpegPath() {
 }
 
 const FFMPEG_PATH = resolveBundledFfmpegPath();
+const MIN_VIDEO_BYTES = Number(process.env.YTDLP_MIN_VIDEO_BYTES || 64 * 1024);
 
 function sendJson(res, status, payload) {
   res.statusCode = status;
@@ -150,6 +151,258 @@ function runCommand(command, args, timeoutMs = 15 * 60 * 1000) {
       });
     });
   });
+}
+
+function parseDurationSeconds(ffmpegOutput) {
+  const match = `${ffmpegOutput || ""}`.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/i);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const seconds = Number(match[3]);
+  const total = hours * 3600 + minutes * 60 + seconds;
+  return Number.isFinite(total) ? total : null;
+}
+
+async function validateMediaFile(filePath, { audioOnly = false } = {}) {
+  const fileStats = await stat(filePath);
+  if (!fileStats.size) {
+    return { ok: false, size: fileStats.size, reason: "Downloaded file is empty." };
+  }
+
+  if (!audioOnly && fileStats.size < MIN_VIDEO_BYTES) {
+    return {
+      ok: false,
+      size: fileStats.size,
+      reason: `Downloaded clip is too small to be valid media (${fileStats.size} bytes).`,
+    };
+  }
+
+  if (!FFMPEG_PATH || audioOnly) {
+    return { ok: true, size: fileStats.size };
+  }
+
+  const probe = await runCommand(FFMPEG_PATH, ["-hide_banner", "-i", filePath], 15_000);
+  const output = `${probe.stderr || ""}\n${probe.stdout || ""}`;
+  const hasVideoStream = /Stream\s+#\S+:\s*Video:/i.test(output);
+  if (!hasVideoStream) {
+    return {
+      ok: false,
+      size: fileStats.size,
+      reason: "Downloaded clip does not contain a video stream.",
+      details: output.slice(0, 800),
+    };
+  }
+
+  const duration = parseDurationSeconds(output);
+  if (duration != null && duration <= 0.1) {
+    return {
+      ok: false,
+      size: fileStats.size,
+      reason: `Downloaded clip has invalid duration (${duration}s).`,
+      details: output.slice(0, 800),
+    };
+  }
+
+  return { ok: true, size: fileStats.size, duration };
+}
+
+async function fetchText(url) {
+  const response = await fetch(url, { headers: { "user-agent": USER_AGENT } });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} while fetching ${url}`);
+  }
+  return response.text();
+}
+
+function parseHlsMediaPlaylist(playlistUrl, playlistText) {
+  const baseUrl = new URL(playlistUrl);
+  const lines = `${playlistText || ""}`.replace(/\r\n/g, "\n").split("\n");
+  const segments = [];
+  let elapsed = 0;
+  let programDateTime = "";
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index].trim();
+    if (line.startsWith("#EXT-X-PROGRAM-DATE-TIME:")) {
+      programDateTime = line;
+      continue;
+    }
+
+    if (!line.startsWith("#EXTINF:")) continue;
+    const duration = Number(line.slice("#EXTINF:".length).split(",", 1)[0]);
+    const uri = (lines[index + 1] || "").trim();
+    if (!Number.isFinite(duration) || duration <= 0 || !uri || uri.startsWith("#")) continue;
+
+    segments.push({
+      start: elapsed,
+      duration,
+      extinf: line,
+      programDateTime,
+      uri: new URL(uri, baseUrl).toString(),
+    });
+    elapsed += duration;
+    index += 1;
+  }
+
+  return { segments, duration: elapsed };
+}
+
+function chooseHlsVariant(playlistUrl, playlistText, maxHeight = 720) {
+  const baseUrl = new URL(playlistUrl);
+  const lines = `${playlistText || ""}`.replace(/\r\n/g, "\n").split("\n");
+  const variants = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index].trim();
+    if (!line.startsWith("#EXT-X-STREAM-INF:")) continue;
+
+    const uri = (lines[index + 1] || "").trim();
+    if (!uri || uri.startsWith("#")) continue;
+    const resolutionMatch = line.match(/RESOLUTION=(\d+)x(\d+)/i);
+    const bandwidthMatch = line.match(/BANDWIDTH=(\d+)/i);
+    const width = resolutionMatch ? Number(resolutionMatch[1]) : 0;
+    const height = resolutionMatch ? Number(resolutionMatch[2]) : 0;
+    const bandwidth = bandwidthMatch ? Number(bandwidthMatch[1]) : 0;
+    variants.push({
+      uri: new URL(uri, baseUrl).toString(),
+      width,
+      height,
+      bandwidth,
+    });
+  }
+
+  if (!variants.length) return "";
+  const withinLimit = variants.filter((variant) => variant.height > 0 && variant.height <= maxHeight);
+  const candidates = withinLimit.length ? withinLimit : variants;
+  candidates.sort((a, b) => (b.height - a.height) || (b.bandwidth - a.bandwidth));
+  return candidates[0].uri;
+}
+
+async function renderKickHlsWindow({ playlistUrl, workdir, clipStart, clipDuration }) {
+  if (!FFMPEG_PATH) {
+    return { ok: false, reason: "ffmpeg is not available for Kick HLS window rendering." };
+  }
+
+  const start = Number(clipStart);
+  const duration = Number(clipDuration);
+  if (!Number.isFinite(start) || start < 0 || !Number.isFinite(duration) || duration <= 0) {
+    return { ok: false, reason: "Kick HLS window rendering requires a valid clipStart and clipDuration." };
+  }
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(playlistUrl);
+  } catch {
+    return { ok: false, reason: "Kick HLS window rendering requires a valid playlist URL." };
+  }
+  if (!parsedUrl.pathname.toLowerCase().endsWith(".m3u8")) {
+    return { ok: false, reason: "Kick HLS window rendering requires a direct m3u8 playlist URL." };
+  }
+
+  let mediaPlaylistUrl = parsedUrl.toString();
+  let playlistText = await fetchText(mediaPlaylistUrl);
+  if (!playlistText.includes("#EXTINF")) {
+    const variantUri = chooseHlsVariant(mediaPlaylistUrl, playlistText);
+    if (!variantUri) return { ok: false, reason: "Kick HLS master playlist did not contain a media playlist." };
+    mediaPlaylistUrl = variantUri;
+    playlistText = await fetchText(mediaPlaylistUrl);
+  }
+
+  const parsed = parseHlsMediaPlaylist(mediaPlaylistUrl, playlistText);
+  if (!parsed.segments.length) {
+    return { ok: false, reason: "Kick HLS playlist did not contain media segments." };
+  }
+  if (start >= parsed.duration) {
+    return {
+      ok: false,
+      reason: `Clip start ${start}s is outside the Kick VOD duration ${parsed.duration.toFixed(3)}s.`,
+    };
+  }
+
+  const padding = 20;
+  const selected = parsed.segments.filter((segment) => {
+    const segmentEnd = segment.start + segment.duration;
+    return segmentEnd >= start - padding && segment.start <= start + duration + padding;
+  });
+  if (!selected.length) {
+    return { ok: false, reason: "No Kick HLS segments overlap the requested clip window." };
+  }
+
+  const innerSeek = Math.max(0, start - selected[0].start);
+  const windowPlaylist = [
+    "#EXTM3U",
+    "#EXT-X-VERSION:3",
+    "#EXT-X-TARGETDURATION:13",
+    "#EXT-X-MEDIA-SEQUENCE:0",
+  ];
+  for (const segment of selected) {
+    if (segment.programDateTime) windowPlaylist.push(segment.programDateTime);
+    windowPlaylist.push(segment.extinf, segment.uri);
+  }
+  windowPlaylist.push("#EXT-X-ENDLIST");
+
+  const windowPlaylistPath = path.join(workdir, "kick-window.m3u8");
+  const outputPath = path.join(workdir, "source-kick-window.mp4");
+  await writeFile(windowPlaylistPath, `${windowPlaylist.join("\n")}\n`, "utf8");
+
+  const result = await runCommand(
+    FFMPEG_PATH,
+    [
+      "-y",
+      "-hide_banner",
+      "-protocol_whitelist",
+      "file,http,https,tcp,tls,crypto",
+      "-ss",
+      String(innerSeek),
+      "-i",
+      windowPlaylistPath,
+      "-t",
+      String(duration),
+      "-c",
+      "copy",
+      "-movflags",
+      "+faststart",
+      outputPath,
+    ],
+    180_000,
+  );
+  if (!result.ok) {
+    return {
+      ok: false,
+      reason: result.timedOut
+        ? "Kick HLS window render timed out."
+        : result.stderr || result.stdout || `ffmpeg exited with ${result.code}`,
+    };
+  }
+
+  return { ok: true, outputPath, segmentCount: selected.length, innerSeek, duration: parsed.duration };
+}
+
+function uniqueAttempts(attempts) {
+  const seen = new Set();
+  return attempts.filter((attempt) => {
+    const key = `${attempt.label}:${attempt.formatPref || ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function buildDownloadAttempts({ sourceKind, formatPref, audioOnly, transcriptOnly }) {
+  if (transcriptOnly || audioOnly) {
+    return [{ label: transcriptOnly ? "transcript" : "audio", formatPref }];
+  }
+
+  const attempts = [{ label: "primary", formatPref }];
+  if (sourceKind === "kick") {
+    attempts.push(
+      { label: "kick-best", formatPref: "best" },
+      { label: "kick-720p", formatPref: "best[height<=720]/best" },
+      { label: "kick-540p", formatPref: "best[height<=540]/best" },
+      { label: "kick-360p", formatPref: "best[height<=360]/best" },
+    );
+  }
+  return uniqueAttempts(attempts);
 }
 
 const KICK_VOD_RESOLVER_SCRIPT = String.raw`
@@ -664,27 +917,129 @@ const server = createServer(async (req, res) => {
     const outputTemplate = transcriptOnly
       ? path.join(workdir, "subtitle.%(ext)s")
       : path.join(workdir, "source.%(ext)s");
-    const args = transcriptOnly
-      ? buildTranscriptArgs({ sourceUrl: effectiveSourceUrl, sourceKind, outputTemplate, language })
-      : buildYtDlpArgs({ sourceUrl: effectiveSourceUrl, sourceKind, outputTemplate, formatPref, audioOnly, clipStart, clipDuration });
-    const result = await runCommand(YTDLP_BIN, args);
+    const attempts = buildDownloadAttempts({ sourceKind, formatPref, audioOnly, transcriptOnly });
+    let sourceFile = "";
+    let validMedia = null;
+    const attemptFailures = [];
 
-    if (!result.ok) {
-      console.error("[ytdlp-proxy] yt-dlp failed", {
-        sourceUrl,
-        sourceKind,
-        audioOnly,
-        transcriptOnly,
-        code: result.code,
-        timedOut: result.timedOut,
-        stderr: (result.stderr || "").slice(0, 800),
-      });
+    for (let attemptIndex = 0; attemptIndex < attempts.length; attemptIndex += 1) {
+      const attempt = attempts[attemptIndex];
+      const attemptTemplate = transcriptOnly
+        ? outputTemplate
+        : path.join(workdir, `source-${attemptIndex}.%(ext)s`);
+      const args = transcriptOnly
+        ? buildTranscriptArgs({ sourceUrl: effectiveSourceUrl, sourceKind, outputTemplate: attemptTemplate, language })
+        : buildYtDlpArgs({
+            sourceUrl: effectiveSourceUrl,
+            sourceKind,
+            outputTemplate: attemptTemplate,
+            formatPref: attempt.formatPref,
+            audioOnly,
+            clipStart,
+            clipDuration,
+          });
+      const result = await runCommand(YTDLP_BIN, args);
+
+      if (!result.ok) {
+        const details = result.timedOut
+          ? "yt-dlp timed out."
+          : result.stderr || result.stdout || `exit code ${result.code}`;
+        attemptFailures.push({ label: attempt.label, details: details.slice(0, 800) });
+        console.error("[ytdlp-proxy] yt-dlp attempt failed", {
+          sourceUrl,
+          sourceKind,
+          audioOnly,
+          transcriptOnly,
+          attempt: attempt.label,
+          code: result.code,
+          timedOut: result.timedOut,
+          stderr: (result.stderr || "").slice(0, 800),
+        });
+        continue;
+      }
+
+      if (transcriptOnly) {
+        break;
+      }
+
+      const attemptPrefix = `source-${attemptIndex}.`;
+      const files = (await readdir(workdir)).filter((name) => name.startsWith(attemptPrefix));
+      if (!files.length) {
+        attemptFailures.push({ label: attempt.label, details: "yt-dlp finished but source file was not found." });
+        continue;
+      }
+
+      const candidateFile = path.join(workdir, files[0]);
+      const validation = await validateMediaFile(candidateFile, { audioOnly });
+      if (!validation.ok) {
+        attemptFailures.push({
+          label: attempt.label,
+          details: validation.reason,
+          size: validation.size,
+        });
+        console.error("[ytdlp-proxy] yt-dlp attempt produced invalid media", {
+          sourceUrl,
+          sourceKind,
+          attempt: attempt.label,
+          reason: validation.reason,
+          size: validation.size,
+        });
+        continue;
+      }
+
+      sourceFile = candidateFile;
+      validMedia = validation;
+      break;
+    }
+
+    if (!transcriptOnly && !sourceFile && sourceKind === "kick" && !audioOnly) {
+      try {
+        const windowRender = await renderKickHlsWindow({
+          playlistUrl: effectiveSourceUrl,
+          workdir,
+          clipStart,
+          clipDuration,
+        });
+        if (windowRender.ok) {
+          const validation = await validateMediaFile(windowRender.outputPath, { audioOnly });
+          if (validation.ok) {
+            sourceFile = windowRender.outputPath;
+            validMedia = validation;
+            console.error("[ytdlp-proxy] kick hls window fallback produced valid media", {
+              sourceUrl,
+              sourceKind,
+              size: validation.size,
+              duration: validation.duration,
+              segmentCount: windowRender.segmentCount,
+              innerSeek: windowRender.innerSeek,
+            });
+          } else {
+            attemptFailures.push({
+              label: "kick-hls-window",
+              details: validation.reason,
+              size: validation.size,
+            });
+          }
+        } else {
+          attemptFailures.push({ label: "kick-hls-window", details: windowRender.reason });
+        }
+      } catch (error) {
+        attemptFailures.push({
+          label: "kick-hls-window",
+          details: error instanceof Error ? error.message : "Kick HLS window render failed.",
+        });
+      }
+    }
+
+    if (!transcriptOnly && !sourceFile) {
       await rm(workdir, { recursive: true, force: true });
       return sendJson(res, 502, {
-        error: "yt-dlp failed.",
-        details: result.timedOut
-          ? "yt-dlp timed out."
-          : result.stderr || result.stdout || `exit code ${result.code}`,
+        error: "Could not produce a valid clip.",
+        reason: attemptFailures[attemptFailures.length - 1]?.details || "All downloader attempts failed.",
+        attempts: attemptFailures,
+        hint: sourceKind === "kick"
+          ? "Kick deep VOD extraction can return an empty HLS container for some offsets. Try a nearby moment or retry after the downloader refreshes."
+          : "The downloader finished without a valid media stream.",
       });
     }
 
@@ -712,22 +1067,7 @@ const server = createServer(async (req, res) => {
       return sendJson(res, 200, { text, segments });
     }
 
-    const files = (await readdir(workdir)).filter((name) => name.startsWith("source."));
-    if (!files.length) {
-      await rm(workdir, { recursive: true, force: true });
-      return sendJson(res, 502, { error: "yt-dlp finished but source file was not found." });
-    }
-
-    const sourceFile = path.join(workdir, files[0]);
-    const fileStats = await stat(sourceFile);
-    if (!fileStats.size) {
-      await rm(workdir, { recursive: true, force: true });
-      return sendJson(res, 502, { error: "Downloaded file is empty." });
-    }
-    if (fileStats.size < 1024) {
-      await rm(workdir, { recursive: true, force: true });
-      return sendJson(res, 502, { error: "Downloaded clip is too small to be valid media." });
-    }
+    const fileStats = validMedia || await validateMediaFile(sourceFile, { audioOnly });
 
     res.statusCode = 200;
     res.setHeader("content-type", contentTypeForExtension(sourceFile));
