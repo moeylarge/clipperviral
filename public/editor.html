@@ -21318,36 +21318,35 @@
         if (scene?.watermarkProfile !== "KICKHQ") return;
         const green = "#53FC18";
         const minDim = Math.min(outputWidth, outputHeight);
-        const logoAspect = KICK_LOGO_VIEWBOX.w / KICK_LOGO_VIEWBOX.h;
 
         ctx.save();
         ctx.globalAlpha = 0.65;
 
-        const logoW = clamp(minDim * 0.075, 42, 110);
-        const logoH = logoW / logoAspect;
-        const hqFont = clamp(logoH * 0.95, 17, 50);
-        const gap = -Math.max(1, logoH * 0.05);
-        const groupH = logoH + gap + hqFont * 0.62;
+        const kickFont = clamp(minDim * 0.036, 24, 46);
+        const hqFont = clamp(kickFont * 0.62, 15, 30);
+        const gap = -Math.max(1, kickFont * 0.08);
+        const groupH = kickFont + gap + hqFont * 0.76;
         const markCenterX = outputWidth * 0.38;
         const markCenterY = outputHeight * 0.56;
-        const logoX = markCenterX - logoW / 2;
-        const logoY = markCenterY - groupH / 2;
-        const hqY = logoY + logoH + gap + hqFont * 0.43;
+        const kickY = markCenterY - groupH / 2 + kickFont * 0.5;
+        const hqY = kickY + kickFont * 0.45 + gap + hqFont * 0.34;
 
         ctx.lineJoin = "round";
-        const outline = Math.max(2, logoW * 0.045);
         ctx.shadowBlur = 0;
-        [[-outline, 0], [outline, 0], [0, -outline], [0, outline], [-outline * 0.7, -outline * 0.7], [outline * 0.7, -outline * 0.7], [-outline * 0.7, outline * 0.7], [outline * 0.7, outline * 0.7]].forEach(([dx, dy]) => {
-          drawKickVectorLogo(ctx, logoX + dx, logoY + dy, logoW, logoH, "#101010");
-        });
-        drawKickVectorLogo(ctx, logoX, logoY, logoW, logoH, green);
-
-        ctx.font = `900 ${hqFont}px "Oswald", "Anton", "Arial Black", Impact, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
+
+        ctx.font = `900 ${kickFont}px "Arial Black", Impact, "Anton", sans-serif`;
+        ctx.fillStyle = green;
+        ctx.strokeStyle = "#101010";
+        ctx.lineWidth = Math.max(3, kickFont * 0.14);
+        ctx.strokeText("KICK", markCenterX, kickY);
+        ctx.fillText("KICK", markCenterX, kickY);
+
+        ctx.font = `900 ${hqFont}px "Arial Black", Impact, "Anton", sans-serif`;
         ctx.fillStyle = "#FFFFFF";
         ctx.strokeStyle = "#101010";
-        ctx.lineWidth = Math.max(3, hqFont * 0.22);
+        ctx.lineWidth = Math.max(3, hqFont * 0.2);
         ctx.strokeText("HQ", markCenterX, hqY);
         ctx.fillText("HQ", markCenterX, hqY);
 
