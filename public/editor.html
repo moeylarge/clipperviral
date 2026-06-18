@@ -21324,10 +21324,10 @@
         if (!kickHqWatermarkImage.complete || !kickHqWatermarkImage.naturalWidth) return;
 
         ctx.save();
-        ctx.globalAlpha = 0.58;
+        ctx.globalAlpha = 0.65;
 
         const imageRatio = kickHqWatermarkImage.naturalHeight / kickHqWatermarkImage.naturalWidth;
-        const markW = clamp(outputWidth * 0.2, 72, 260);
+        const markW = clamp(outputWidth * 0.065, 42, 120);
         const markH = markW * imageRatio;
         const markCenterX = outputWidth * 0.38;
         const markCenterY = outputHeight * 0.56;
