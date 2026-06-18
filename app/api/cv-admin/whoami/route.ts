@@ -12,9 +12,11 @@ export async function GET() {
     data: { user },
   } = await supabase.auth.getUser();
   const admin = await getCvAdminSession();
+  const isAdmin = Boolean(admin);
 
   return NextResponse.json({
-    is_admin: Boolean(admin),
+    is_admin: isAdmin,
+    isAdmin,
     email: user?.email || null,
   });
 }

@@ -7872,6 +7872,7 @@
               <button id="addElementCta" class="add-element-cta" type="button" aria-haspopup="menu" aria-expanded="false">+ Add element</button>
               <div id="addElementMenu" class="add-element-menu" role="menu" aria-label="Add element">
                 <button type="button" role="menuitem" data-add-element="viralHeader">ClipperViral Watermark</button>
+                <button type="button" role="menuitem" data-add-element="kickHqWatermark" data-admin-only="kickHq" hidden style="display:none;">KICK HQ Watermark</button>
                 <button type="button" role="menuitem" data-add-element="countdown">Countdown</button>
                 <button type="button" role="menuitem" disabled title="Coming in Wave D">Sticker <span class="menu-tag">Soon</span></button>
                 <button type="button" role="menuitem" data-add-element="watermark">Watermark</button>
@@ -8128,6 +8129,31 @@
               <button id="viralHeaderDuplicateButton" class="primary-btn source-action secondary-action" type="button">Copy style</button>
               <button id="viralHeaderDeleteButton" class="primary-btn source-action secondary-action" type="button">Delete header</button>
             </article>
+            </details>
+            <details class="elements-section" data-element-section="kickHqWatermark" data-admin-only="kickHq" hidden style="display:none;">
+              <summary>KICK HQ Watermark</summary>
+              <article class="element-card">
+                <div class="element-card-head">
+                  <div>
+                    <strong>KICK HQ partner watermark</strong>
+                    <p>Partner-page watermark profile for KickStreamingHQ clips.</p>
+                  </div>
+                  <span class="element-badge">Admin</span>
+                </div>
+                <div class="section-title">Watermark profile</div>
+                <div class="segmented" role="group" aria-label="Watermark profile">
+                  <button id="watermarkProfileCvButton" type="button" class="active" data-watermark-profile="CV" aria-pressed="true">CV</button>
+                  <button id="watermarkProfileKickHqButton" type="button" data-watermark-profile="KICKHQ" aria-pressed="false">KICK HQ</button>
+                </div>
+                <div id="kickHqWatermarkControls" hidden>
+                  <div class="field-stack">
+                    <label for="kickHqStreamerInput">Streamer</label>
+                    <input id="kickHqStreamerInput" type="text" value="KING68THEGREAT" maxlength="32" autocomplete="off" />
+                    <div class="element-hint">Bottom-right URL renders as KICK.COM/{STREAMER}.</div>
+                  </div>
+                </div>
+                <div id="kickHqWatermarkStatus" class="element-status" aria-live="polite">CV watermark profile is active.</div>
+              </article>
             </details>
             <details class="elements-section" data-element-section="cutoutOverlay" data-admin-only="cutout" hidden>
               <summary>Cutout Overlay</summary>
@@ -9688,6 +9714,8 @@
               animMode: "static",
               driftCycleSec: 6,
             },
+            watermarkProfile: "CV",
+            kickHqStreamer: "KING68THEGREAT",
             cutoutOverlay: {
               enabled: false,
               imageDataUrl: "",
@@ -10209,12 +10237,18 @@
       const _kickStreamerImageCache = new Map();
       const viralHeaderState = editorState.scene.overlays.viralHeader;
       const cutoutOverlayState = editorState.scene.overlays.cutoutOverlay;
+      const ADMIN_EMAIL = "moeylarge@gmail.com";
+      const WATERMARK_PROFILES = ["CV", "KICKHQ"];
+      let isKickHqAdmin = false;
+      let kickHqAdminChecked = false;
+      let pendingSavedWatermarkProfile = null;
       const captionState = editorState.scene.captions;
       Object.defineProperty(window, "layoutState", { value: layoutState, enumerable: true });
       Object.defineProperty(window, "kickState", { value: kickState, enumerable: true });
       Object.defineProperty(window, "kickProgramState", { value: kickProgramState, enumerable: true });
       Object.defineProperty(window, "viralHeaderState", { value: viralHeaderState, enumerable: true });
       Object.defineProperty(window, "cutoutOverlayState", { value: cutoutOverlayState, enumerable: true });
+      Object.defineProperty(window, "watermarkState", { value: editorState.scene.overlays, enumerable: true });
       Object.defineProperty(window, "captionState", { value: captionState, enumerable: true });
       const KICK_LOGO_VIEWBOX = { x: 15, y: 90, w: 220, h: 70.6422 };
       const KICK_LOGO_PATH = "M15 90H38.5714V105.698H46.4286V97.8491H54.2857V90H77.8571V113.547H70V121.397H62.1429V129.246H70V137.095H77.8571V160.642H54.2857V152.793H46.4286V144.944H38.5714V160.642H15V90ZM172.143 90H195.714V105.698H203.571V97.8491H211.429V90H235V113.547H227.143V121.397H219.286V129.246H227.143V137.095H235V160.642H211.429V152.793H203.571V144.944H195.714V160.642H172.143V90ZM85.7143 90H109.286V160.642H85.7143V90ZM125 90V97.8491H117.143V152.793H125V160.642H164.286V137.095H140.714V113.547H164.286V90H125Z";
@@ -10972,6 +11006,11 @@
       const viralHeaderRotationOutput = document.getElementById("viralHeaderRotationOutput");
       const viralHeaderShowPreviewToggle = document.getElementById("viralHeaderShowPreviewToggle");
       const viralHeaderIncludeExportToggle = document.getElementById("viralHeaderIncludeExportToggle");
+      const watermarkProfileCvButton = document.getElementById("watermarkProfileCvButton");
+      const watermarkProfileKickHqButton = document.getElementById("watermarkProfileKickHqButton");
+      const kickHqWatermarkControls = document.getElementById("kickHqWatermarkControls");
+      const kickHqStreamerInput = document.getElementById("kickHqStreamerInput");
+      const kickHqWatermarkStatus = document.getElementById("kickHqWatermarkStatus");
       const cutoutOverlayToggle = document.getElementById("cutoutOverlayToggle");
       const cutoutUploadInput = document.getElementById("cutoutUploadInput");
       const cutoutUploadButton = document.getElementById("cutoutUploadButton");
@@ -12166,6 +12205,17 @@
           visible: !!kickSource.enabled && (isWholeClip || (currentTime >= kickStart && currentTime <= kickEnd)),
         };
         const viralSource = state?.scene?.overlays?.viralHeader || editorState.scene.overlays.viralHeader || {};
+        const rawWatermarkProfile = state?.scene?.watermarkProfile
+          || state?.scene?.overlays?.watermarkProfile
+          || editorState.scene.overlays.watermarkProfile
+          || WATERMARK_PROFILE_DEFAULTS.watermarkProfile;
+        const watermarkProfile = WATERMARK_PROFILES.includes(rawWatermarkProfile) ? rawWatermarkProfile : WATERMARK_PROFILE_DEFAULTS.watermarkProfile;
+        const kickHqStreamer = normalizeKickHqStreamer(
+          state?.scene?.kickHqStreamer
+            || state?.scene?.overlays?.kickHqStreamer
+            || editorState.scene.overlays.kickHqStreamer
+            || WATERMARK_PROFILE_DEFAULTS.kickHqStreamer
+        );
         const overlayDims = getOutputDimensions(activeLayout.format);
         const viralTextAlignRaw = viralSource.textAlign;
         const viralTextAlign = (viralTextAlignRaw === "left" || viralTextAlignRaw === "right" || viralTextAlignRaw === "center") ? viralTextAlignRaw : "center";
@@ -12236,6 +12286,8 @@
             crops: buildNormalizedPanelState(activeLayout, layoutStateValue.crops),
           },
           colorGrade: state?.scene?.colorGrade || editorState.scene.colorGrade || "none",
+          watermarkProfile,
+          kickHqStreamer,
           overlays: {
             kick: kickState,
             kickProgram: (() => {
@@ -12946,6 +12998,10 @@
       ];
       const KICK_PROGRAM_PERSISTENT_FIELDS = ["enabled", "streamerId", "format", "barWidthPct", "barOpacity", "customYOffsetPct"];
       const VIRAL_HEADER_PERSISTENT_FIELDS = ["text", "x", "y", "width", "fontSize", "opacity", "rotation", "textAlign", "showInPreview", "includeInExport", "animMode", "driftCycleSec"];
+      const WATERMARK_PROFILE_DEFAULTS = Object.freeze({
+        watermarkProfile: "CV",
+        kickHqStreamer: "KING68THEGREAT",
+      });
       const CUTOUT_PERSISTENT_FIELDS = ["enabled", "imageDataUrl", "name", "corner", "scale", "opacity", "start", "end", "layer"];
       const CUSTOM_TEXT_PERSISTENT_FIELDS = ["enabled", "text", "style", "position", "customX", "customY", "duration", "durationInSec", "durationOutSec", "size", "opacity", "animation", "color", "shadow"];
       const VIRAL_HEADER_DEFAULTS = Object.freeze({
@@ -13037,6 +13093,13 @@
             kickProgramState[field] = saved.kickProgram[field];
           });
         }
+        if (saved.watermarkProfile !== undefined) {
+          pendingSavedWatermarkProfile = saved.watermarkProfile === "KICKHQ" ? "KICKHQ" : null;
+          editorState.scene.overlays.watermarkProfile = WATERMARK_PROFILE_DEFAULTS.watermarkProfile;
+        }
+        if (saved.kickHqStreamer !== undefined) {
+          editorState.scene.overlays.kickHqStreamer = normalizeKickHqStreamer(saved.kickHqStreamer);
+        }
         if (saved.cutoutOverlay && typeof saved.cutoutOverlay === "object" && cutoutOverlayState) {
           CUTOUT_PERSISTENT_FIELDS.forEach((field) => {
             if (saved.cutoutOverlay[field] === undefined) return;
@@ -13109,7 +13172,15 @@
             const customText = {};
             const customTextState = editorState.scene.overlays.customText || {};
             CUSTOM_TEXT_PERSISTENT_FIELDS.forEach((field) => { customText[field] = customTextState[field]; });
-            localStorage.setItem(ELEMENT_SETTINGS_STORAGE_KEY, JSON.stringify({ kick, kickProgram, viralHeader, cutoutOverlay, customText }));
+            localStorage.setItem(ELEMENT_SETTINGS_STORAGE_KEY, JSON.stringify({
+              kick,
+              kickProgram,
+              viralHeader,
+              watermarkProfile: getWatermarkProfile(),
+              kickHqStreamer: getKickHqStreamer(),
+              cutoutOverlay,
+              customText,
+            }));
           } catch {}
         });
       }
@@ -15378,6 +15449,73 @@
         element.style.textAlign = align;
       }
 
+      function normalizeKickHqStreamer(value) {
+        const cleaned = `${value || WATERMARK_PROFILE_DEFAULTS.kickHqStreamer}`
+          .trim()
+          .replace(/^kick\.com\//i, "")
+          .replace(/^@+/, "")
+          .replace(/[^a-z0-9_]/gi, "")
+          .toUpperCase()
+          .slice(0, 32);
+        return cleaned || WATERMARK_PROFILE_DEFAULTS.kickHqStreamer;
+      }
+
+      function getWatermarkProfile() {
+        const profile = editorState.scene.overlays.watermarkProfile;
+        return WATERMARK_PROFILES.includes(profile) ? profile : WATERMARK_PROFILE_DEFAULTS.watermarkProfile;
+      }
+
+      function getKickHqStreamer() {
+        return normalizeKickHqStreamer(editorState.scene.overlays.kickHqStreamer);
+      }
+
+      function setWatermarkProfile(profile) {
+        const next = profile === "KICKHQ" && isKickHqAdmin ? "KICKHQ" : "CV";
+        editorState.scene.overlays.watermarkProfile = next;
+        updateWatermarkProfileControls();
+        updateViralHeaderControls();
+        syncCanvasPreview();
+      }
+
+      function updateWatermarkProfileControls() {
+        const profile = getWatermarkProfile();
+        const isKickHq = profile === "KICKHQ";
+        [watermarkProfileCvButton, watermarkProfileKickHqButton].forEach((button) => {
+          if (!button) return;
+          const match = button.dataset.watermarkProfile === profile;
+          button.classList.toggle("active", match);
+          button.setAttribute("aria-pressed", String(match));
+        });
+        if (kickHqWatermarkControls) kickHqWatermarkControls.hidden = !isKickHq;
+        if (kickHqStreamerInput && document.activeElement !== kickHqStreamerInput) kickHqStreamerInput.value = getKickHqStreamer();
+        if (kickHqWatermarkStatus) {
+          kickHqWatermarkStatus.classList.toggle("active", isKickHq);
+          kickHqWatermarkStatus.textContent = isKickHq
+            ? `KICK HQ watermark active. CV tag is off. URL: KICK.COM/${getKickHqStreamer()}.`
+            : "CV watermark profile is active.";
+        }
+        if (kickHqAdminChecked) persistElementSettings();
+      }
+
+      function setKickHqAdminVisibility(isAdmin) {
+        kickHqAdminChecked = true;
+        isKickHqAdmin = !!isAdmin;
+        document.querySelectorAll('[data-admin-only="kickHq"]').forEach((node) => {
+          node.hidden = !isKickHqAdmin;
+          if (!isKickHqAdmin) node.style.display = "none";
+          else node.style.removeProperty("display");
+        });
+        if (isKickHqAdmin && pendingSavedWatermarkProfile === "KICKHQ") {
+          editorState.scene.overlays.watermarkProfile = "KICKHQ";
+        } else if (!isKickHqAdmin && getWatermarkProfile() === "KICKHQ") {
+          editorState.scene.overlays.watermarkProfile = "CV";
+        }
+        pendingSavedWatermarkProfile = null;
+        updateWatermarkProfileControls();
+        updateViralHeaderControls();
+        syncCanvasPreview();
+      }
+
       function updateViralHeaderControls() {
         const dims = getOutputDimensions(layoutState.format);
         if (!Number.isFinite(Number(viralHeaderState.opacity))) viralHeaderState.opacity = 1;
@@ -15422,7 +15560,8 @@
         viralHeaderToggle.setAttribute("aria-pressed", String(!!viralHeaderState.enabled));
         viralHeaderToggle.dataset.stateLabel = viralHeaderState.enabled ? "On" : "Off";
         const showInPreview = !!viralHeaderState.showInPreview;
-        const previewVisible = !!viralHeaderState.enabled && showInPreview;
+        const profileAllowsCv = getWatermarkProfile() !== "KICKHQ";
+        const previewVisible = profileAllowsCv && !!viralHeaderState.enabled && showInPreview;
         viralHeaderCanvasOverlay.classList.toggle("active", previewVisible);
         viralHeaderCanvasOverlay.setAttribute("aria-hidden", String(!previewVisible));
         /* sync CSS animation class to match selected animMode */
@@ -15444,7 +15583,9 @@
         }
         applyPixelHeaderBox(viralHeaderCanvasOverlay, viralHeaderState);
         viralHeaderStatus.classList.toggle("active", !!viralHeaderState.enabled);
-        viralHeaderStatus.textContent = viralHeaderState.enabled
+        viralHeaderStatus.textContent = !profileAllowsCv
+          ? "ClipperViral tag is off because KICK HQ profile is active."
+          : viralHeaderState.enabled
           ? Number(viralHeaderState.x) < 0 || Number(viralHeaderState.y) < 0
             ? "Visible at bottom center."
             : `Visible at ${Math.round(viralHeaderState.x)}px, ${Math.round(viralHeaderState.y)}px.`
@@ -17691,6 +17832,24 @@
           } catch (err) {
             console.warn("copy style failed", err);
           }
+        });
+      }
+      [watermarkProfileCvButton, watermarkProfileKickHqButton].filter(Boolean).forEach((button) => {
+        button.addEventListener("click", () => {
+          setWatermarkProfile(button.dataset.watermarkProfile);
+          keepMobilePreviewFirst();
+        });
+      });
+      if (kickHqStreamerInput) {
+        kickHqStreamerInput.addEventListener("input", () => {
+          editorState.scene.overlays.kickHqStreamer = normalizeKickHqStreamer(kickHqStreamerInput.value);
+          updateWatermarkProfileControls();
+          syncCanvasPreview();
+        });
+        kickHqStreamerInput.addEventListener("blur", () => {
+          kickHqStreamerInput.value = getKickHqStreamer();
+          updateWatermarkProfileControls();
+          syncCanvasPreview();
         });
       }
       if (addElementCta && addElementMenu) {
@@ -21206,6 +21365,68 @@
         ctx.restore();
       }
 
+      function drawKickHqWatermark(ctx, outputWidth, outputHeight, scene) {
+        if (scene?.watermarkProfile !== "KICKHQ") return;
+        const streamer = normalizeKickHqStreamer(scene?.kickHqStreamer);
+        const green = "#53FC18";
+        const minDim = Math.min(outputWidth, outputHeight);
+        const shortPad = clamp(minDim * 0.035, 22, 56);
+        const logoAspect = KICK_LOGO_VIEWBOX.w / KICK_LOGO_VIEWBOX.h;
+
+        ctx.save();
+        ctx.globalAlpha = 0.65;
+
+        // Center partner mark.
+        const centerLogoW = clamp(outputWidth * 0.18, minDim * 0.16, minDim * 0.34);
+        const centerLogoH = centerLogoW / logoAspect;
+        const hqFont = clamp(centerLogoH * 0.95, 22, 82);
+        ctx.font = `900 ${hqFont}px "Oswald", "Anton", "Arial Black", Impact, sans-serif`;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.lineJoin = "round";
+        const hqW = ctx.measureText("HQ").width;
+        const groupGap = Math.max(8, centerLogoW * 0.08);
+        const groupW = centerLogoW + groupGap + hqW;
+        const groupX = (outputWidth - groupW) / 2;
+        const centerY = outputHeight * 0.5;
+        const centerLogoY = centerY - centerLogoH * 0.58;
+        ctx.shadowBlur = Math.max(3, minDim * 0.006);
+        ctx.shadowColor = "rgba(0,0,0,0.7)";
+        drawKickVectorLogo(ctx, groupX, centerLogoY, centerLogoW, centerLogoH, green);
+        ctx.fillStyle = green;
+        ctx.strokeStyle = "rgba(0,0,0,0.9)";
+        ctx.lineWidth = Math.max(2, hqFont * 0.08);
+        const hqX = groupX + centerLogoW + groupGap;
+        const hqY = centerY + centerLogoH * 0.04;
+        ctx.strokeText("HQ", hqX, hqY);
+        ctx.fillText("HQ", hqX, hqY);
+
+        // Bottom-left KICK wordmark.
+        const bottomLogoW = clamp(outputWidth * 0.22, minDim * 0.24, minDim * 0.46);
+        const bottomLogoH = bottomLogoW / logoAspect;
+        const bottomLogoX = shortPad;
+        const bottomLogoY = outputHeight - shortPad - bottomLogoH;
+        drawKickVectorLogo(ctx, bottomLogoX, bottomLogoY, bottomLogoW, bottomLogoH, green);
+
+        // Bottom-right streamer URL.
+        const sceneKick = {
+          user: streamer,
+          allCaps: true,
+          urlTextStyle: "barlow-condensed-extrabold",
+          handleFont: "standard",
+        };
+        const urlStyle = getKickUrlStyleConfig(sceneKick);
+        const maxTextW = Math.max(120, outputWidth - bottomLogoX - bottomLogoW - shortPad * 2);
+        const baseFont = clamp(outputHeight * 0.034, 22, 66);
+        const fontSize = fitKickUrlText(ctx, sceneKick, maxTextW, baseFont, urlStyle);
+        const textW = Math.min(maxTextW, measureKickUrlText(ctx, sceneKick, fontSize, urlStyle));
+        const textX = outputWidth - shortPad - textW;
+        const textY = outputHeight - shortPad - bottomLogoH * 0.47;
+        drawKickUrlText(ctx, sceneKick, textX, textY, maxTextW, fontSize, urlStyle, "#FFFFFF", 0.65, 0, false);
+
+        ctx.restore();
+      }
+
       // Bundle B #29: Waveform visualizer overlay — renders a moving amplitude window synced to playback.
       function drawWaveformViz(ctx, outputWidth, outputHeight, scene) {
         const wv = scene?.overlays?.waveformViz;
@@ -21366,7 +21587,11 @@
         const forExport = !!options.forExport;
         const vhGateOk = vh && (forExport ? vh.includeInExport !== false : vh.showInPreview !== false);
         drawCutoutOverlay(ctx, outputWidth, outputHeight, scene, "belowWatermark");
-        if (vhGateOk) drawViralHeader(ctx, outputWidth, outputHeight, vh, scene.source.currentTime || 0, scene.layout?.panelBoxes?.focus);
+        if (scene.watermarkProfile === "KICKHQ") {
+          drawKickHqWatermark(ctx, outputWidth, outputHeight, scene);
+        } else if (vhGateOk) {
+          drawViralHeader(ctx, outputWidth, outputHeight, vh, scene.source.currentTime || 0, scene.layout?.panelBoxes?.focus);
+        }
         drawCutoutOverlay(ctx, outputWidth, outputHeight, scene, "aboveWatermark");
         // Kick Program compliance bar must sit above every other overlay.
         drawKickProgramOverlay(ctx, outputWidth, outputHeight, scene);
@@ -21747,6 +21972,7 @@
       if (kickProgramState.enabled) applyKickProgramWatermarkMode(true);
       updateKickOverlay();
       updateKickProgramControls();
+      updateWatermarkProfileControls();
       updateViralHeaderControls();
       syncCutoutControls();
       try { window._syncCustomTextUI?.(); } catch (e) {}
@@ -25688,7 +25914,7 @@
           try {
             const response = await fetch("/api/cv-admin/whoami", { headers: { accept: "application/json" } });
             const payload = await response.json().catch(() => ({}));
-            window.__CV_IS_ADMIN__ = Boolean(payload?.is_admin);
+            window.__CV_IS_ADMIN__ = Boolean(payload?.is_admin || payload?.isAdmin);
           } catch {
             window.__CV_IS_ADMIN__ = false;
           }
@@ -25699,6 +25925,9 @@
           }
           if (typeof setCutoutAdminVisibility === "function") {
             setCutoutAdminVisibility(Boolean(window.__CV_IS_ADMIN__));
+          }
+          if (typeof setKickHqAdminVisibility === "function") {
+            setKickHqAdminVisibility(Boolean(window.__CV_IS_ADMIN__));
           }
         }
 
