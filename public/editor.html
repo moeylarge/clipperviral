@@ -10246,6 +10246,11 @@
       const KICK_LOGO_PATH = "M15 90H38.5714V105.698H46.4286V97.8491H54.2857V90H77.8571V113.547H70V121.397H62.1429V129.246H70V137.095H77.8571V160.642H54.2857V152.793H46.4286V144.944H38.5714V160.642H15V90ZM172.143 90H195.714V105.698H203.571V97.8491H211.429V90H235V113.547H227.143V121.397H219.286V129.246H227.143V137.095H235V160.642H211.429V152.793H203.571V144.944H195.714V160.642H172.143V90ZM85.7143 90H109.286V160.642H85.7143V90ZM125 90V97.8491H117.143V152.793H125V160.642H164.286V137.095H140.714V113.547H164.286V90H125Z";
       const kickLogoImage = new Image();
       kickLogoImage.src = "/assets/kick-logo.svg";
+      const kickHqWatermarkImage = new Image();
+      kickHqWatermarkImage.addEventListener("load", () => {
+        if (typeof syncCanvasPreview === "function") syncCanvasPreview();
+      });
+      kickHqWatermarkImage.src = "/kickhq-watermark.png";
       // Rich caption preset tokens. Each token describes a full visual identity:
       // font/weight/case, fill+stroke, drop shadow, optional pill background,
       // emphasis color (for word highlight fix), default words-per-line, and the
@@ -21316,39 +21321,23 @@
 
       function drawKickHqWatermark(ctx, outputWidth, outputHeight, scene) {
         if (scene?.watermarkProfile !== "KICKHQ") return;
-        const green = "#53FC18";
-        const minDim = Math.min(outputWidth, outputHeight);
+        if (!kickHqWatermarkImage.complete || !kickHqWatermarkImage.naturalWidth) return;
 
         ctx.save();
-        ctx.globalAlpha = 0.65;
+        ctx.globalAlpha = 0.58;
 
-        const kickFont = clamp(minDim * 0.036, 24, 46);
-        const hqFont = clamp(kickFont * 0.62, 15, 30);
-        const gap = -Math.max(1, kickFont * 0.08);
-        const groupH = kickFont + gap + hqFont * 0.76;
+        const imageRatio = kickHqWatermarkImage.naturalHeight / kickHqWatermarkImage.naturalWidth;
+        const markW = clamp(outputWidth * 0.2, 72, 260);
+        const markH = markW * imageRatio;
         const markCenterX = outputWidth * 0.38;
         const markCenterY = outputHeight * 0.56;
-        const kickY = markCenterY - groupH / 2 + kickFont * 0.5;
-        const hqY = kickY + kickFont * 0.45 + gap + hqFont * 0.34;
-
-        ctx.lineJoin = "round";
-        ctx.shadowBlur = 0;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        ctx.font = `900 ${kickFont}px "Arial Black", Impact, "Anton", sans-serif`;
-        ctx.fillStyle = green;
-        ctx.strokeStyle = "#101010";
-        ctx.lineWidth = Math.max(3, kickFont * 0.14);
-        ctx.strokeText("KICK", markCenterX, kickY);
-        ctx.fillText("KICK", markCenterX, kickY);
-
-        ctx.font = `900 ${hqFont}px "Arial Black", Impact, "Anton", sans-serif`;
-        ctx.fillStyle = "#FFFFFF";
-        ctx.strokeStyle = "#101010";
-        ctx.lineWidth = Math.max(3, hqFont * 0.2);
-        ctx.strokeText("HQ", markCenterX, hqY);
-        ctx.fillText("HQ", markCenterX, hqY);
+        ctx.drawImage(
+          kickHqWatermarkImage,
+          markCenterX - markW / 2,
+          markCenterY - markH / 2,
+          markW,
+          markH
+        );
 
         ctx.restore();
       }
