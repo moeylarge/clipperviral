@@ -21292,7 +21292,9 @@
         if (imgReady) {
           // Official per-streamer overlay PNG is on disk — render as-is.
           ctx.fillStyle = "#000000";
-          ctx.fillRect(box.x - 1, box.y, box.w + 2, box.h);
+          const backingY = box.y + box.h * 0.42;
+          const backingH = box.h * 0.52;
+          ctx.fillRect(box.x - 1, backingY, box.w + 2, backingH);
           ctx.drawImage(img, box.x, box.y, box.w, box.h);
         } else {
           // Fallback bar so the dropdown is usable before all 67 streamer PNGs are downloaded.
