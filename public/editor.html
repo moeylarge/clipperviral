@@ -21291,6 +21291,8 @@
         ctx.globalAlpha = clamp(Number.isFinite(Number(kp.barOpacity)) ? Number(kp.barOpacity) : 1, 0, 1);
         if (imgReady) {
           // Official per-streamer overlay PNG is on disk — render as-is.
+          ctx.fillStyle = "#000000";
+          ctx.fillRect(box.x - 1, box.y, box.w + 2, box.h);
           ctx.drawImage(img, box.x, box.y, box.w, box.h);
         } else {
           // Fallback bar so the dropdown is usable before all 67 streamer PNGs are downloaded.
