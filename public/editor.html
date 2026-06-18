@@ -21321,28 +21321,31 @@
         const logoAspect = KICK_LOGO_VIEWBOX.w / KICK_LOGO_VIEWBOX.h;
 
         ctx.save();
-        ctx.globalAlpha = 0.58;
+        ctx.globalAlpha = 0.86;
 
-        const logoW = clamp(minDim * 0.135, 62, 190);
+        const logoW = clamp(minDim * 0.092, 54, 138);
         const logoH = logoW / logoAspect;
-        const hqFont = clamp(logoH * 0.9, 18, 68);
-        const gap = Math.max(2, logoH * 0.08);
-        const groupH = logoH + gap + hqFont * 0.74;
+        const hqFont = clamp(logoH * 0.95, 17, 50);
+        const gap = -Math.max(1, logoH * 0.05);
+        const groupH = logoH + gap + hqFont * 0.62;
         const logoX = (outputWidth - logoW) / 2;
         const logoY = (outputHeight - groupH) / 2;
-        const hqY = logoY + logoH + gap + hqFont * 0.52;
+        const hqY = logoY + logoH + gap + hqFont * 0.43;
 
         ctx.lineJoin = "round";
-        ctx.shadowBlur = Math.max(2, minDim * 0.0045);
-        ctx.shadowColor = "rgba(0,0,0,0.7)";
+        const outline = Math.max(2, logoW * 0.045);
+        ctx.shadowBlur = 0;
+        [[-outline, 0], [outline, 0], [0, -outline], [0, outline], [-outline * 0.7, -outline * 0.7], [outline * 0.7, -outline * 0.7], [-outline * 0.7, outline * 0.7], [outline * 0.7, outline * 0.7]].forEach(([dx, dy]) => {
+          drawKickVectorLogo(ctx, logoX + dx, logoY + dy, logoW, logoH, "#101010");
+        });
         drawKickVectorLogo(ctx, logoX, logoY, logoW, logoH, green);
 
         ctx.font = `900 ${hqFont}px "Oswald", "Anton", "Arial Black", Impact, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillStyle = "#FFFFFF";
-        ctx.strokeStyle = "rgba(0,0,0,0.9)";
-        ctx.lineWidth = Math.max(2, hqFont * 0.1);
+        ctx.strokeStyle = "#101010";
+        ctx.lineWidth = Math.max(3, hqFont * 0.22);
         ctx.strokeText("HQ", outputWidth / 2, hqY);
         ctx.fillText("HQ", outputWidth / 2, hqY);
 
