@@ -21327,10 +21327,10 @@
         ctx.globalAlpha = 0.65;
 
         const imageRatio = kickHqWatermarkImage.naturalHeight / kickHqWatermarkImage.naturalWidth;
-        const markW = clamp(outputWidth * 0.065, 42, 120);
+        const markW = clamp(outputWidth * 0.052, 34, 96);
         const markH = markW * imageRatio;
-        const markCenterX = outputWidth * 0.38;
-        const markCenterY = outputHeight * 0.56;
+        const markCenterX = outputWidth * 0.5;
+        const markCenterY = outputHeight * 0.5;
         ctx.drawImage(
           kickHqWatermarkImage,
           markCenterX - markW / 2,
