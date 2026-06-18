@@ -16127,13 +16127,10 @@
       }
 
       function getKickProgramOverlayBox(w, h, kp = kickProgramState, layout = getActiveLayout()) {
-        const streamerImg = loadKickStreamerImage(kp.streamerId);
-        const ratio = streamerImg?.complete && streamerImg.naturalWidth > 0
-          ? streamerImg.naturalHeight / streamerImg.naturalWidth
-          : KICK_PROGRAM_NATIVE_RATIO;
-        const barW = w * clamp(Number(kp.barWidthPct) || 1.0, 0.5, 1);
+        const ratio = KICK_PROGRAM_NATIVE_RATIO;
+        const barW = w;
         const barH = barW * ratio;
-        const barX = (w - barW) / 2;
+        const barX = 0;
         const format = kp.format === "auto" ? detectClipFormat(w, h, layout) : kp.format;
         let barY;
         if (kp.customYOffsetPct !== null && kp.customYOffsetPct !== undefined && Number.isFinite(Number(kp.customYOffsetPct))) {
@@ -21284,35 +21281,26 @@
       function drawKickProgramOverlay(ctx, w, h, sceneOrOverlay) {
         const kp = sceneOrOverlay?.overlays?.kickProgram || sceneOrOverlay;
         if (!kp?.enabled || !kp.streamerId) return;
-        const img = loadKickStreamerImage(kp.streamerId);
-        const imgReady = !!(img && img.complete && img.naturalWidth);
         const box = getKickProgramOverlayBox(w, h, kp, sceneOrOverlay?.layout || getActiveLayout());
         ctx.save();
         ctx.globalAlpha = clamp(Number.isFinite(Number(kp.barOpacity)) ? Number(kp.barOpacity) : 1, 0, 1);
-        if (imgReady) {
-          // Official per-streamer overlay PNG, expanded to the full frame width.
-          ctx.drawImage(img, 0, box.y, w, box.h);
-        } else {
-          // Fallback bar so the dropdown is usable before all 67 streamer PNGs are downloaded.
-          // Renders a black bar with Kick green "KICK" wordmark + "KICK.COM/{handle}" in white.
-          const streamer = getKickStreamer(kp.streamerId);
-          const handle = (streamer?.id || "streamer").toUpperCase();
-          ctx.fillStyle = "#000000";
-          ctx.fillRect(0, box.y, w, box.h);
-          const padX = w * 0.03;
-          const midY = box.y + box.h / 2;
-          ctx.textBaseline = "middle";
-          // Left side: KICK wordmark (chunky/bold, Kick green)
-          ctx.fillStyle = "#53FC18";
-          ctx.font = `900 ${Math.round(box.h * 0.62)}px "Press Start 2P", "Arial Black", Impact, sans-serif`;
-          ctx.textAlign = "left";
-          ctx.fillText("KICK", padX, midY);
-          // Right side: KICK.COM/{HANDLE} (white, condensed bold)
-          ctx.fillStyle = "#FFFFFF";
-          ctx.font = `800 ${Math.round(box.h * 0.55)}px "Bebas Neue", "Arial Black", Impact, sans-serif`;
-          ctx.textAlign = "right";
-          ctx.fillText(`KICK.COM/${handle}`, w - padX, midY);
-        }
+        const streamer = getKickStreamer(kp.streamerId);
+        const handle = (streamer?.id || kp.streamerId || "streamer").toUpperCase();
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0, box.y, w, box.h);
+        const padX = w * 0.03;
+        const midY = box.y + box.h / 2;
+        ctx.textBaseline = "middle";
+        // Left side: KICK wordmark (chunky/bold, Kick green)
+        ctx.fillStyle = "#53FC18";
+        ctx.font = `900 ${Math.round(box.h * 0.62)}px "Press Start 2P", "Arial Black", Impact, sans-serif`;
+        ctx.textAlign = "left";
+        ctx.fillText("KICK", padX, midY);
+        // Right side: KICK.COM/{HANDLE} (white, condensed bold)
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = `800 ${Math.round(box.h * 0.55)}px "Bebas Neue", "Arial Black", Impact, sans-serif`;
+        ctx.textAlign = "right";
+        ctx.fillText(`KICK.COM/${handle}`, w - padX, midY);
         ctx.restore();
       }
 
